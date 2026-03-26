@@ -9,15 +9,15 @@
 
 export const API_ENDPOINTS = {
   // 사용자
-  USERS: '/api/users',
+  USERS: "/api/users",
   USER: (id: string) => `/api/users/${id}`,
-  USER_PROFILE: '/api/users/profile',
+  USER_PROFILE: "/api/users/profile",
 
   // 인증
-  AUTH_LOGIN: '/api/auth/login',
-  AUTH_LOGOUT: '/api/auth/logout',
-  AUTH_REGISTER: '/api/auth/register',
-  AUTH_REFRESH: '/api/auth/refresh',
+  AUTH_LOGIN: "/api/auth/login",
+  AUTH_LOGOUT: "/api/auth/logout",
+  AUTH_REGISTER: "/api/auth/register",
+  AUTH_REFRESH: "/api/auth/refresh",
 } as const;
 
 // ============================================================================
@@ -58,11 +58,11 @@ export const HTTP_STATUS = {
 // ============================================================================
 
 export const STORAGE_KEYS = {
-  AUTH_TOKEN: 'auth_token',
-  REFRESH_TOKEN: 'refresh_token',
-  USER_PREFERENCES: 'user_preferences',
-  THEME: 'theme',
-  LANGUAGE: 'language',
+  AUTH_TOKEN: "auth_token",
+  REFRESH_TOKEN: "refresh_token",
+  USER_PREFERENCES: "user_preferences",
+  THEME: "theme",
+  LANGUAGE: "language",
 } as const;
 
 // ============================================================================
@@ -107,8 +107,8 @@ export const VALIDATION_RULES = {
 // ============================================================================
 
 export const SORT_ORDER = {
-  ASC: 'asc',
-  DESC: 'desc',
+  ASC: "asc",
+  DESC: "desc",
 } as const;
 
 // ============================================================================
@@ -116,9 +116,9 @@ export const SORT_ORDER = {
 // ============================================================================
 
 export const USER_ROLES = {
-  ADMIN: 'admin',
-  USER: 'user',
-  GUEST: 'guest',
+  ADMIN: "admin",
+  USER: "user",
+  GUEST: "guest",
 } as const;
 
 // ============================================================================
@@ -126,10 +126,10 @@ export const USER_ROLES = {
 // ============================================================================
 
 export const NOTIFICATION_TYPES = {
-  SUCCESS: 'success',
-  ERROR: 'error',
-  WARNING: 'warning',
-  INFO: 'info',
+  SUCCESS: "success",
+  ERROR: "error",
+  WARNING: "warning",
+  INFO: "info",
 } as const;
 
 // ============================================================================
@@ -142,3 +142,14 @@ export const REGEX = {
   KOREAN_CHAR: /[가-힣]/,
   SPECIAL_CHAR: /[!@#$%^&*]/,
 } as const;
+
+// ============================================================================
+// 게시판 상수
+// ============================================================================
+export const BOARDS = [
+  { key: "anchor", label: "앵커판" },
+  { key: "orpg", label: "OR판" },
+  { key: "test", label: "테스트판" },
+  { key: "trans", label: "번역판" },
+  { key: "honor", label: "명예의 전당" },
+] as const;
