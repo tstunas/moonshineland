@@ -31,16 +31,27 @@ const DEFAULT_SECTIONS: SidebarSection[] = [
   {
     title: "게시판",
     items: [
-      { label: "앵커판", href: "/anchor" },
-      { label: "OR판", href: "/orpg" },
-      { label: "테스트판", href: "/test" },
-      { label: "번역판", href: "/trans" },
-      { label: "명예의 전당", href: "/honor" },
+      { label: "앵커판", href: "/board/anchor" },
+      { label: "OR판", href: "/board/orpg" },
+      { label: "테스트판", href: "/board/test" },
+      { label: "번역판", href: "/board/trans" },
+      { label: "명예의 전당", href: "/board/honor" },
+    ],
+  },
+  {
+    title: "보관",
+    items: [
+      { label: "아카이브", href: "/archive" },
+      { label: "마토메", href: "/matome" },
     ],
   },
   {
     title: "환경설정",
     items: [{ label: "개인선호설정", href: "/preferences" }],
+  },
+  {
+    title: "관리자 페이지",
+    items: [{ label: "대시보드", href: "/dashboard" }],
   },
 ];
 
