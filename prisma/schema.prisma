@@ -12,3 +12,220 @@ datasource db {
   provider = "mysql"
 }
 
+enum ContentType {
+  text
+  aa
+  novel
+  line
+}
+
+model User {
+  id              Int       @id @default(autoincrement())
+  avatarUrl       String    @default("") @db.VarChar(512)
+  username        String    @unique @db.VarChar(50)
+  email           String    @unique @db.VarChar(191)
+  passwordHash    String    @db.VarChar(255)
+  lastLoginAt     DateTime? @db.DateTime(3)
+  suspendedUntil  DateTime? @db.DateTime(3)
+  isForeigner     Boolean   @default(false)
+  isAdultVerified Boolean   @default(false)
+  isActive        Boolean   @default(true)
+  isAdmin         Boolean   @default(false)
+  createdAt       DateTime  @default(now()) @db.DateTime(3)
+  updatedAt       DateTime  @updatedAt @db.DateTime(3)
+
+  announcements       Announcement[]
+  boardsOwned         Board[]              @relation("BoardOwner")
+  boardCollaborations BoardCollaborator[]
+  boardMemberships    BoardMember[]
+  boardBans           BoardBan[]
+  threadsOwned        Thread[]             @relation("ThreadOwner")
+  threadCollaborators ThreadCollaborator[]
+  threadMemberships   ThreadMember[]
+  threadBans          ThreadBan[]
+  posts               Post[]
+  autoPosts           AutoPost[]
+} 
+
+model Announcement {
+  id          Int         @id @default(autoincrement())
+  title       String      @db.VarChar(200)
+  content     String      @db.LongText
+  rawContent  String      @db.LongText
+  contentType ContentType @default(text)
+  isHidden    Boolean     @default(false)
+  isAdultOnly Boolean     @default(false)
+  createdAt   DateTime    @default(now()) @db.DateTime(3)
+  updatedAt   DateTime    @updatedAt @db.DateTime(3)
+  userId      Int?
+
+  user User? @relation(fields: [userId], references: [id], onDelete: SetNull)
+}
+
+model Board {
+  id           Int      @id @default(autoincrement())
+  boardKey     String   @unique @db.VarChar(64)
+  name         String   @db.VarChar(120)
+  description  String   @default("") @db.Text
+  passwordHash String?  @db.VarChar(255)
+  isAdultOnly  Boolean  @default(false)
+  isHidden     Boolean  @default(false)
+  isSecret     Boolean  @default(false)
+  isPrivate    Boolean  @default(false)
+  isBasic      Boolean  @default(false)
+  isArchive    Boolean  @default(false)
+  createdAt    DateTime @default(now()) @db.DateTime(3)
+  updatedAt    DateTime @updatedAt @db.DateTime(3)
+  userId       Int?
+
+  owner         User?               @relation("BoardOwner", fields: [userId], references: [id], onDelete: SetNull)
+  threads       Thread[]
+  collaborators BoardCollaborator[]
+  joinedUsers   BoardMember[]
+  bannedUsers   BoardBan[]
+}
+
+model BoardCollaborator {
+  boardId Int
+  userId  Int
+
+  board Board @relation(fields: [boardId], references: [id], onDelete: Cascade)
+  user  User  @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@id([boardId, userId])
+  @@index([boardId, userId])
+}
+
+model BoardMember {
+  boardId Int
+  userId  Int
+
+  board Board @relation(fields: [boardId], references: [id], onDelete: Cascade)
+  user  User  @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@id([boardId, userId])
+  @@index([boardId, userId])
+}
+
+model BoardBan {
+  boardId Int
+  userId  Int
+
+  board Board @relation(fields: [boardId], references: [id], onDelete: Cascade)
+  user  User  @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@id([boardId, userId])
+  @@index([boardId, userId])
+}
+
+model Thread {
+  id           Int      @id @default(autoincrement())
+  threadIndex  Int
+  title        String   @db.VarChar(200)
+  author       String   @db.VarChar(80)
+  idcode       String   @db.VarChar(32)
+  postCount    Int      @default(0)
+  postLimit    Int      @default(500)
+  passwordHash String?  @db.VarChar(255)
+  isAdultOnly  Boolean  @default(false)
+  isHidden     Boolean  @default(false)
+  isSecret     Boolean  @default(false)
+  isPrivate    Boolean  @default(false)
+  isChat       Boolean  @default(false)
+  isArchive    Boolean  @default(false)
+  createdAt    DateTime @default(now()) @db.DateTime(3)
+  updatedAt    DateTime @updatedAt @db.DateTime(3)
+  boardId      Int
+  userId       Int?
+
+  board         Board                @relation(fields: [boardId], references: [id], onDelete: Cascade)
+  owner         User?                @relation("ThreadOwner", fields: [userId], references: [id], onDelete: SetNull)
+  posts         Post[]
+  autoPosts     AutoPost[]
+  collaborators ThreadCollaborator[]
+  joinedUsers   ThreadMember[]
+  bannedUsers   ThreadBan[]
+
+  @@unique([boardId, threadIndex])
+}
+
+model ThreadCollaborator {
+  threadId Int
+  userId   Int
+
+  thread Thread @relation(fields: [threadId], references: [id], onDelete: Cascade)
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@id([threadId, userId])
+  @@index([userId])
+}
+
+model ThreadMember {
+  threadId Int
+  userId   Int
+
+  thread Thread @relation(fields: [threadId], references: [id], onDelete: Cascade)
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@id([threadId, userId])
+  @@index([threadId, userId])
+}
+
+model ThreadBan {
+  threadId Int
+  userId   Int
+
+  thread Thread @relation(fields: [threadId], references: [id], onDelete: Cascade)
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@id([threadId, userId])
+  @@index([userId])
+}
+
+model Post {
+  id               Int         @id @default(autoincrement())
+  postOrder        Int
+  author           String      @db.VarChar(80)
+  idcode           String      @db.VarChar(32)
+  content          String      @db.LongText
+  rawContent       String      @db.LongText
+  contentType      ContentType @default(text)
+  imageUrl         String?     @db.VarChar(512)
+  isHidden         Boolean     @default(false)
+  isEdited         Boolean     @default(false)
+  isAutoPost       Boolean     @default(false)
+  createdAt        DateTime    @default(now()) @db.DateTime(3)
+  updatedAt        DateTime    @updatedAt @db.DateTime(3)
+  contentUpdatedAt DateTime?   @db.DateTime(3)
+  threadId         Int
+  userId           Int
+
+  thread Thread @relation(fields: [threadId], references: [id], onDelete: Cascade)
+  user   User   @relation(fields: [userId], references: [id], onDelete: Restrict)
+
+  @@unique([threadId, postOrder])
+}
+
+model AutoPost {
+  id               Int         @id @default(autoincrement())
+  autoPostSequence Int
+  author           String      @db.VarChar(80)
+  idcode           String      @db.VarChar(32)
+  content          String      @db.LongText
+  rawContent       String      @db.LongText
+  contentType      ContentType @default(text)
+  imageUrl         String?     @db.VarChar(512)
+  isHidden         Boolean     @default(false)
+  isEdited         Boolean     @default(false)
+  createdAt        DateTime    @default(now()) @db.DateTime(3)
+  updatedAt        DateTime    @updatedAt @db.DateTime(3)
+  contentUpdatedAt DateTime?   @db.DateTime(3)
+  threadId         Int
+  userId           Int
+
+  thread Thread @relation(fields: [threadId], references: [id], onDelete: Cascade)
+  user   User   @relation(fields: [userId], references: [id], onDelete: Restrict)
+
+  @@unique([threadId, autoPostSequence])
+  @@index([userId])
+}
