@@ -148,6 +148,9 @@ model Thread {
   bannedUsers   ThreadBan[]
 
   @@unique([boardId, threadIndex])
+  @@index([boardId, isChat, isAdultOnly, threadIndex])
+  @@index([boardId, title])
+  @@index([boardId, author])
 }
 
 model ThreadCollaborator {
@@ -191,7 +194,6 @@ model Post {
   content          String      @db.LongText
   rawContent       String      @db.LongText
   contentType      ContentType @default(text)
-  imageUrl         String?     @db.VarChar(512)
   isHidden         Boolean     @default(false)
   isEdited         Boolean     @default(false)
   isAutoPost       Boolean     @default(false)
@@ -203,8 +205,39 @@ model Post {
 
   thread Thread @relation(fields: [threadId], references: [id], onDelete: Cascade)
   user   User   @relation(fields: [userId], references: [id], onDelete: Restrict)
+  contentHistories PostContentHistory[]
+  postImages      PostImage[]
 
   @@unique([threadId, postOrder])
+  @@index([threadId, createdAt])
+  @@index([threadId, updatedAt])
+}
+
+model PostImage {
+  id        Int      @id @default(autoincrement())
+  postId    Int
+  imageUrl  String   @db.VarChar(512)
+  sortOrder Int      @default(1)
+  createdAt DateTime @default(now()) @db.DateTime(3)
+
+  post Post @relation(fields: [postId], references: [id], onDelete: Cascade)
+
+  @@unique([postId, sortOrder])
+  @@index([postId, sortOrder])
+}
+
+model PostContentHistory {
+  id                       Int       @id @default(autoincrement())
+  postId                   Int
+  previousContent          String    @db.LongText
+  previousRawContent       String    @db.LongText
+  previousCreatedAt        DateTime  @db.DateTime(3)
+  previousContentUpdatedAt DateTime? @db.DateTime(3)
+  createdAt                DateTime  @default(now()) @db.DateTime(3)
+
+  post Post @relation(fields: [postId], references: [id], onDelete: Cascade)
+
+  @@index([postId, createdAt])
 }
 
 model AutoPost {
@@ -215,7 +248,6 @@ model AutoPost {
   content          String      @db.LongText
   rawContent       String      @db.LongText
   contentType      ContentType @default(text)
-  imageUrl         String?     @db.VarChar(512)
   isHidden         Boolean     @default(false)
   isEdited         Boolean     @default(false)
   createdAt        DateTime    @default(now()) @db.DateTime(3)
@@ -226,7 +258,21 @@ model AutoPost {
 
   thread Thread @relation(fields: [threadId], references: [id], onDelete: Cascade)
   user   User   @relation(fields: [userId], references: [id], onDelete: Restrict)
+  autoPostImages AutoPostImage[]
 
   @@unique([threadId, autoPostSequence])
   @@index([userId])
+}
+
+model AutoPostImage {
+  id         Int      @id @default(autoincrement())
+  autoPostId Int
+  imageUrl   String   @db.VarChar(512)
+  sortOrder  Int      @default(1)
+  createdAt  DateTime @default(now()) @db.DateTime(3)
+
+  autoPost AutoPost @relation(fields: [autoPostId], references: [id], onDelete: Cascade)
+
+  @@unique([autoPostId, sortOrder])
+  @@index([autoPostId, sortOrder])
 }

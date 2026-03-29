@@ -101,6 +101,7 @@ CREATE TABLE `Thread` (
     `isArchive` BOOLEAN NOT NULL DEFAULT false,
     `createdAt` DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
     `updatedAt` DATETIME(3) NOT NULL,
+    `postUpdatedAt` DATETIME(3) NOT NULL,
     `boardId` INTEGER NOT NULL,
     `userId` INTEGER NULL,
 
@@ -144,7 +145,6 @@ CREATE TABLE `Post` (
     `content` LONGTEXT NOT NULL,
     `rawContent` LONGTEXT NOT NULL,
     `contentType` ENUM('text', 'aa', 'novel', 'line') NOT NULL DEFAULT 'text',
-    `imageUrl` VARCHAR(512) NULL,
     `isHidden` BOOLEAN NOT NULL DEFAULT false,
     `isEdited` BOOLEAN NOT NULL DEFAULT false,
     `isAutoPost` BOOLEAN NOT NULL DEFAULT false,
@@ -159,6 +159,19 @@ CREATE TABLE `Post` (
 ) DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
 
 -- CreateTable
+CREATE TABLE `PostImage` (
+    `id` INTEGER NOT NULL AUTO_INCREMENT,
+    `postId` INTEGER NOT NULL,
+    `imageUrl` VARCHAR(512) NOT NULL,
+    `sortOrder` INTEGER NOT NULL DEFAULT 1,
+    `createdAt` DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
+
+    UNIQUE INDEX `PostImage_postId_sortOrder_key`(`postId`, `sortOrder`),
+    INDEX `PostImage_postId_sortOrder_idx`(`postId`, `sortOrder`),
+    PRIMARY KEY (`id`)
+) DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
+
+-- CreateTable
 CREATE TABLE `AutoPost` (
     `id` INTEGER NOT NULL AUTO_INCREMENT,
     `autoPostSequence` INTEGER NOT NULL,
@@ -167,7 +180,6 @@ CREATE TABLE `AutoPost` (
     `content` LONGTEXT NOT NULL,
     `rawContent` LONGTEXT NOT NULL,
     `contentType` ENUM('text', 'aa', 'novel', 'line') NOT NULL DEFAULT 'text',
-    `imageUrl` VARCHAR(512) NULL,
     `isHidden` BOOLEAN NOT NULL DEFAULT false,
     `isEdited` BOOLEAN NOT NULL DEFAULT false,
     `createdAt` DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
@@ -178,6 +190,19 @@ CREATE TABLE `AutoPost` (
 
     UNIQUE INDEX `AutoPost_threadId_autoPostSequence_key`(`threadId`, `autoPostSequence`),
     INDEX `AutoPost_userId_idx`(`userId`),
+    PRIMARY KEY (`id`)
+) DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
+
+-- CreateTable
+CREATE TABLE `AutoPostImage` (
+    `id` INTEGER NOT NULL AUTO_INCREMENT,
+    `autoPostId` INTEGER NOT NULL,
+    `imageUrl` VARCHAR(512) NOT NULL,
+    `sortOrder` INTEGER NOT NULL DEFAULT 1,
+    `createdAt` DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
+
+    UNIQUE INDEX `AutoPostImage_autoPostId_sortOrder_key`(`autoPostId`, `sortOrder`),
+    INDEX `AutoPostImage_autoPostId_sortOrder_idx`(`autoPostId`, `sortOrder`),
     PRIMARY KEY (`id`)
 ) DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
 
@@ -236,7 +261,45 @@ ALTER TABLE `Post` ADD CONSTRAINT `Post_threadId_fkey` FOREIGN KEY (`threadId`) 
 ALTER TABLE `Post` ADD CONSTRAINT `Post_userId_fkey` FOREIGN KEY (`userId`) REFERENCES `User`(`id`) ON DELETE RESTRICT ON UPDATE CASCADE;
 
 -- AddForeignKey
+ALTER TABLE `PostImage` ADD CONSTRAINT `PostImage_postId_fkey` FOREIGN KEY (`postId`) REFERENCES `Post`(`id`) ON DELETE CASCADE ON UPDATE CASCADE;
+
+-- AddForeignKey
 ALTER TABLE `AutoPost` ADD CONSTRAINT `AutoPost_threadId_fkey` FOREIGN KEY (`threadId`) REFERENCES `Thread`(`id`) ON DELETE CASCADE ON UPDATE CASCADE;
 
 -- AddForeignKey
 ALTER TABLE `AutoPost` ADD CONSTRAINT `AutoPost_userId_fkey` FOREIGN KEY (`userId`) REFERENCES `User`(`id`) ON DELETE RESTRICT ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE `AutoPostImage` ADD CONSTRAINT `AutoPostImage_autoPostId_fkey` FOREIGN KEY (`autoPostId`) REFERENCES `AutoPost`(`id`) ON DELETE CASCADE ON UPDATE CASCADE;
+
+-- CreateTable
+CREATE TABLE `PostContentHistory` (
+    `id` INTEGER NOT NULL AUTO_INCREMENT,
+    `postId` INTEGER NOT NULL,
+    `previousContent` LONGTEXT NOT NULL,
+    `previousRawContent` LONGTEXT NOT NULL,
+    `previousCreatedAt` DATETIME(3) NOT NULL,
+    `previousContentUpdatedAt` DATETIME(3) NULL,
+    `createdAt` DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
+
+    INDEX `PostContentHistory_postId_createdAt_idx`(`postId`, `createdAt`),
+    PRIMARY KEY (`id`)
+) DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
+
+-- CreateIndex
+CREATE INDEX `Thread_boardId_isChat_isAdultOnly_threadIndex_idx` ON `Thread`(`boardId`, `isChat`, `isAdultOnly`, `threadIndex`);
+
+-- CreateIndex
+CREATE INDEX `Thread_boardId_title_idx` ON `Thread`(`boardId`, `title`);
+
+-- CreateIndex
+CREATE INDEX `Thread_boardId_author_idx` ON `Thread`(`boardId`, `author`);
+
+-- CreateIndex
+CREATE INDEX `Post_threadId_createdAt_idx` ON `Post`(`threadId`, `createdAt`);
+
+-- CreateIndex
+CREATE INDEX `Post_threadId_updatedAt_idx` ON `Post`(`threadId`, `updatedAt`);
+
+-- AddForeignKey
+ALTER TABLE `PostContentHistory` ADD CONSTRAINT `PostContentHistory_postId_fkey` FOREIGN KEY (`postId`) REFERENCES `Post`(`id`) ON DELETE CASCADE ON UPDATE CASCADE;
