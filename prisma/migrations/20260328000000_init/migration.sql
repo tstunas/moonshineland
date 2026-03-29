@@ -23,7 +23,7 @@ CREATE TABLE `User` (
 -- CreateTable
 CREATE TABLE `Announcement` (
     `id` INTEGER NOT NULL AUTO_INCREMENT,
-    `title` VARCHAR(200) NOT NULL,
+    `title` VARCHAR(80) NOT NULL,
     `content` LONGTEXT NOT NULL,
     `rawContent` LONGTEXT NOT NULL,
     `contentType` ENUM('text', 'aa', 'novel', 'line') NOT NULL DEFAULT 'text',
@@ -88,8 +88,8 @@ CREATE TABLE `BoardBan` (
 CREATE TABLE `Thread` (
     `id` INTEGER NOT NULL AUTO_INCREMENT,
     `threadIndex` INTEGER NOT NULL,
-    `title` VARCHAR(200) NOT NULL,
-    `author` VARCHAR(80) NOT NULL,
+    `title` VARCHAR(80) NOT NULL,
+    `author` VARCHAR(60) NOT NULL,
     `idcode` VARCHAR(32) NOT NULL,
     `postCount` INTEGER NOT NULL DEFAULT 0,
     `postLimit` INTEGER NOT NULL DEFAULT 500,
@@ -141,7 +141,7 @@ CREATE TABLE `ThreadBan` (
 CREATE TABLE `Post` (
     `id` INTEGER NOT NULL AUTO_INCREMENT,
     `postOrder` INTEGER NOT NULL,
-    `author` VARCHAR(80) NOT NULL,
+    `author` VARCHAR(60) NOT NULL,
     `idcode` VARCHAR(32) NOT NULL,
     `content` LONGTEXT NOT NULL,
     `rawContent` LONGTEXT NOT NULL,
@@ -176,7 +176,7 @@ CREATE TABLE `PostImage` (
 CREATE TABLE `AutoPost` (
     `id` INTEGER NOT NULL AUTO_INCREMENT,
     `autoPostSequence` INTEGER NOT NULL,
-    `author` VARCHAR(80) NOT NULL,
+    `author` VARCHAR(60) NOT NULL,
     `idcode` VARCHAR(32) NOT NULL,
     `content` LONGTEXT NOT NULL,
     `rawContent` LONGTEXT NOT NULL,

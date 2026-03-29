@@ -428,7 +428,7 @@ export function ThreadForm({
           <input
             name="title"
             type="text"
-            placeholder="제목을 입력하세요"
+            placeholder="제목(80자 이내)"
             value={title}
             onChange={(event) => {
               setTitle(event.target.value);
@@ -438,7 +438,7 @@ export function ThreadForm({
           <input
             name="author"
             type="text"
-            placeholder="이름을 입력하세요"
+            placeholder="이름(60자 이내)"
             value={author}
             onChange={(event) => {
               setAuthor(event.target.value);
@@ -448,7 +448,7 @@ export function ThreadForm({
           <input
             name="command"
             type="text"
-            placeholder="콘솔 명령어를 입력하세요"
+            placeholder="콘솔 명령어"
             value={command}
             onChange={(event) => {
               setCommand(event.target.value);
@@ -461,7 +461,7 @@ export function ThreadForm({
           ref={contentRef}
           onInput={resizeTextarea}
           name="content"
-          placeholder="내용을 입력하세요"
+          placeholder="내용(4만자 이내)"
           rows={6}
           value={content}
           onChange={(event) => {

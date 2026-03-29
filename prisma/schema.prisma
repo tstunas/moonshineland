@@ -50,7 +50,7 @@ model User {
 
 model Announcement {
   id          Int         @id @default(autoincrement())
-  title       String      @db.VarChar(200)
+  title       String      @db.VarChar(80)
   content     String      @db.LongText
   rawContent  String      @db.LongText
   contentType ContentType @default(text)
@@ -122,8 +122,8 @@ model BoardBan {
 model Thread {
   id           Int      @id @default(autoincrement())
   threadIndex  Int
-  title        String   @db.VarChar(200)
-  author       String   @db.VarChar(80)
+  title        String   @db.VarChar(80)
+  author       String   @db.VarChar(60)
   idcode       String   @db.VarChar(32)
   postCount    Int      @default(0)
   postLimit    Int      @default(500)
@@ -190,7 +190,7 @@ model ThreadBan {
 model Post {
   id               Int         @id @default(autoincrement())
   postOrder        Int
-  author           String      @db.VarChar(80)
+  author           String      @db.VarChar(60)
   idcode           String      @db.VarChar(32)
   content          String      @db.LongText
   rawContent       String      @db.LongText

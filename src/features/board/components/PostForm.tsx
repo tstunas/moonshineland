@@ -603,7 +603,7 @@ export function PostForm({
           <input
             name="author"
             type="text"
-            placeholder="이름을 입력하세요"
+            placeholder="이름(60자 이내)"
             value={author}
             onChange={(event) => {
               setAuthor(event.target.value);
@@ -613,7 +613,7 @@ export function PostForm({
           <input
             name="command"
             type="text"
-            placeholder="콘솔 명령어를 입력하세요"
+            placeholder="콘솔 명령어"
             value={command}
             onChange={(event) => {
               setCommand(event.target.value);
@@ -626,7 +626,7 @@ export function PostForm({
           ref={contentRef}
           onInput={resizeTextarea}
           name="content"
-          placeholder="내용을 입력하세요"
+          placeholder="내용(4만자 이내)"
           rows={6}
           value={content}
           onChange={(event) => {
