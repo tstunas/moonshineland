@@ -29,7 +29,9 @@ function toggleCommandToken(command: string, token: string): string {
     .split(".")
     .map((value) => value.trim())
     .filter(Boolean);
-  const hasToken = tokens.some((value) => value.toLowerCase() === normalizedToken);
+  const hasToken = tokens.some(
+    (value) => value.toLowerCase() === normalizedToken,
+  );
 
   if (hasToken) {
     return tokens
@@ -285,10 +287,10 @@ export function ThreadForm({
         handleToggleAutosize();
       }
 
-	  if (key === "i") {
-      event.preventDefault();
-      imageInputRef.current?.click();
-    }
+      if (key === "i") {
+        event.preventDefault();
+        imageInputRef.current?.click();
+      }
     };
 
     window.addEventListener("keydown", onKeyDown);
@@ -377,6 +379,47 @@ export function ThreadForm({
             <label
               className={cn(
                 "cursor-pointer rounded-xl border px-4 py-3 transition",
+                isChat
+                  ? "border-amber-300 bg-amber-50 text-amber-700 shadow-sm"
+                  : "border-slate-200 bg-white text-slate-600 hover:border-amber-200 hover:bg-amber-50/50",
+              )}
+            >
+              <input
+                name="isChat"
+                type="checkbox"
+                value="true"
+                checked={isChat}
+                onChange={(event) => {
+                  setIsChat(event.target.checked);
+                }}
+                className="sr-only"
+              />
+              <span className="flex items-center justify-between gap-3">
+                <span>
+                  <span className="block text-sm font-semibold">잡담판</span>
+                  <span className="mt-0.5 block text-xs opacity-80">
+                    연재판 대신 자유 대화 스레드로 등록합니다.
+                  </span>
+                </span>
+                <span
+                  className={cn(
+                    "inline-flex h-6 w-11 rounded-full p-0.5 transition",
+                    isChat ? "bg-amber-400" : "bg-slate-300",
+                  )}
+                >
+                  <span
+                    className={cn(
+                      "h-5 w-5 rounded-full bg-white shadow-sm transition",
+                      isChat ? "translate-x-5" : "translate-x-0",
+                    )}
+                  />
+                </span>
+              </span>
+            </label>
+
+            <label
+              className={cn(
+                "cursor-pointer rounded-xl border px-4 py-3 transition",
                 isAdultOnly
                   ? "border-rose-300 bg-rose-50 text-rose-700 shadow-sm"
                   : "border-slate-200 bg-white text-slate-600 hover:border-rose-200 hover:bg-rose-50/50",
@@ -415,47 +458,6 @@ export function ThreadForm({
                     className={cn(
                       "h-5 w-5 rounded-full bg-white shadow-sm transition",
                       isAdultOnly ? "translate-x-5" : "translate-x-0",
-                    )}
-                  />
-                </span>
-              </span>
-            </label>
-
-            <label
-              className={cn(
-                "cursor-pointer rounded-xl border px-4 py-3 transition",
-                isChat
-                  ? "border-amber-300 bg-amber-50 text-amber-700 shadow-sm"
-                  : "border-slate-200 bg-white text-slate-600 hover:border-amber-200 hover:bg-amber-50/50",
-              )}
-            >
-              <input
-                name="isChat"
-                type="checkbox"
-                value="true"
-                checked={isChat}
-                onChange={(event) => {
-                  setIsChat(event.target.checked);
-                }}
-                className="sr-only"
-              />
-              <span className="flex items-center justify-between gap-3">
-                <span>
-                  <span className="block text-sm font-semibold">잡담판</span>
-                  <span className="mt-0.5 block text-xs opacity-80">
-                    연재판 대신 자유 대화 스레드로 등록합니다.
-                  </span>
-                </span>
-                <span
-                  className={cn(
-                    "inline-flex h-6 w-11 rounded-full p-0.5 transition",
-                    isChat ? "bg-amber-400" : "bg-slate-300",
-                  )}
-                >
-                  <span
-                    className={cn(
-                      "h-5 w-5 rounded-full bg-white shadow-sm transition",
-                      isChat ? "translate-x-5" : "translate-x-0",
                     )}
                   />
                 </span>
@@ -530,7 +532,11 @@ export function ThreadForm({
       {isPreviewOpen ? (
         <PreviewModal
           modalTitle="스레드 미리보기"
-          titleLine={`${[isAdultOnly ? "[성인만]" : null, isChat ? "[잡담판]" : null, `#${threadIndex}`]
+          titleLine={`${[
+            isAdultOnly ? "[성인만]" : null,
+            isChat ? "[잡담판]" : null,
+            `#${threadIndex}`,
+          ]
             .filter(Boolean)
             .join(" ")} ${title || "(제목 없음)"}`}
           subLine={`${author || AnonymousAuthor}${command ? ` (${command})` : ""}`}
