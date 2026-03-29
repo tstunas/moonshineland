@@ -32,10 +32,10 @@ export async function adjustThreadPostLimitAction(
   }
 
   const nextPostLimit = context.thread.postLimit + delta;
-  if (nextPostLimit < 1 || nextPostLimit > 5000) {
+  if (nextPostLimit < 1 || nextPostLimit > 5001) {
     return {
       success: false,
-      message: "스레드 상한은 1 이상 5000 이하만 허용됩니다.",
+      message: "스레드 상한은 1 이상 5001 이하만 허용됩니다.",
     };
   }
 
