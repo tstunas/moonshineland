@@ -288,7 +288,7 @@ CREATE TABLE `PostContentHistory` (
 ) DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
 
 -- CreateIndex
-CREATE INDEX `Thread_boardId_isChat_isAdultOnly_threadIndex_idx` ON `Thread`(`boardId`, `isChat`, `isAdultOnly`, `threadIndex`);
+CREATE INDEX `Thread_boardId_isChat_isAdultOnly_threadIndex_idx` ON `Thread`(`boardId`, `postUpdatedAt`, `isChat`, `isAdultOnly`, `threadIndex`);
 
 -- CreateIndex
 CREATE INDEX `Thread_boardId_title_idx` ON `Thread`(`boardId`, `title`);

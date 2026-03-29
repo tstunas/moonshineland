@@ -29,6 +29,7 @@ export function PostImagePicker({
     <div className="mt-4">
       <button
         type="button"
+        tabIndex={-1}
         onClick={() => {
           imageInputRef.current?.click();
         }}
