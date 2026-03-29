@@ -135,3 +135,12 @@ export const BOARDS = [
   { key: "trans", label: "번역판" },
   { key: "honor", label: "명예의 전당" },
 ] as const;
+
+export const AnonymousAuthor = "익명의 부족원";
+
+// ============================================================================
+// 폼 로컬스토리지 키
+// ============================================================================
+export const LS_POST_AUTHOR_KEY = "moonshine:post:author";
+export const LS_POST_COMMAND_KEY = "moonshine:post:command";
+export const LS_POST_SOUND_KEY = "moonshine:post:soundEnabled";

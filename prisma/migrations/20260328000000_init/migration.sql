@@ -11,6 +11,7 @@ CREATE TABLE `User` (
     `isAdultVerified` BOOLEAN NOT NULL DEFAULT false,
     `isActive` BOOLEAN NOT NULL DEFAULT true,
     `isAdmin` BOOLEAN NOT NULL DEFAULT false,
+    `preferences` JSON NOT NULL DEFAULT '{}',
     `createdAt` DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
     `updatedAt` DATETIME(3) NOT NULL,
 

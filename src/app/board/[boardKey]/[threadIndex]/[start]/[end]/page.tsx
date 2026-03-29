@@ -1,4 +1,5 @@
 import { ThreadLiveClient } from "@/features/board/components/ThreadLiveClient";
+import { canManageThread } from "@/features/board/lib/canManageThread";
 import { getPosts } from "@/features/board/lib/getPosts";
 import { getThread } from "@/features/board/lib/getThread";
 
@@ -62,10 +63,13 @@ export default async function ThreadRangePage({
     );
   }
 
-  const posts = await getPosts(boardKey, threadIndex);
-  const visiblePosts = posts.filter(
-    (post) => post.postOrder >= start && post.postOrder <= end,
-  );
+  const visiblePosts = await getPosts(boardKey, threadIndex, {
+    mode: "range",
+    start,
+    end,
+    includeZero: true,
+  });
+  const canManage = await canManageThread(thread.userId ?? null);
 
   return (
     <ThreadLiveClient
@@ -75,6 +79,7 @@ export default async function ThreadRangePage({
       mode="range"
       rangeStart={start}
       rangeEnd={end}
+      canManageThread={canManage}
     />
   );
 }

@@ -60,6 +60,7 @@ export async function loginAction(
     const accessToken = await signAccessToken({
       sub: String(user.id),
       email: user.email,
+      isAdultVerified: user.isAdultVerified,
     });
 
     (await cookies()).set(
@@ -113,6 +114,7 @@ export async function signupAction(
     const accessToken = await signAccessToken({
       sub: String(user.id),
       email: user.email,
+      isAdultVerified: user.isAdultVerified,
     });
 
     (await cookies()).set(

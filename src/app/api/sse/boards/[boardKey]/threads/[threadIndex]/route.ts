@@ -31,7 +31,7 @@ async function resolveClientKey(): Promise<string> {
  *
  * 스레드 SSE 연결 수립.
  * 쿼리 파라미터:
- *   - receiveNewPosts=false  →  새 답글 수신 비활성화 (기본값: true)
+ *   - receiveNewPosts=false  →  새 레스 수신 비활성화 (기본값: true)
  *
  * 수신 이벤트:
  *   - connected              →  { connectionId }
@@ -53,7 +53,7 @@ export async function GET(
   const connectionId = randomUUID();
   const clientKey = await resolveClientKey();
 
-  // 쿼리 파라미터로 초기 새 답글 수신 여부 결정 (기본값 true)
+  // 쿼리 파라미터로 초기 새 레스 수신 여부 결정 (기본값 true)
   const receiveNewPosts =
     request.nextUrl.searchParams.get("receiveNewPosts") !== "false";
 
@@ -101,7 +101,7 @@ export async function GET(
 /**
  * PATCH /api/sse/boards/[boardKey]/threads/[threadIndex]
  *
- * 새 답글 수신 상태를 변경합니다.
+ * 새 레스 수신 상태를 변경합니다.
  * Body: { connectionId: string, receiveNewPosts: boolean }
  */
 export async function PATCH(

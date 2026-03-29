@@ -6,6 +6,7 @@ type ThreadPaginationProps = {
   currentPage: number;
   basePath: string;
   queryKey?: string;
+  extraQuery?: Record<string, string>;
 };
 
 export function ThreadPagination({
@@ -13,6 +14,7 @@ export function ThreadPagination({
   currentPage,
   basePath,
   queryKey = "page",
+  extraQuery,
 }: ThreadPaginationProps) {
   const safeTotalPages = Math.max(1, Math.trunc(totalPages));
   const safeCurrentPage = Math.min(
@@ -41,6 +43,7 @@ export function ThreadPagination({
           basePath,
           Math.max(1, safeCurrentPage - 1),
           queryKey,
+          extraQuery,
         )}
         aria-disabled={safeCurrentPage <= 1}
         tabIndex={safeCurrentPage <= 1 ? -1 : undefined}
@@ -60,6 +63,7 @@ export function ThreadPagination({
           currentPage={safeCurrentPage}
           basePath={basePath}
           queryKey={queryKey}
+          extraQuery={extraQuery}
         />
       </div>
 
@@ -69,6 +73,7 @@ export function ThreadPagination({
           currentPage={safeCurrentPage}
           basePath={basePath}
           queryKey={queryKey}
+          extraQuery={extraQuery}
         />
       </div>
 
@@ -77,6 +82,7 @@ export function ThreadPagination({
           basePath,
           Math.min(safeTotalPages, safeCurrentPage + 1),
           queryKey,
+          extraQuery,
         )}
         aria-disabled={safeCurrentPage >= safeTotalPages}
         tabIndex={safeCurrentPage >= safeTotalPages ? -1 : undefined}
@@ -98,11 +104,13 @@ function PageItems({
   currentPage,
   basePath,
   queryKey,
+  extraQuery,
 }: {
   items: Array<number | "ellipsis">;
   currentPage: number;
   basePath: string;
   queryKey: string;
+  extraQuery?: Record<string, string>;
 }) {
   return (
     <>
@@ -123,7 +131,7 @@ function PageItems({
         return (
           <Link
             key={item}
-            href={createPageHref(basePath, item, queryKey)}
+            href={createPageHref(basePath, item, queryKey, extraQuery)}
             aria-current={isActive ? "page" : undefined}
             className={cn(
               "flex min-w-9 items-center justify-center rounded border px-2.5 py-1.5 text-sm transition-colors",
@@ -144,12 +152,18 @@ function createPageHref(
   basePath: string,
   page: number,
   queryKey: string,
+  extraQuery?: Record<string, string>,
 ): string {
-  if (page <= 1) {
+  const params = new URLSearchParams(extraQuery ?? {});
+
+  if (page > 1) {
+    params.set(queryKey, String(page));
+  }
+
+  if (params.size === 0) {
     return basePath;
   }
 
-  const params = new URLSearchParams({ [queryKey]: String(page) });
   return `${basePath}?${params.toString()}`;
 }
 

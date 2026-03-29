@@ -1,32 +1,9 @@
-import { Thread } from "@/types/thread";
+import { getThreadQuery } from "@/features/board/queries";
+import type { Thread } from "@/types/thread";
 
 export async function getThread(
   boardKey: string,
   threadIndex: number,
 ): Promise<Thread | null> {
-  if (boardKey !== "anchor" || threadIndex !== 1) {
-    return null;
-  }
-
-  return {
-    id: 1,
-    threadIndex: 1,
-    title: "첫 번째 스레드",
-    author: "작성자1",
-    idcode: "abc123",
-    passwordHash: null,
-    postCount: 10,
-    postLimit: 100,
-    createdAt: new Date(),
-    updatedAt: new Date(),
-    postUpdatedAt: new Date(),
-    boardId: 1,
-    isAdultOnly: false,
-    isArchive: false,
-    isChat: false,
-    isHidden: false,
-    isPrivate: false,
-    isSecret: false,
-    userId: 1,
-  };
+  return getThreadQuery(boardKey, threadIndex);
 }

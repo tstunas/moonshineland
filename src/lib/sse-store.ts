@@ -18,23 +18,49 @@ export interface SseClient {
   /** 로그인 유저: "user:{userId}", 비로그인: "anon:{uuid}" */
   clientKey: string;
   controller: ReadableStreamDefaultController<Uint8Array>;
-  /** 새 답글 수신 여부 (스레드 구독자만 유효) */
+  /** 새 레스 수신 여부 (스레드 구독자만 유효) */
   receiveNewPosts: boolean;
+}
+
+interface SseStoreState {
+  boardClients: Map<string, Map<string, SseClient>>;
+  threadClients: Map<string, Map<string, SseClient>>;
+  boardCountCache: Map<string, number>;
+  threadCountCache: Map<string, number>;
+}
+
+const globalForSseStore = globalThis as typeof globalThis & {
+  __MOONSHINE_SSE_STORE__?: SseStoreState;
+};
+
+function getSseStoreState(): SseStoreState {
+  if (!globalForSseStore.__MOONSHINE_SSE_STORE__) {
+    globalForSseStore.__MOONSHINE_SSE_STORE__ = {
+      boardClients: new Map(),
+      threadClients: new Map(),
+      boardCountCache: new Map(),
+      threadCountCache: new Map(),
+    };
+  }
+
+  return globalForSseStore.__MOONSHINE_SSE_STORE__;
 }
 
 // ─── 내부 상태 ────────────────────────────────────────────────────────────────
 
+const sseStoreState = getSseStoreState();
+
 /** boardKey → connectionId → SseClient */
-const boardClients = new Map<string, Map<string, SseClient>>();
+const boardClients = sseStoreState.boardClients;
 
 /** `${boardKey}:${threadIndex}` → connectionId → SseClient */
-const threadClients = new Map<string, Map<string, SseClient>>();
+const threadClients = sseStoreState.threadClients;
 
 /** 마지막으로 계산된 게시판 사용자 수 캐시 */
-const boardCountCache = new Map<string, number>();
+const boardCountCache = sseStoreState.boardCountCache;
 
 /** 마지막으로 계산된 스레드 사용자 수 캐시 (`${boardKey}:${threadIndex}` 키) */
-const threadCountCache = new Map<string, number>();
+const threadCountCache = sseStoreState.threadCountCache;
 
 // ─── 인코딩 유틸 ──────────────────────────────────────────────────────────────
 
@@ -169,7 +195,7 @@ export function unsubscribeThreadClient(
 
 // ─── 스레드 구독 상태 변경 ────────────────────────────────────────────────────
 
-/** 특정 연결의 새 답글 수신 여부를 변경합니다. */
+/** 특정 연결의 새 레스 수신 여부를 변경합니다. */
 export function setReceiveNewPosts(
   boardKey: string,
   threadIndex: number,
@@ -186,7 +212,7 @@ export function setReceiveNewPosts(
 // ─── 스레드 이벤트 브로드캐스트 ──────────────────────────────────────────────
 
 /**
- * 새 답글 브로드캐스트.
+ * 새 레스 브로드캐스트.
  * `receiveNewPosts === true` 상태인 클라이언트에게만 전송합니다.
  */
 export function broadcastNewPost(
@@ -196,6 +222,7 @@ export function broadcastNewPost(
 ) {
   const threadKey = `${boardKey}:${threadIndex}`;
   const tc = threadClients.get(threadKey);
+
   if (!tc) return;
   for (const client of tc.values()) {
     if (client.receiveNewPosts) {
@@ -205,7 +232,7 @@ export function broadcastNewPost(
 }
 
 /**
- * 답글 내용(content/rawContent) 수정 브로드캐스트.
+ * 레스 내용(content/rawContent) 수정 브로드캐스트.
  * 해당 스레드에 접속 중인 모든 클라이언트에게 전송합니다.
  */
 export function broadcastPostContentEdited(
@@ -229,7 +256,7 @@ export function broadcastPostContentEdited(
 }
 
 /**
- * 답글 ContentType 수정 브로드캐스트.
+ * 레스 ContentType 수정 브로드캐스트.
  * 해당 스레드에 접속 중인 모든 클라이언트에게 전송합니다.
  */
 export function broadcastPostContentTypeEdited(

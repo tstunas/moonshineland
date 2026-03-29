@@ -1,7 +1,9 @@
+import { BoardThreadFilters } from "@/features/board/components/BoardThreadFilters";
 import { ThreadForm } from "@/features/board/components/ThreadForm";
 import { ThreadItem } from "@/features/board/components/ThreadItem";
 import { ThreadPagination } from "@/features/board/components/ThreadPagination";
 import { BoardPresenceClient } from "@/features/board/components/BoardPresenceClient";
+import { getNextThreadIndex } from "@/features/board/lib/getNextThreadIndex";
 import { getThreads } from "@/features/board/lib/getThreads";
 import { getTotalThreads } from "@/features/board/lib/getTotalThreads";
 import { BOARDS } from "@/lib/constants";
@@ -11,10 +13,18 @@ export default async function BoardPage({
   searchParams,
 }: {
   params: Promise<{ boardKey: string }>;
-  searchParams: Promise<{ page?: string }>;
+  searchParams: Promise<{
+    page?: string;
+    threadType?: string;
+    includeAdultOnly?: string;
+    isChat?: string;
+    title?: string;
+    author?: string;
+  }>;
 }) {
   const { boardKey } = await params;
-  const { page } = await searchParams;
+  const { page, threadType, includeAdultOnly, isChat, title, author } =
+    await searchParams;
 
   const board = BOARDS.find((board) => board.key === boardKey);
 
@@ -38,10 +48,47 @@ export default async function BoardPage({
     );
   }
 
-  const threadItems = await getThreads(boardKey);
-  const totalThreads = await getTotalThreads(boardKey);
   const currentPage = Math.max(1, Number.parseInt(page ?? "1", 10) || 1);
+  const threadTypeFilter =
+    threadType === "chat"
+      ? "chat"
+      : threadType === "serial"
+        ? "serial"
+        : isChat === "true"
+          ? "chat"
+          : isChat === "false"
+            ? "serial"
+            : "all";
+  const isChatFilter =
+    threadTypeFilter === "all" ? undefined : threadTypeFilter === "chat";
+  const includeAdultOnlyThreads = includeAdultOnly === "true";
+  const isAdultOnlyFilter = includeAdultOnlyThreads ? undefined : false;
+  const titleFilter = title?.trim() ? title.trim() : undefined;
+  const authorFilter = author?.trim() ? author.trim() : undefined;
+
+  const [threadItems, totalThreads, nextThreadIndex] = await Promise.all([
+    getThreads(boardKey, {
+      page: currentPage,
+      isChat: isChatFilter,
+      isAdultOnly: isAdultOnlyFilter,
+      title: titleFilter,
+      author: authorFilter,
+    }),
+    getTotalThreads(boardKey, {
+      isChat: isChatFilter,
+      isAdultOnly: isAdultOnlyFilter,
+      title: titleFilter,
+      author: authorFilter,
+    }),
+    getNextThreadIndex(boardKey),
+  ]);
   const totalPages = Math.ceil(totalThreads / 20);
+  const extraQuery = {
+    ...(threadTypeFilter !== "all" ? { threadType: threadTypeFilter } : {}),
+    ...(includeAdultOnlyThreads ? { includeAdultOnly: "true" } : {}),
+    ...(titleFilter ? { title: titleFilter } : {}),
+    ...(authorFilter ? { author: authorFilter } : {}),
+  };
 
   return (
     <>
@@ -49,21 +96,38 @@ export default async function BoardPage({
         <h1 className="text-2xl font-bold text-slate-900">{board.label}</h1>
         <BoardPresenceClient boardKey={boardKey} />
       </div>
-      <ul className="mt-4 space-y-2">
-        {threadItems.map((thread) => (
-          <li key={thread.id} className="p-2 border rounded">
-            <ThreadItem thread={thread} boardKey={boardKey} />
+      <div className="mt-6">
+        <BoardThreadFilters
+          boardKey={boardKey}
+          totalThreads={totalThreads}
+          title={titleFilter}
+          author={authorFilter}
+          includeAdultOnly={includeAdultOnlyThreads}
+          threadType={threadTypeFilter}
+        />
+      </div>
+      <ul className="mt-5 space-y-3">
+        {threadItems.length > 0 ? (
+          threadItems.map((thread) => (
+            <li key={thread.id}>
+              <ThreadItem thread={thread} boardKey={boardKey} />
+            </li>
+          ))
+        ) : (
+          <li className="rounded-[24px] border border-dashed border-slate-300 bg-slate-50 px-6 py-12 text-center text-slate-500">
+            현재 조건에 맞는 스레드가 없습니다.
           </li>
-        ))}
+        )}
       </ul>
       <div className="flex justify-center py-6">
         <ThreadPagination
           totalPages={totalPages}
           currentPage={currentPage}
           basePath={`/board/${boardKey}`}
+          extraQuery={extraQuery}
         />
       </div>
-      <ThreadForm boardKey={boardKey} />
+      <ThreadForm boardKey={boardKey} threadIndex={nextThreadIndex} />
     </>
   );
 }

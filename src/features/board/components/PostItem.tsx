@@ -1,9 +1,9 @@
+import { cn } from "@/lib/cn";
+import { AnonymousAuthor } from "@/lib/constants";
 import { Post } from "@/types/post";
 
 export function PostItem({ post }: { post: Post }) {
-  const authorLabel = post.idcode
-    ? `${post.author} (${post.idcode})`
-    : post.author;
+  const author = post.author || AnonymousAuthor;
   const contentTypeLabel = post.contentType !== "text" ? "</>" : null;
 
   const formatPostDate = (value: Date | string) => {
@@ -26,7 +26,10 @@ export function PostItem({ post }: { post: Post }) {
       <header className="border-b border-sky-200 bg-slate-200 px-6 py-4">
         <p className="text-[20px] leading-tight text-sky-900">
           <span className="font-semibold">#{post.postOrder}</span>{" "}
-          <span>{authorLabel}</span>{" "}
+          <span>{author}</span>{" "}
+          <span className="text-[16px] leading-tight text-slate-700">
+            ({post.idcode})
+          </span>{" "}
           {contentTypeLabel ? (
             <span className="rounded border border-sky-300 px-1.5 py-0.5 text-[20px] leading-none text-sky-700">
               {contentTypeLabel}
@@ -39,9 +42,13 @@ export function PostItem({ post }: { post: Post }) {
       </header>
 
       <div className="px-6 py-6">
-        <p className="whitespace-pre-wrap break-words text-[16px] leading-relaxed text-slate-900">
-          {post.content}
-        </p>
+        <div
+          className={cn(
+            "content whitespace-pre-wrap break-words text-[16px] leading-relaxed text-slate-900",
+            post.contentType,
+          )}
+          dangerouslySetInnerHTML={{ __html: post.content }}
+        />
       </div>
     </article>
   );

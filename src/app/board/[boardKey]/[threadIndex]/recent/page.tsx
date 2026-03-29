@@ -1,4 +1,5 @@
 import { ThreadLiveClient } from "@/features/board/components/ThreadLiveClient";
+import { canManageThread } from "@/features/board/lib/canManageThread";
 import { getPosts } from "@/features/board/lib/getPosts";
 import { getThread } from "@/features/board/lib/getThread";
 
@@ -32,7 +33,11 @@ export default async function ThreadRecentPage({
     );
   }
 
-  const posts = await getPosts(boardKey, threadIndex);
+  const posts = await getPosts(boardKey, threadIndex, {
+    mode: "recent",
+    includeZero: true,
+  });
+  const canManage = await canManageThread(thread.userId ?? null);
 
   return (
     <ThreadLiveClient
@@ -40,6 +45,7 @@ export default async function ThreadRecentPage({
       initialThread={thread}
       initialPosts={posts}
       mode="recent"
+      canManageThread={canManage}
     />
   );
 }

@@ -21,10 +21,10 @@ export interface SseThreadUserCountEvent {
   count: number;
 }
 
-/** 새 답글 이벤트 (`receiveNewPosts` 상태인 클라이언트에게만 전송) */
+/** 새 레스 이벤트 (`receiveNewPosts` 상태인 클라이언트에게만 전송) */
 export type SseNewPostEvent = Post;
 
-/** 답글 내용 수정 이벤트 (스레드 접속 중 모든 클라이언트에게 전송) */
+/** 레스 내용 수정 이벤트 (스레드 접속 중 모든 클라이언트에게 전송) */
 export interface SsePostContentEditedEvent {
   postId: number;
   content: string;
@@ -34,7 +34,7 @@ export interface SsePostContentEditedEvent {
   updatedAt: string;
 }
 
-/** 답글 ContentType 수정 이벤트 (스레드 접속 중 모든 클라이언트에게 전송) */
+/** 레스 ContentType 수정 이벤트 (스레드 접속 중 모든 클라이언트에게 전송) */
 export interface SsePostContentTypeEditedEvent {
   postId: number;
   contentType: ContentType;
@@ -56,7 +56,7 @@ export type SseEventName = (typeof SSE_EVENTS)[keyof typeof SSE_EVENTS];
 
 // ─── 클라이언트 → 서버 요청 ──────────────────────────────────────────────────
 
-/** 새 답글 수신 상태 변경 요청 (PATCH /api/sse/boards/:boardKey/threads/:threadIndex) */
+/** 새 레스 수신 상태 변경 요청 (PATCH /api/sse/boards/:boardKey/threads/:threadIndex) */
 export interface PatchReceiveNewPostsRequest {
   connectionId: string;
   receiveNewPosts: boolean;

@@ -1,3 +1,4 @@
+import { AnonymousAuthor } from "@/lib/constants";
 import type { Thread } from "@/types/thread";
 
 function formatThreadDate(value: Date | string): string {
@@ -16,15 +17,15 @@ function formatThreadDate(value: Date | string): string {
 }
 
 export function ThreadHeader({ thread }: { thread: Thread }) {
-  const remaining = Math.max(thread.postLimit - thread.postCount, 0);
+  const author = thread.author || AnonymousAuthor;
   const authorText = thread.idcode
-    ? `${thread.author}${thread.idcode}`
-    : thread.author;
+    ? `${author} (${thread.idcode})`
+    : author;
 
   return (
     <header className="rounded-lg border border-sky-200 bg-slate-100 px-6 py-6">
       <h1 className="truncate text-[30px] font-bold leading-tight text-slate-900">
-        #{thread.threadIndex} {thread.title} -{remaining}- ({thread.postCount})
+        #{thread.threadIndex} {thread.title} ({thread.postCount})
       </h1>
 
       <div className="mt-6 space-y-2 text-[18px] leading-tight text-slate-900">
