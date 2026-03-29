@@ -48,6 +48,15 @@ export interface SsePostVisibilityEditedEvent {
   updatedAt: string;
 }
 
+/** 자동투하 템플릿이 실제 투하로 소비되었음을 알리는 이벤트 */
+export interface SseAutoPostFiredEvent {
+  autoPostId: number;
+  autoPostSequence: number;
+  postId: number;
+  postOrder: number;
+  createdAt: string;
+}
+
 // ─── 이벤트 이름 상수 ─────────────────────────────────────────────────────────
 
 export const SSE_EVENTS = {
@@ -55,6 +64,7 @@ export const SSE_EVENTS = {
   BOARD_USER_COUNT: "board:user-count",
   THREAD_USER_COUNT: "thread:user-count",
   NEW_POST: "thread:new-post",
+  AUTO_POST_FIRED: "thread:auto-post-fired",
   POST_CONTENT_EDITED: "thread:post-content-edited",
   POST_CONTENT_TYPE_EDITED: "thread:post-content-type-edited",
   POST_VISIBILITY_EDITED: "thread:post-visibility-edited",

@@ -3,10 +3,17 @@
   "version": "0.1.0",
   "private": true,
   "scripts": {
-    "dev": "next dev",
+    "dev": "next dev --webpack",
+    "dev:autopost": "concurrently -k -n app,cron -c cyan,green \"APP_PORT=3000 PORT=3000 npm run dev\" \"APP_PORT=3000 npm run autopost:caller\"",
     "build": "next build",
     "start": "next start",
     "lint": "eslint",
+    "autopost:caller": "tsx src/services/autoPostCronCaller.ts",
+    "pm2:start": "pm2 start ecosystem.config.cjs --env production",
+    "pm2:restart": "pm2 restart ecosystem.config.cjs --env production",
+    "pm2:stop": "pm2 stop ecosystem.config.cjs",
+    "pm2:delete": "pm2 delete ecosystem.config.cjs",
+    "pm2:logs": "pm2 logs",
     "prisma:generate": "prisma generate",
     "prisma:migrate": "prisma migrate",
     "prisma:seed": "prisma db seed"
@@ -24,6 +31,7 @@
     "react": "19.2.4",
     "react-dom": "19.2.4",
     "sonner": "^2.0.7",
+    "tsx": "^4.21.0",
     "zod": "^4.3.6"
   },
   "devDependencies": {
@@ -33,11 +41,11 @@
     "@types/pg": "^8.20.0",
     "@types/react": "^19",
     "@types/react-dom": "^19",
+    "concurrently": "^9.2.1",
     "eslint": "^9",
     "eslint-config-next": "16.2.1",
     "prisma": "^7.5.0",
     "tailwindcss": "^4",
-    "tsx": "^4.21.0",
     "typescript": "^5"
   }
 }

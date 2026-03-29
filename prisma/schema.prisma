@@ -19,6 +19,11 @@ enum ContentType {
   line
 }
 
+enum AutoPostOrderMode {
+  sequence
+  random
+}
+
 model User {
   id              Int       @id @default(autoincrement())
   avatarUrl       String    @default("") @db.VarChar(512)
@@ -46,6 +51,7 @@ model User {
   threadBans          ThreadBan[]
   posts               Post[]
   autoPosts           AutoPost[]
+  autoPostSchedules   AutoPostSchedule[]
 } 
 
 model Announcement {
@@ -144,6 +150,7 @@ model Thread {
   owner         User?                @relation("ThreadOwner", fields: [userId], references: [id], onDelete: SetNull)
   posts         Post[]
   autoPosts     AutoPost[]
+  autoPostSchedule AutoPostSchedule?
   collaborators ThreadCollaborator[]
   joinedUsers   ThreadMember[]
   bannedUsers   ThreadBan[]
@@ -277,4 +284,34 @@ model AutoPostImage {
 
   @@unique([autoPostId, sortOrder])
   @@index([autoPostId, sortOrder])
+}
+
+model AutoPostSchedule {
+  id                   Int               @id @default(autoincrement())
+  isEnabled            Boolean           @default(false)
+  intervalSeconds      Int               @default(60)
+  orderMode            AutoPostOrderMode @default(sequence)
+  stopWhenArchived     Boolean           @default(true)
+  nextAutoPostSequence Int?              
+  nextRunAt            DateTime?         @db.DateTime(3)
+  pauseUntil           DateTime?         @db.DateTime(3)
+  lockUntil            DateTime?         @db.DateTime(3)
+  lastRunAt            DateTime?         @db.DateTime(3)
+  lastPostedAt         DateTime?         @db.DateTime(3)
+  startedAt            DateTime?         @db.DateTime(3)
+  stoppedAt            DateTime?         @db.DateTime(3)
+  lastError            String?           @db.VarChar(255)
+  runCount             Int               @default(0)
+  failCount            Int               @default(0)
+  createdAt            DateTime          @default(now()) @db.DateTime(3)
+  updatedAt            DateTime          @updatedAt @db.DateTime(3)
+  threadId             Int               @unique
+  userId               Int
+
+  thread Thread @relation(fields: [threadId], references: [id], onDelete: Cascade)
+  user   User   @relation(fields: [userId], references: [id], onDelete: Restrict)
+
+  @@index([isEnabled, nextRunAt, lockUntil])
+  @@index([nextRunAt])
+  @@index([userId])
 }

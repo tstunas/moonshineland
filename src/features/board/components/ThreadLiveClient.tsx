@@ -43,6 +43,7 @@ export function ThreadLiveClient({
   const [showScrollBottomButton, setShowScrollBottomButton] = useState(false);
   const postsRef = useRef(posts);
   const pendingScrollBottomAfterRenderRef = useRef(false);
+  const bottomScrollTimeoutIdsRef = useRef<number[]>([]);
   const postFormContainerRef = useRef<HTMLDivElement | null>(null);
   const audioContextRef = useRef<AudioContext | null>(null);
 
@@ -93,6 +94,36 @@ export function ThreadLiveClient({
       behavior: "smooth",
     });
   }, []);
+
+  const clearBottomScrollTimeouts = useCallback(() => {
+    for (const timeoutId of bottomScrollTimeoutIdsRef.current) {
+      window.clearTimeout(timeoutId);
+    }
+    bottomScrollTimeoutIdsRef.current = [];
+  }, []);
+
+  const scrollToBottomAfterRender = useCallback(() => {
+    clearBottomScrollTimeouts();
+
+    // 두 프레임 뒤 실행해 상태 반영 + 레이아웃 계산이 끝난 뒤 하단으로 이동한다.
+    window.requestAnimationFrame(() => {
+      window.requestAnimationFrame(() => {
+        scrollToBottom();
+      });
+    });
+
+    // 이미지 로딩 등 지연 레이아웃 변경을 보정하기 위해 후속 하단 이동을 추가한다.
+    bottomScrollTimeoutIdsRef.current.push(
+      window.setTimeout(() => {
+        scrollToBottom();
+      }, 240),
+    );
+    bottomScrollTimeoutIdsRef.current.push(
+      window.setTimeout(() => {
+        scrollToBottom();
+      }, 900),
+    );
+  }, [clearBottomScrollTimeouts, scrollToBottom]);
 
   const queueScrollBottomAfterRender = useCallback(() => {
     pendingScrollBottomAfterRenderRef.current = true;
@@ -151,6 +182,10 @@ export function ThreadLiveClient({
         });
       });
 
+      if (isBottomLockEnabled) {
+        queueScrollBottomAfterRender();
+      }
+
       if (beforeTop !== null) {
         window.requestAnimationFrame(() => {
           const afterTop =
@@ -165,7 +200,13 @@ export function ThreadLiveClient({
         });
       }
     },
-    [boardKey, initialThread.threadIndex, isFormVisibleInViewport],
+    [
+      boardKey,
+      initialThread.threadIndex,
+      isBottomLockEnabled,
+      isFormVisibleInViewport,
+      queueScrollBottomAfterRender,
+    ],
   );
 
   useEffect(() => {
@@ -179,11 +220,9 @@ export function ThreadLiveClient({
 
     pendingScrollBottomAfterRenderRef.current = false;
 
-    // 상태 반영 후 실제 DOM 높이가 확정된 다음 프레임에서 하단으로 이동
-    window.requestAnimationFrame(() => {
-      scrollToBottom();
-    });
-  }, [posts, thread.postCount, scrollToBottom]);
+    // 상태 반영 후 실제 DOM 높이가 확정된 뒤 하단으로 이동
+    scrollToBottomAfterRender();
+  }, [posts, thread.postCount, scrollToBottomAfterRender]);
 
   useEffect(() => {
     const updateButtonVisibility = () => {
@@ -385,11 +424,12 @@ export function ThreadLiveClient({
 
   useEffect(() => {
     return () => {
+      clearBottomScrollTimeouts();
       if (audioContextRef.current) {
         void audioContextRef.current.close();
       }
     };
-  }, []);
+  }, [clearBottomScrollTimeouts]);
 
   return (
     <div className="relative">
@@ -472,8 +512,8 @@ export function ThreadLiveClient({
           }}
           onRequestRefresh={async () => {
             if (isBottomLockEnabled) {
-              queueScrollBottomAfterRender();
               await refreshMissingPosts(false);
+              scrollToBottomAfterRender();
               return;
             }
             await refreshMissingPosts(true);

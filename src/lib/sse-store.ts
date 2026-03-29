@@ -232,6 +232,29 @@ export function broadcastNewPost(
 }
 
 /**
+ * 자동투하 템플릿이 실제 레스로 투하되었음을 브로드캐스트합니다.
+ * 해당 스레드에 접속 중인 모든 클라이언트에게 전송합니다.
+ */
+export function broadcastAutoPostFired(
+  boardKey: string,
+  threadIndex: number,
+  data: {
+    autoPostId: number;
+    autoPostSequence: number;
+    postId: number;
+    postOrder: number;
+    createdAt: string;
+  },
+) {
+  const threadKey = `${boardKey}:${threadIndex}`;
+  const tc = threadClients.get(threadKey);
+  if (!tc) return;
+  for (const client of tc.values()) {
+    sendToClient(client, "thread:auto-post-fired", data);
+  }
+}
+
+/**
  * 레스 내용(content/rawContent) 수정 브로드캐스트.
  * 해당 스레드에 접속 중인 모든 클라이언트에게 전송합니다.
  */

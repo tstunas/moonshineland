@@ -580,7 +580,7 @@ export function PostForm({
 
   const openAutoManagePage = useCallback(() => {
     window.open(
-      `/board/${boardKey}/thread/${threadIndex}/auto`,
+      `/board/${boardKey}/${threadIndex}/auto`,
       "_blank",
       "noopener,noreferrer",
     );
