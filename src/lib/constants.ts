@@ -1,25 +1,7 @@
 /**
  * 애플리케이션 상수
- * API 경로, HTTP 상태코드, 설정값 등
+ * HTTP 상태코드, 설정값 등
  */
-
-// ============================================================================
-// API
-// ============================================================================
-
-export const API_ENDPOINTS = {
-  // 사용자
-  USERS: "/api/users",
-  USER: (id: string) => `/api/users/${id}`,
-  USER_PROFILE: "/api/users/profile",
-
-  // 인증
-  AUTH_LOGIN: "/api/auth/login",
-  AUTH_LOGOUT: "/api/auth/logout",
-  AUTH_REGISTER: "/api/auth/register",
-  AUTH_REFRESH: "/api/auth/refresh",
-} as const;
-
 // ============================================================================
 // HTTP 상태코드
 // ============================================================================

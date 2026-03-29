@@ -64,8 +64,8 @@ model Announcement {
 
 model Board {
   id           Int      @id @default(autoincrement())
-  boardKey     String   @unique @db.VarChar(64)
-  name         String   @db.VarChar(120)
+  boardKey     String   @unique @db.VarChar(20)
+  name         String   @unique @db.VarChar(20)
   description  String   @default("") @db.Text
   passwordHash String?  @db.VarChar(255)
   isAdultOnly  Boolean  @default(false)
