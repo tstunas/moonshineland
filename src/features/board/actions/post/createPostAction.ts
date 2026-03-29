@@ -13,6 +13,34 @@ import {
 } from "../helpers";
 import type { BoardActionResult } from "../types";
 
+const MAX_POST_ORDER_RETRY = 5;
+
+function isPostOrderConflictError(error: unknown): boolean {
+  if (!error || typeof error !== "object") {
+    return false;
+  }
+
+  const withCode = error as { code?: unknown; meta?: { target?: unknown } };
+  if (withCode.code !== "P2002") {
+    return false;
+  }
+
+  const target = withCode.meta?.target;
+  if (Array.isArray(target)) {
+    const normalized = target
+      .map((item) => String(item))
+      .map((item) => item.toLowerCase());
+    return normalized.includes("threadid") && normalized.includes("postorder");
+  }
+
+  if (typeof target === "string") {
+    const normalized = target.toLowerCase();
+    return normalized.includes("threadid") && normalized.includes("postorder");
+  }
+
+  return true;
+}
+
 export async function createPostAction(
   formData: FormData,
 ): Promise<BoardActionResult> {
@@ -50,99 +78,122 @@ export async function createPostAction(
 
   try {
     const uploaded = await uploadImages(imageFiles, boardKey, threadIndex);
-    const createdPostForBroadcast: Post = await prisma.$transaction(
-      async (tx) => {
-        const thread = await tx.thread.findFirst({
-          where: {
-            threadIndex,
-            board: {
-              boardKey,
+    let createdPostForBroadcast: Post | null = null;
+
+    for (let attempt = 0; attempt < MAX_POST_ORDER_RETRY; attempt += 1) {
+      try {
+        createdPostForBroadcast = await prisma.$transaction(async (tx) => {
+          const thread = await tx.thread.findFirst({
+            where: {
+              threadIndex,
+              board: {
+                boardKey,
+              },
             },
-          },
-          select: {
-            id: true,
-            userId: true,
-            postLimit: true,
-            postCount: true,
-            isPrivate: true,
-          },
-        });
+            select: {
+              id: true,
+              userId: true,
+              postLimit: true,
+              postCount: true,
+              isPrivate: true,
+            },
+          });
 
-        if (!thread) {
-          throw new Error("THREAD_NOT_FOUND");
-        }
+          if (!thread) {
+            throw new Error("THREAD_NOT_FOUND");
+          }
 
-        const isThreadBanned = await tx.threadBan.findUnique({
-          where: {
-            threadId_userId: {
+          const isThreadBanned = await tx.threadBan.findUnique({
+            where: {
+              threadId_userId: {
+                threadId: thread.id,
+                userId,
+              },
+            },
+            select: {
+              threadId: true,
+            },
+          });
+
+          if (isThreadBanned) {
+            throw new Error("THREAD_BANNED");
+          }
+
+          const lastPost = await tx.post.findFirst({
+            where: {
+              threadId: thread.id,
+            },
+            orderBy: {
+              postOrder: "desc",
+            },
+            select: {
+              postOrder: true,
+            },
+          });
+
+          const nextPostOrder = (lastPost?.postOrder ?? -1) + 1;
+
+          if (thread.isPrivate && thread.userId !== userId) {
+            throw new Error("THREAD_REPLY_LOCKED");
+          }
+
+          if (nextPostOrder > thread.postLimit) {
+            throw new Error("POST_LIMIT_EXCEEDED");
+          }
+
+          const htmlContent = generateHtmlContent(content);
+
+          const createdPost = await tx.post.create({
+            data: {
               threadId: thread.id,
               userId,
+              postOrder: nextPostOrder,
+              author,
+              idcode: "TODO-IDCODE",
+              content: htmlContent,
+              rawContent: content,
+              contentType,
+              contentUpdatedAt: new Date(),
+              ...(buildPostImagesCreateData(uploaded)
+                ? { postImages: buildPostImagesCreateData(uploaded) }
+                : {}),
             },
-          },
-          select: {
-            threadId: true,
-          },
+          });
+
+          await tx.thread.update({
+            where: {
+              id: thread.id,
+            },
+            data: {
+              postCount: createdPost.postOrder,
+              postUpdatedAt: createdPost.createdAt,
+            },
+          });
+
+          return createdPost;
         });
 
-        if (isThreadBanned) {
-          throw new Error("THREAD_BANNED");
+        break;
+      } catch (error) {
+        const canRetry =
+          attempt < MAX_POST_ORDER_RETRY - 1 &&
+          isPostOrderConflictError(error);
+
+        if (canRetry) {
+          continue;
         }
 
-        // TODO: 동시성 경쟁이 있을 수 있으므로 락/재시도 전략을 추가하세요.
-        const lastPost = await tx.post.findFirst({
-          where: {
-            threadId: thread.id,
-          },
-          orderBy: {
-            postOrder: "desc",
-          },
-          select: {
-            postOrder: true,
-          },
-        });
+        throw error;
+      }
+    }
 
-        const nextPostOrder = (lastPost?.postOrder ?? -1) + 1;
+    if (!createdPostForBroadcast) {
+      return {
+        success: false,
+        message: "너무 많은 사람이 동시에 작성 중입니다. 잠시 후 다시 시도해 주세요.",
+      };
+    }
 
-        if (thread.isPrivate && thread.userId !== userId) {
-          throw new Error("THREAD_REPLY_LOCKED");
-        }
-
-        if (nextPostOrder > thread.postLimit) {
-          throw new Error("POST_LIMIT_EXCEEDED");
-        }
-
-        const htmlContent = generateHtmlContent(content);
-
-        const createdPost = await tx.post.create({
-          data: {
-            threadId: thread.id,
-            userId,
-            postOrder: nextPostOrder,
-            author,
-            idcode: "TODO-IDCODE",
-            content: htmlContent,
-            rawContent: content,
-            contentType,
-            contentUpdatedAt: new Date(),
-            ...(buildPostImagesCreateData(uploaded)
-              ? { postImages: buildPostImagesCreateData(uploaded) }
-              : {}),
-          },
-        });
-
-        await tx.thread.update({
-          where: {
-            id: thread.id,
-          },
-          data: {
-            postCount: createdPost.postOrder,
-            postUpdatedAt: createdPost.createdAt,
-          },
-        });
-
-        return createdPost;
-      },
-    );
     broadcastNewPost(boardKey, threadIndex, createdPostForBroadcast);
 
     return { success: true, message: "레스이 작성되었습니다." };
