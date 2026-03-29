@@ -6,12 +6,24 @@ import { useEffect } from "react";
 const FILTER_INCLUDE_ADULT_ONLY_KEY =
   "moonshineland:board:filters:includeAdultOnly";
 
+const ERROR_MESSAGES: Record<string, string> = {
+  not_adult: "인증 결과 성인이 아닌 것으로 확인되었습니다.",
+  token_failed: "BBaton 서버에서 인증 정보를 가져오지 못했습니다. 다시 시도해주세요.",
+  user_info_failed: "BBaton 서버에서 유저 정보를 가져오지 못했습니다. 다시 시도해주세요.",
+  missing_code: "인증 코드가 누락되었습니다. 다시 시도해주세요.",
+  server_config_error: "서버 설정 오류가 발생했습니다. 관리자에게 문의해주세요.",
+};
+
 export function AdultRequiredClient({
   nextPath,
   shouldClearAdultFilter,
+  bbatonAuthUrl,
+  error,
 }: {
   nextPath: string;
   shouldClearAdultFilter: boolean;
+  bbatonAuthUrl: string;
+  error?: string;
 }) {
   useEffect(() => {
     if (!shouldClearAdultFilter) {
@@ -20,6 +32,8 @@ export function AdultRequiredClient({
 
     window.localStorage.removeItem(FILTER_INCLUDE_ADULT_ONLY_KEY);
   }, [shouldClearAdultFilter]);
+
+  const errorMessage = error ? (ERROR_MESSAGES[error] ?? "인증 중 오류가 발생했습니다. 다시 시도해주세요.") : null;
 
   return (
     <div className="flex min-h-[60vh] items-center justify-center px-4 py-12">
@@ -35,9 +49,15 @@ export function AdultRequiredClient({
           다시 시도해주세요.
         </p>
 
+        {errorMessage && (
+          <p className="mt-3 rounded-xl bg-rose-50 px-4 py-3 text-sm font-medium text-rose-700">
+            {errorMessage}
+          </p>
+        )}
+
         <div className="mt-6 flex flex-wrap gap-2">
           <Link
-            href="/settings/preferences"
+            href={bbatonAuthUrl}
             className="inline-flex h-10 items-center justify-center rounded-full bg-rose-500 px-4 text-sm font-semibold text-white transition hover:bg-rose-600"
           >
             성인인증 하러 가기

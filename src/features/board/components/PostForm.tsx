@@ -627,7 +627,7 @@ export function PostForm({
           onInput={resizeTextarea}
           name="content"
           placeholder="내용을 입력하세요"
-          rows={5}
+          rows={6}
           value={content}
           onChange={(event) => {
             setContent(event.target.value);

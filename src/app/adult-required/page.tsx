@@ -10,9 +10,10 @@ export default async function AdultRequiredPage({
   searchParams: Promise<{
     next?: string;
     clearAdultFilter?: string;
+    error?: string;
   }>;
 }) {
-  const { next, clearAdultFilter } = await searchParams;
+  const { next, clearAdultFilter, error } = await searchParams;
   const nextPath =
     typeof next === "string" && next.startsWith("/") ? next : "/";
 
@@ -27,10 +28,14 @@ export default async function AdultRequiredPage({
     redirect(`/login?next=${encodeURIComponent(nextPath)}`);
   }
 
+  const bbatonAuthUrl = `https://bauth.bbaton.com/oauth/authorize?client_id=${process.env.BBATON_CLIENT_ID}&redirect_uri=${process.env.BBATON_REDIRECT_URI}&response_type=code&scope=read_profile&state=${encodeURIComponent(nextPath)}`;
+
   return (
     <AdultRequiredClient
       nextPath={nextPath}
       shouldClearAdultFilter={clearAdultFilter === "1"}
+      bbatonAuthUrl={bbatonAuthUrl}
+      error={error}
     />
   );
 }
