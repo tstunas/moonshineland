@@ -286,7 +286,7 @@ export function PostItem({
         </p>
         <p className="mt-2 text-[15px] leading-tight text-slate-700">
           {formatPostDate(post.createdAt)}
-          {post.contentUpdatedAt ? (
+          {post.isEdited && post.contentUpdatedAt ? (
             <span className="ml-2 text-[12px] text-slate-500">
               ({formatPostDate(post.contentUpdatedAt)})
             </span>

@@ -19,6 +19,9 @@ const geistMono = Geist_Mono({
   subsets: ["latin"],
 });
 
+const picsLabelAddress = process.env.PICS_LABEL_ADDRESS ?? "주소";
+const picsLabelContent = `(PICS-1.1 'http://service.kocsc.or.kr/rating.html' | gentrue for '${picsLabelAddress}' r (y 1))`;
+
 export const metadata: Metadata = {
   title: {
     default: "문샤인랜드",
@@ -39,6 +42,9 @@ export default async function RootLayout({
       lang="ko"
       className={`${geistSans.variable} ${geistMono.variable} h-full overflow-hidden antialiased`}
     >
+      <head>
+        <meta httpEquiv="PICS-label" content={picsLabelContent} />
+      </head>
       <body className="h-full overflow-hidden bg-slate-300 text-slate-900">
         <PerformanceMeasureGuard />
         <PreferencesCssApplier />
