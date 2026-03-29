@@ -1,6 +1,7 @@
 import { ThreadForm } from "@/features/board/components/ThreadForm";
 import { ThreadItem } from "@/features/board/components/ThreadItem";
 import { ThreadPagination } from "@/features/board/components/ThreadPagination";
+import { BoardPresenceClient } from "@/features/board/components/BoardPresenceClient";
 import { getThreads } from "@/features/board/lib/getThreads";
 import { getTotalThreads } from "@/features/board/lib/getTotalThreads";
 import { BOARDS } from "@/lib/constants";
@@ -44,8 +45,9 @@ export default async function BoardPage({
 
   return (
     <>
-      <div className="flex h-full items-center justify-center">
+      <div className="flex h-full flex-col items-center justify-center gap-3">
         <h1 className="text-2xl font-bold text-slate-900">{board.label}</h1>
+        <BoardPresenceClient boardKey={boardKey} />
       </div>
       <ul className="mt-4 space-y-2">
         {threadItems.map((thread) => (

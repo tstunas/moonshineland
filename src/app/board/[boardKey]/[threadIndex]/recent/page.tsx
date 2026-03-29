@@ -1,7 +1,4 @@
-import { PostForm } from "@/features/board/components/PostForm";
-import { PostItem } from "@/features/board/components/PostItem";
-import { ThreadHeader } from "@/features/board/components/ThreadHeader";
-import { ThreadNavigation } from "@/features/board/components/ThreadNavigation";
+import { ThreadLiveClient } from "@/features/board/components/ThreadLiveClient";
 import { getPosts } from "@/features/board/lib/getPosts";
 import { getThread } from "@/features/board/lib/getThread";
 
@@ -38,27 +35,11 @@ export default async function ThreadRecentPage({
   const posts = await getPosts(boardKey, threadIndex);
 
   return (
-    <div className="relative">
-      <div className="mb-4">
-        <ThreadNavigation
-          boardKey={boardKey}
-          threadIndex={threadIndex}
-          postCount={thread.postCount}
-          mode="recent"
-        />
-      </div>
-
-      <ThreadHeader thread={thread} />
-
-      <ul className="mt-6 space-y-4">
-        {posts.map((post) => (
-          <li key={post.id}>
-            <PostItem post={post} />
-          </li>
-        ))}
-      </ul>
-      <div className="flex justify-center py-4" />
-      <PostForm boardKey={boardKey} threadIndex={threadIndex} />
-    </div>
+    <ThreadLiveClient
+      boardKey={boardKey}
+      initialThread={thread}
+      initialPosts={posts}
+      mode="recent"
+    />
   );
 }
