@@ -18,27 +18,29 @@ function formatThreadDate(value: Date | string): string {
 
 export function ThreadHeader({ thread }: { thread: Thread }) {
   const author = thread.author || AnonymousAuthor;
-  const authorText = thread.idcode
-    ? `${author} (${thread.idcode})`
-    : author;
 
   return (
-    <header className="rounded-lg border border-sky-200 bg-slate-100 px-6 py-6">
-      <h1 className="truncate text-[30px] font-bold leading-tight text-slate-900">
+    <header className="rounded-[24px] border border-sky-200 bg-[linear-gradient(180deg,_rgba(248,250,252,0.98),_rgba(241,245,249,0.94))] px-5 py-5 shadow-[0_16px_35px_-30px_rgba(15,23,42,0.45)]">
+      <h1 className="truncate text-[26px] font-semibold leading-tight text-slate-900">
         #{thread.threadIndex} {thread.title} ({thread.postCount})
       </h1>
 
-      <div className="mt-6 space-y-2 text-[18px] leading-tight text-slate-900">
+      <div className="mt-5 space-y-1.5 text-[15px] leading-tight text-slate-800">
         <p>
-          <span className="mr-3 text-sky-900">작성자:</span>
-          {authorText}
+          <span className="mr-2 text-[14px] font-medium text-sky-900">작성자:</span>
+          <span>{author}</span>
+          {thread.idcode ? (
+            <span className="ml-1 text-[13px] text-slate-500">
+              ({thread.idcode})
+            </span>
+          ) : null}
         </p>
         <p>
-          <span className="mr-3 text-sky-900">작성일:</span>
+          <span className="mr-2 text-[14px] font-medium text-sky-900">작성일:</span>
           {formatThreadDate(thread.createdAt)}
         </p>
         <p>
-          <span className="mr-3 text-sky-900">갱신일:</span>
+          <span className="mr-2 text-[14px] font-medium text-sky-900">갱신일:</span>
           {formatThreadDate(thread.postUpdatedAt)}
         </p>
       </div>

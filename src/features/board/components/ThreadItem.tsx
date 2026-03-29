@@ -57,7 +57,7 @@ export function ThreadItem({ thread, boardKey }: ThreadItemProps) {
           <span
             key={badge.key}
             className={cn(
-              "inline-flex items-center rounded-full border px-2.5 py-1 text-xs font-semibold tracking-[0.12em]",
+              "inline-flex items-center rounded-full border px-2.5 py-1 text-xs font-medium tracking-[0.12em]",
               badge.className,
             )}
           >
@@ -66,15 +66,15 @@ export function ThreadItem({ thread, boardKey }: ThreadItemProps) {
         ))}
       </div>
 
-      <h3 className="mt-3 truncate text-[22px] font-normal leading-tight text-sky-900 transition-colors group-hover:text-sky-700">
+      <h3 className="mt-3 truncate text-[20px] font-normal leading-tight text-sky-900 transition-colors group-hover:text-sky-700">
         {threadNo} <Link href={threadRecentHref}>{thread.title}</Link>{" "}
         <Link href={threadHref}>{postCountText}</Link>
       </h3>
-      <p className="mt-2 truncate text-[17px] leading-tight text-sky-800">
+      <p className="mt-2 truncate text-[15px] leading-tight text-sky-800">
         {authorLabel}
       </p>
 
-      <p className="mt-1 text-[18px] leading-tight text-slate-700">
+      <p className="mt-1 text-[16px] leading-tight text-slate-700">
         {dateRange}
       </p>
     </article>

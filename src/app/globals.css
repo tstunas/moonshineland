@@ -146,12 +146,11 @@ body {
   letter-spacing: normal !important;
 }
 
-.content.content {
+.content {
   margin-left: 10px;
 }
 
-.content.content.aa {
-  margin-left: 0;
+.content.aa {
   overflow-y: hidden;
 }
 

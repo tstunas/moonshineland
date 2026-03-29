@@ -212,10 +212,10 @@ export function PostItem({
       )}
     >
       <header className="border-b border-sky-200 bg-slate-200 px-6 py-4">
-        <p className="text-[20px] leading-tight text-sky-900">
-          <span className="font-semibold">#{post.postOrder}</span>{" "}
+        <p className="text-[18px] leading-tight text-sky-900">
+          <span className="font-medium">#{post.postOrder}</span>{" "}
           <span>{author}</span>{" "}
-          <span className="text-[16px] leading-tight text-slate-700">
+          <span className="text-[14px] leading-tight text-slate-500">
             ({post.idcode})
           </span>{" "}
           {contentTypeLabel ? (
@@ -225,18 +225,17 @@ export function PostItem({
                 void copyRawContent();
               }}
               title="원문(rawContent) 복사"
-              className="rounded border border-sky-300 px-1.5 py-0.5 text-[20px] leading-none text-sky-700 hover:bg-sky-50"
+              className="rounded border border-sky-300 px-1.5 py-0.5 text-[18px] leading-none text-sky-700 hover:bg-sky-50"
             >
               {contentTypeLabel}
             </button>
-          ) : null}
-          {" "}
+          ) : null}{" "}
           <button
             type="button"
             onClick={() => {
               void copyAnchor();
             }}
-            className="rounded border border-slate-300 bg-white px-1.5 py-0.5 text-[12px] leading-none text-slate-700 hover:bg-slate-50"
+            className="rounded border border-slate-300 bg-white px-1.5 py-0.5 text-[11px] leading-none text-slate-700 hover:bg-slate-50"
           >
             앵커 복사
           </button>
@@ -249,49 +248,46 @@ export function PostItem({
                   void hidePost();
                 }}
                 className={cn(
-                  "rounded px-1.5 py-0.5 text-[12px] leading-none",
+                  "rounded px-1.5 py-0.5 text-[11px] leading-none",
                   post.isHidden
                     ? "border border-emerald-300 bg-emerald-50 text-emerald-700 hover:bg-emerald-100"
                     : "border border-rose-300 bg-rose-50 text-rose-700 hover:bg-rose-100",
                 )}
               >
                 {post.isHidden ? "하이드 해제" : "하이드"}
-              </button>
-              {" "}
+              </button>{" "}
               <button
                 type="button"
                 onClick={openEditModal}
-                className="rounded border border-amber-300 bg-amber-50 px-1.5 py-0.5 text-[12px] leading-none text-amber-700 hover:bg-amber-100"
+                className="rounded border border-amber-300 bg-amber-50 px-1.5 py-0.5 text-[11px] leading-none text-amber-700 hover:bg-amber-100"
               >
                 수정
-              </button>
-              {" "}
+              </button>{" "}
               <button
                 type="button"
                 onClick={() => {
                   void toggleAa();
                 }}
-                className="rounded border border-sky-300 bg-sky-50 px-1.5 py-0.5 text-[12px] leading-none text-sky-700 hover:bg-sky-100"
+                className="rounded border border-sky-300 bg-sky-50 px-1.5 py-0.5 text-[11px] leading-none text-sky-700 hover:bg-sky-100"
               >
                 {post.contentType === "aa" ? "AA 제거" : "AA 적용"}
-              </button>
-              {" "}
+              </button>{" "}
               <button
                 type="button"
                 onClick={() => {
                   void banUser();
                 }}
-                className="rounded border border-fuchsia-300 bg-fuchsia-50 px-1.5 py-0.5 text-[12px] leading-none text-fuchsia-700 hover:bg-fuchsia-100"
+                className="rounded border border-fuchsia-300 bg-fuchsia-50 px-1.5 py-0.5 text-[11px] leading-none text-fuchsia-700 hover:bg-fuchsia-100"
               >
                 밴하기
               </button>
             </>
           ) : null}
         </p>
-        <p className="mt-2 text-[16px] leading-tight text-slate-700">
+        <p className="mt-2 text-[15px] leading-tight text-slate-700">
           {formatPostDate(post.createdAt)}
           {post.contentUpdatedAt ? (
-            <span className="ml-2 text-[13px] text-slate-500">
+            <span className="ml-2 text-[12px] text-slate-500">
               ({formatPostDate(post.contentUpdatedAt)})
             </span>
           ) : null}
@@ -299,7 +295,7 @@ export function PostItem({
         {post.isEdited || post.isAutoPost ? (
           <div className="mt-2 flex flex-wrap gap-1.5">
             {showHiddenPostStyle ? (
-              <span className="inline-flex items-center rounded-full border border-rose-300 bg-rose-50 px-2 py-0.5 text-[11px] font-semibold text-rose-700">
+              <span className="inline-flex items-center rounded-full border border-rose-300 bg-rose-50 px-2 py-0.5 text-[10px] font-medium text-rose-700">
                 하이드됨
               </span>
             ) : null}
@@ -309,30 +305,30 @@ export function PostItem({
                 onClick={() => {
                   void openEditHistoryModal();
                 }}
-                className="inline-flex items-center rounded-full border border-amber-300 bg-amber-50 px-2 py-0.5 text-[11px] font-semibold text-amber-700 hover:bg-amber-100"
+                className="inline-flex items-center rounded-full border border-amber-300 bg-amber-50 px-2 py-0.5 text-[10px] font-medium text-amber-700 hover:bg-amber-100"
               >
                 수정됨
               </button>
             ) : null}
             {post.isAutoPost ? (
-              <span className="inline-flex items-center rounded-full border border-indigo-300 bg-indigo-50 px-2 py-0.5 text-[11px] font-semibold text-indigo-700">
+              <span className="inline-flex items-center rounded-full border border-indigo-300 bg-indigo-50 px-2 py-0.5 text-[10px] font-medium text-indigo-700">
                 자동투하
               </span>
             ) : null}
           </div>
         ) : showHiddenPostStyle ? (
           <div className="mt-2 flex flex-wrap gap-1.5">
-            <span className="inline-flex items-center rounded-full border border-rose-300 bg-rose-50 px-2 py-0.5 text-[11px] font-semibold text-rose-700">
+            <span className="inline-flex items-center rounded-full border border-rose-300 bg-rose-50 px-2 py-0.5 text-[10px] font-medium text-rose-700">
               하이드됨
             </span>
           </div>
         ) : null}
       </header>
 
-      <div className="px-6 py-6">
+      <div className="px-3 py-4">
         <div
           className={cn(
-            "content whitespace-pre-wrap break-words text-[16px] leading-relaxed text-slate-900",
+            "content whitespace-pre-wrap break-words text-[15px] leading-relaxed text-slate-900",
             post.contentType,
           )}
           dangerouslySetInnerHTML={{ __html: post.content }}
@@ -349,7 +345,7 @@ export function PostItem({
                 onClick={() => {
                   setIsEditOpen(false);
                 }}
-                className="rounded-lg border border-slate-300 bg-slate-50 px-3 py-1.5 text-xs font-semibold text-slate-700 transition-colors hover:bg-slate-100"
+                className="rounded-lg border border-slate-300 bg-slate-50 px-3 py-1.5 text-xs font-medium text-slate-700 transition-colors hover:bg-slate-100"
               >
                 닫기
               </button>
@@ -363,7 +359,7 @@ export function PostItem({
                   setEditCommand(event.target.value);
                 }}
                 placeholder="콘솔 명령어"
-                className="h-11 w-full rounded border border-sky-200 bg-slate-50 px-3 text-[16px] text-slate-900 placeholder:text-slate-500 focus:border-sky-400 focus:outline-none"
+                className="h-11 w-full rounded border border-sky-200 bg-slate-50 px-3 text-[15px] text-slate-900 placeholder:text-slate-500 focus:border-sky-400 focus:outline-none"
               />
               <textarea
                 value={editContent}
@@ -372,7 +368,7 @@ export function PostItem({
                 }}
                 rows={10}
                 placeholder="내용"
-                className="w-full resize-y rounded border border-sky-200 bg-slate-50 px-3 py-3 text-[16px] leading-relaxed text-slate-900 placeholder:text-slate-500 focus:border-sky-400 focus:outline-none"
+                className="w-full resize-y rounded border border-sky-200 bg-slate-50 px-3 py-3 text-[15px] leading-relaxed text-slate-900 placeholder:text-slate-500 focus:border-sky-400 focus:outline-none"
               />
 
               <div className="flex gap-2 pt-1">
@@ -381,7 +377,7 @@ export function PostItem({
                   onClick={() => {
                     setIsEditOpen(false);
                   }}
-                  className="h-11 flex-1 rounded-lg border border-slate-300 bg-white text-sm font-semibold text-slate-700 transition-colors hover:bg-slate-50"
+                  className="h-11 flex-1 rounded-lg border border-slate-300 bg-white text-sm font-medium text-slate-700 transition-colors hover:bg-slate-50"
                 >
                   취소
                 </button>
@@ -391,7 +387,7 @@ export function PostItem({
                     void submitEdit();
                   }}
                   disabled={isSavingEdit}
-                  className="h-11 flex-1 rounded-lg bg-sky-500 text-sm font-semibold text-white transition-colors hover:bg-sky-600 disabled:cursor-not-allowed disabled:bg-slate-400"
+                  className="h-11 flex-1 rounded-lg bg-sky-500 text-sm font-medium text-white transition-colors hover:bg-sky-600 disabled:cursor-not-allowed disabled:bg-slate-400"
                 >
                   {isSavingEdit ? "저장 중..." : "수정 저장"}
                 </button>
@@ -411,7 +407,7 @@ export function PostItem({
                 onClick={() => {
                   setIsHistoryOpen(false);
                 }}
-                className="rounded-lg border border-slate-300 bg-slate-50 px-3 py-1.5 text-xs font-semibold text-slate-700 transition-colors hover:bg-slate-100"
+                className="rounded-lg border border-slate-300 bg-slate-50 px-3 py-1.5 text-xs font-medium text-slate-700 transition-colors hover:bg-slate-100"
               >
                 닫기
               </button>
@@ -419,9 +415,13 @@ export function PostItem({
 
             <div className="max-h-[70vh] space-y-3 overflow-auto p-5">
               {isHistoryLoading ? (
-                <p className="text-sm text-slate-600">이력을 불러오는 중입니다...</p>
+                <p className="text-sm text-slate-600">
+                  이력을 불러오는 중입니다...
+                </p>
               ) : editHistories.length === 0 ? (
-                <p className="text-sm text-slate-600">저장된 수정 이력이 없습니다.</p>
+                <p className="text-sm text-slate-600">
+                  저장된 수정 이력이 없습니다.
+                </p>
               ) : (
                 editHistories.map((history) => (
                   <section
@@ -432,15 +432,16 @@ export function PostItem({
                       이력 저장: {formatPostDate(history.createdAt)}
                     </p>
                     <p className="mt-1 text-xs text-slate-500">
-                      이전 내용 시각: {formatPostDate(history.previousCreatedAt)}
+                      이전 내용 시각:{" "}
+                      {formatPostDate(history.previousCreatedAt)}
                       {history.previousContentUpdatedAt
                         ? ` (${formatPostDate(history.previousContentUpdatedAt)})`
                         : ""}
                     </p>
-                    <div className="mt-2 inline-flex rounded-full border border-sky-300 bg-sky-50 px-2 py-0.5 text-[11px] font-semibold text-sky-700">
+                    <div className="mt-2 inline-flex rounded-full border border-sky-300 bg-sky-50 px-2 py-0.5 text-[10px] font-medium text-sky-700">
                       contentType: {history.previousContentType}
                     </div>
-                    <pre className="mt-2 max-h-52 overflow-auto whitespace-pre-wrap break-words rounded border border-slate-200 bg-slate-50 p-3 text-[13px] leading-relaxed text-slate-800">
+                    <pre className="mt-2 max-h-52 overflow-auto whitespace-pre-wrap break-words rounded border border-slate-200 bg-slate-50 p-3 text-[12px] leading-relaxed text-slate-800">
                       {history.previousRawContent}
                     </pre>
                   </section>

@@ -716,7 +716,7 @@ export function AutoPostManagerClient({
             onClick={() => {
               void refreshAutoPosts();
             }}
-            className="rounded border border-sky-300 bg-sky-50 px-2 py-1 text-xs font-semibold text-sky-700 hover:bg-sky-100 disabled:cursor-not-allowed disabled:opacity-70"
+            className="rounded border border-sky-300 bg-sky-50 px-2 py-1 text-xs font-medium text-sky-700 hover:bg-sky-100 disabled:cursor-not-allowed disabled:opacity-70"
           >
             {isRefreshing ? "갱신 중..." : "목록 갱신"}
           </button>
@@ -735,21 +735,21 @@ export function AutoPostManagerClient({
                   )}
                 >
                   <header className="border-b border-sky-200 bg-slate-200 px-5 py-3">
-                    <p className="text-[18px] leading-tight text-sky-900">
-                      <span className="font-semibold">AUTO#{autoPost.autoPostSequence}</span>{" "}
+                    <p className="text-[16px] leading-tight text-sky-900">
+                      <span className="font-medium">AUTO#{autoPost.autoPostSequence}</span>{" "}
                       <span>{autoPost.author || AnonymousAuthor}</span>{" "}
-                      <span className="text-[14px] text-slate-700">({autoPost.idcode})</span>{" "}
+                      <span className="text-[13px] text-slate-500">({autoPost.idcode})</span>{" "}
                       <button
                         type="button"
                         onClick={() => {
                           openEditModal(autoPost);
                         }}
-                        className="rounded border border-amber-300 bg-amber-50 px-1.5 py-0.5 text-[12px] leading-none font-semibold text-amber-700 hover:bg-amber-100"
+                        className="rounded border border-amber-300 bg-amber-50 px-1.5 py-0.5 text-[11px] leading-none font-medium text-amber-700 hover:bg-amber-100"
                       >
                         수정
                       </button>
                     </p>
-                    <p className="mt-1 text-sm text-slate-700">
+                    <p className="mt-1 text-xs text-slate-700">
                       {formatPostDate(autoPost.createdAt)}
                       {autoPost.contentUpdatedAt ? (
                         <span className="ml-2 text-xs text-slate-500">
@@ -758,16 +758,16 @@ export function AutoPostManagerClient({
                       ) : null}
                     </p>
                     {autoPost.isEdited ? (
-                      <span className="mt-1 inline-flex items-center rounded-full border border-amber-300 bg-amber-50 px-2 py-0.5 text-[11px] font-semibold text-amber-700">
+                      <span className="mt-1 inline-flex items-center rounded-full border border-amber-300 bg-amber-50 px-2 py-0.5 text-[10px] font-medium text-amber-700">
                         수정됨
                       </span>
                     ) : null}
                   </header>
 
-                  <div className="px-5 py-4">
+                  <div className="px-3 py-4">
                     <div
                       className={cn(
-                        "content whitespace-pre-wrap break-words text-[16px] leading-relaxed text-slate-900",
+                        "content whitespace-pre-wrap break-words text-[15px] leading-relaxed text-slate-900",
                         autoPost.contentType,
                       )}
                       dangerouslySetInnerHTML={{ __html: autoPost.content }}
@@ -810,7 +810,7 @@ export function AutoPostManagerClient({
       <section className="rounded-2xl border border-sky-200 bg-white p-4 shadow-sm">
         <div className="mb-2 flex items-center justify-between">
           <h2 className="text-xl font-bold text-slate-900">자동투하 레스 작성</h2>
-          <span className="rounded border border-sky-200 bg-sky-50 px-2 py-1 text-xs font-semibold text-sky-700">
+          <span className="rounded border border-sky-200 bg-sky-50 px-2 py-1 text-xs font-medium text-sky-700">
             현재 저장: {autoPostCountLabel}
           </span>
         </div>
@@ -887,7 +887,7 @@ export function AutoPostManagerClient({
               onClick={() => {
                 void handleStartAutoPost();
               }}
-              className="rounded border border-emerald-300 bg-emerald-50 px-2 py-1 text-xs font-semibold text-emerald-700 hover:bg-emerald-100 disabled:cursor-not-allowed disabled:opacity-70"
+              className="rounded border border-emerald-300 bg-emerald-50 px-2 py-1 text-xs font-medium text-emerald-700 hover:bg-emerald-100 disabled:cursor-not-allowed disabled:opacity-70"
             >
               자동투하 시작
             </button>
@@ -897,7 +897,7 @@ export function AutoPostManagerClient({
               onClick={() => {
                 void handleStopAutoPost();
               }}
-              className="rounded border border-rose-300 bg-rose-50 px-2 py-1 text-xs font-semibold text-rose-700 hover:bg-rose-100 disabled:cursor-not-allowed disabled:opacity-70"
+              className="rounded border border-rose-300 bg-rose-50 px-2 py-1 text-xs font-medium text-rose-700 hover:bg-rose-100 disabled:cursor-not-allowed disabled:opacity-70"
             >
               자동투하 중단
             </button>
@@ -907,7 +907,7 @@ export function AutoPostManagerClient({
               onClick={() => {
                 void handleSaveSchedule();
               }}
-              className="rounded border border-indigo-300 bg-white px-2 py-1 text-xs font-semibold text-indigo-700 hover:bg-indigo-100 disabled:cursor-not-allowed disabled:opacity-70"
+              className="rounded border border-indigo-300 bg-white px-2 py-1 text-xs font-medium text-indigo-700 hover:bg-indigo-100 disabled:cursor-not-allowed disabled:opacity-70"
             >
               자동투하 설정 저장
             </button>
@@ -933,7 +933,7 @@ export function AutoPostManagerClient({
               onChange={(event) => {
                 setAuthor(event.target.value);
               }}
-              className="h-11 rounded border border-sky-200 bg-slate-50 px-3 text-[16px] text-slate-900 placeholder:text-slate-500 focus:border-sky-400 focus:outline-none"
+              className="h-11 rounded border border-sky-200 bg-slate-50 px-3 text-[15px] text-slate-900 placeholder:text-slate-500 focus:border-sky-400 focus:outline-none"
             />
             <input
               name="command"
@@ -943,7 +943,7 @@ export function AutoPostManagerClient({
               onChange={(event) => {
                 setCommand(event.target.value);
               }}
-              className="h-11 rounded border border-sky-200 bg-slate-50 px-3 text-[16px] text-slate-900 placeholder:text-slate-500 focus:border-sky-400 focus:outline-none"
+              className="h-11 rounded border border-sky-200 bg-slate-50 px-3 text-[15px] text-slate-900 placeholder:text-slate-500 focus:border-sky-400 focus:outline-none"
             />
           </div>
 
@@ -958,7 +958,7 @@ export function AutoPostManagerClient({
               setContent(event.target.value);
             }}
             className={cn(
-              "contentInput w-full resize-y rounded border border-sky-200 bg-slate-50 px-3 py-3 text-[16px] leading-relaxed text-slate-900 placeholder:text-slate-500 focus:border-sky-400 focus:outline-none",
+              "contentInput w-full resize-y rounded border border-sky-200 bg-slate-50 px-3 py-3 text-[15px] leading-relaxed text-slate-900 placeholder:text-slate-500 focus:border-sky-400 focus:outline-none",
               contentTypeClassName,
             )}
           />
@@ -975,7 +975,7 @@ export function AutoPostManagerClient({
           <button
             type="submit"
             disabled={isSubmitting}
-            className="h-11 w-full rounded bg-sky-500 text-[20px] font-semibold text-white transition-colors hover:bg-sky-600 disabled:cursor-not-allowed disabled:bg-slate-400"
+            className="h-11 w-full rounded bg-sky-500 text-[18px] font-medium text-white transition-colors hover:bg-sky-600 disabled:cursor-not-allowed disabled:bg-slate-400"
           >
             {isSubmitting ? "작성 중..." : "자동투하 레스 작성"}
           </button>
@@ -1017,7 +1017,7 @@ export function AutoPostManagerClient({
                 onClick={() => {
                   setEditingAutoPost(null);
                 }}
-                className="rounded-lg border border-slate-300 bg-slate-50 px-3 py-1.5 text-xs font-semibold text-slate-700 transition-colors hover:bg-slate-100"
+                className="rounded-lg border border-slate-300 bg-slate-50 px-3 py-1.5 text-xs font-medium text-slate-700 transition-colors hover:bg-slate-100"
               >
                 닫기
               </button>
@@ -1031,7 +1031,7 @@ export function AutoPostManagerClient({
                   setEditAuthor(event.target.value);
                 }}
                 placeholder="작성자"
-                className="h-11 w-full rounded border border-sky-200 bg-slate-50 px-3 text-[16px] text-slate-900 placeholder:text-slate-500 focus:border-sky-400 focus:outline-none"
+                className="h-11 w-full rounded border border-sky-200 bg-slate-50 px-3 text-[15px] text-slate-900 placeholder:text-slate-500 focus:border-sky-400 focus:outline-none"
               />
               <input
                 type="text"
@@ -1040,7 +1040,7 @@ export function AutoPostManagerClient({
                   setEditCommand(event.target.value);
                 }}
                 placeholder="콘솔 명령어"
-                className="h-11 w-full rounded border border-sky-200 bg-slate-50 px-3 text-[16px] text-slate-900 placeholder:text-slate-500 focus:border-sky-400 focus:outline-none"
+                className="h-11 w-full rounded border border-sky-200 bg-slate-50 px-3 text-[15px] text-slate-900 placeholder:text-slate-500 focus:border-sky-400 focus:outline-none"
               />
               <textarea
                 value={editContent}
@@ -1049,7 +1049,7 @@ export function AutoPostManagerClient({
                 }}
                 rows={10}
                 placeholder="내용"
-                className="w-full resize-y rounded border border-sky-200 bg-slate-50 px-3 py-3 text-[16px] leading-relaxed text-slate-900 placeholder:text-slate-500 focus:border-sky-400 focus:outline-none"
+                className="w-full resize-y rounded border border-sky-200 bg-slate-50 px-3 py-3 text-[15px] leading-relaxed text-slate-900 placeholder:text-slate-500 focus:border-sky-400 focus:outline-none"
               />
 
               <div className="flex gap-2 pt-1">
@@ -1059,7 +1059,7 @@ export function AutoPostManagerClient({
                     void submitEdit();
                   }}
                   disabled={isEditingSaving}
-                  className="inline-flex h-10 items-center justify-center rounded bg-amber-500 px-4 text-sm font-semibold text-white transition-colors hover:bg-amber-600 disabled:cursor-not-allowed disabled:bg-slate-400"
+                  className="inline-flex h-10 items-center justify-center rounded bg-amber-500 px-4 text-sm font-medium text-white transition-colors hover:bg-amber-600 disabled:cursor-not-allowed disabled:bg-slate-400"
                 >
                   {isEditingSaving ? "저장 중..." : "수정 저장"}
                 </button>
@@ -1068,7 +1068,7 @@ export function AutoPostManagerClient({
                   onClick={() => {
                     setEditingAutoPost(null);
                   }}
-                  className="inline-flex h-10 items-center justify-center rounded border border-slate-300 bg-white px-4 text-sm font-semibold text-slate-700 transition-colors hover:bg-slate-100"
+                  className="inline-flex h-10 items-center justify-center rounded border border-slate-300 bg-white px-4 text-sm font-medium text-slate-700 transition-colors hover:bg-slate-100"
                 >
                   취소
                 </button>

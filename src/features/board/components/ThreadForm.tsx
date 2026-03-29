@@ -371,6 +371,11 @@ export function ThreadForm({
         action={submitCreateThread}
         className="rounded-lg border border-sky-200 bg-slate-100 p-4"
       >
+        {!isSignedIn ? (
+          <p className="my-3 rounded border border-amber-200 bg-amber-50 px-3 py-2 text-xs font-medium text-amber-700">
+            로그인 후 스레드를 작성할 수 있습니다.
+          </p>
+        ) : null}
         <fieldset
           disabled={!isSignedIn}
           className={cn(!isSignedIn ? "cursor-not-allowed opacity-60" : "")}
@@ -390,152 +395,152 @@ export function ThreadForm({
             }}
           />
 
-        <div className="flex flex-col gap-3">
-          <div className="grid gap-2 rounded-2xl border border-sky-200 bg-[linear-gradient(180deg,_rgba(240,249,255,1),_rgba(248,250,252,1))] p-3 text-[15px] text-slate-700 sm:grid-cols-2">
-            <label
-              className={cn(
-                "cursor-pointer rounded-xl border px-4 py-3 transition",
-                isChat
-                  ? "border-amber-300 bg-amber-50 text-amber-700 shadow-sm"
-                  : "border-slate-200 bg-white text-slate-600 hover:border-amber-200 hover:bg-amber-50/50",
-              )}
-            >
-              <input
-                name="isChat"
-                type="checkbox"
-                value="true"
-                checked={isChat}
-                onChange={(event) => {
-                  setIsChat(event.target.checked);
-                }}
-                className="sr-only"
-              />
-              <span className="flex items-center justify-between gap-3">
-                <span>
-                  <span className="block text-sm font-semibold">잡담판</span>
-                  <span className="mt-0.5 block text-xs opacity-80">
-                    연재판 대신 자유 대화 스레드로 등록합니다.
+          <div className="flex flex-col gap-3">
+            <div className="grid gap-2 rounded-2xl border border-sky-200 bg-[linear-gradient(180deg,_rgba(240,249,255,1),_rgba(248,250,252,1))] p-3 text-[15px] text-slate-700 sm:grid-cols-2">
+              <label
+                className={cn(
+                  "cursor-pointer rounded-xl border px-4 py-3 transition",
+                  isChat
+                    ? "border-amber-300 bg-amber-50 text-amber-700 shadow-sm"
+                    : "border-slate-200 bg-white text-slate-600 hover:border-amber-200 hover:bg-amber-50/50",
+                )}
+              >
+                <input
+                  name="isChat"
+                  type="checkbox"
+                  value="true"
+                  checked={isChat}
+                  onChange={(event) => {
+                    setIsChat(event.target.checked);
+                  }}
+                  className="sr-only"
+                />
+                <span className="flex items-center justify-between gap-3">
+                  <span>
+                    <span className="block text-sm font-semibold">잡담판</span>
+                    <span className="mt-0.5 block text-xs opacity-80">
+                      연재판 대신 자유 대화 스레드로 등록합니다.
+                    </span>
                   </span>
-                </span>
-                <span
-                  className={cn(
-                    "inline-flex h-6 w-11 rounded-full p-0.5 transition",
-                    isChat ? "bg-amber-400" : "bg-slate-300",
-                  )}
-                >
                   <span
                     className={cn(
-                      "h-5 w-5 rounded-full bg-white shadow-sm transition",
-                      isChat ? "translate-x-5" : "translate-x-0",
+                      "inline-flex h-6 w-11 rounded-full p-0.5 transition",
+                      isChat ? "bg-amber-400" : "bg-slate-300",
                     )}
-                  />
+                  >
+                    <span
+                      className={cn(
+                        "h-5 w-5 rounded-full bg-white shadow-sm transition",
+                        isChat ? "translate-x-5" : "translate-x-0",
+                      )}
+                    />
+                  </span>
                 </span>
-              </span>
-            </label>
+              </label>
 
-            <label
-              className={cn(
-                "cursor-pointer rounded-xl border px-4 py-3 transition",
-                isAdultOnly
-                  ? "border-rose-300 bg-rose-50 text-rose-700 shadow-sm"
-                  : "border-slate-200 bg-white text-slate-600 hover:border-rose-200 hover:bg-rose-50/50",
-              )}
-            >
-              <input
-                name="isAdultOnly"
-                type="checkbox"
-                value="true"
-                checked={isAdultOnly}
-                onChange={(event) => {
-                  const nextChecked = event.target.checked;
-                  if (nextChecked && !isAdultVerified) {
-                    toast.error("성인인증이 필요합니다.");
-                    moveToAdultRequiredPage();
-                    return;
-                  }
-                  setIsAdultOnly(nextChecked);
-                }}
-                className="sr-only"
-              />
-              <span className="flex items-center justify-between gap-3">
-                <span>
-                  <span className="block text-sm font-semibold">성인만</span>
-                  <span className="mt-0.5 block text-xs opacity-80">
-                    성인 전용 스레드로 등록합니다.
+              <label
+                className={cn(
+                  "cursor-pointer rounded-xl border px-4 py-3 transition",
+                  isAdultOnly
+                    ? "border-rose-300 bg-rose-50 text-rose-700 shadow-sm"
+                    : "border-slate-200 bg-white text-slate-600 hover:border-rose-200 hover:bg-rose-50/50",
+                )}
+              >
+                <input
+                  name="isAdultOnly"
+                  type="checkbox"
+                  value="true"
+                  checked={isAdultOnly}
+                  onChange={(event) => {
+                    const nextChecked = event.target.checked;
+                    if (nextChecked && !isAdultVerified) {
+                      toast.error("성인인증이 필요합니다.");
+                      moveToAdultRequiredPage();
+                      return;
+                    }
+                    setIsAdultOnly(nextChecked);
+                  }}
+                  className="sr-only"
+                />
+                <span className="flex items-center justify-between gap-3">
+                  <span>
+                    <span className="block text-sm font-semibold">성인만</span>
+                    <span className="mt-0.5 block text-xs opacity-80">
+                      성인 전용 스레드로 등록합니다.
+                    </span>
                   </span>
-                </span>
-                <span
-                  className={cn(
-                    "inline-flex h-6 w-11 rounded-full p-0.5 transition",
-                    isAdultOnly ? "bg-rose-400" : "bg-slate-300",
-                  )}
-                >
                   <span
                     className={cn(
-                      "h-5 w-5 rounded-full bg-white shadow-sm transition",
-                      isAdultOnly ? "translate-x-5" : "translate-x-0",
+                      "inline-flex h-6 w-11 rounded-full p-0.5 transition",
+                      isAdultOnly ? "bg-rose-400" : "bg-slate-300",
                     )}
-                  />
+                  >
+                    <span
+                      className={cn(
+                        "h-5 w-5 rounded-full bg-white shadow-sm transition",
+                        isAdultOnly ? "translate-x-5" : "translate-x-0",
+                      )}
+                    />
+                  </span>
                 </span>
-              </span>
-            </label>
+              </label>
+            </div>
+            <input
+              name="title"
+              type="text"
+              placeholder="제목(80자 이내)"
+              value={title}
+              onChange={(event) => {
+                setTitle(event.target.value);
+              }}
+              className="h-11 rounded border border-sky-200 bg-slate-50 px-3 text-[16px] text-slate-900 placeholder:text-slate-500 focus:border-sky-400 focus:outline-none"
+            />
+            <input
+              name="author"
+              type="text"
+              placeholder="이름(60자 이내)"
+              value={author}
+              onChange={(event) => {
+                setAuthor(event.target.value);
+              }}
+              className="h-11 rounded border border-sky-200 bg-slate-50 px-3 text-[16px] text-slate-900 placeholder:text-slate-500 focus:border-sky-400 focus:outline-none"
+            />
+            <input
+              name="command"
+              type="text"
+              placeholder="콘솔 명령어"
+              value={command}
+              onChange={(event) => {
+                setCommand(event.target.value);
+              }}
+              className="h-11 rounded border border-sky-200 bg-slate-50 px-3 text-[16px] text-slate-900 placeholder:text-slate-500 focus:border-sky-400 focus:outline-none"
+            />
           </div>
-          <input
-            name="title"
-            type="text"
-            placeholder="제목(80자 이내)"
-            value={title}
-            onChange={(event) => {
-              setTitle(event.target.value);
-            }}
-            className="h-11 rounded border border-sky-200 bg-slate-50 px-3 text-[16px] text-slate-900 placeholder:text-slate-500 focus:border-sky-400 focus:outline-none"
-          />
-          <input
-            name="author"
-            type="text"
-            placeholder="이름(60자 이내)"
-            value={author}
-            onChange={(event) => {
-              setAuthor(event.target.value);
-            }}
-            className="h-11 rounded border border-sky-200 bg-slate-50 px-3 text-[16px] text-slate-900 placeholder:text-slate-500 focus:border-sky-400 focus:outline-none"
-          />
-          <input
-            name="command"
-            type="text"
-            placeholder="콘솔 명령어"
-            value={command}
-            onChange={(event) => {
-              setCommand(event.target.value);
-            }}
-            className="h-11 rounded border border-sky-200 bg-slate-50 px-3 text-[16px] text-slate-900 placeholder:text-slate-500 focus:border-sky-400 focus:outline-none"
-          />
-        </div>
 
-        <textarea
-          ref={contentRef}
-          onInput={resizeTextarea}
-          name="content"
-          placeholder="내용(4만자 이내)"
-          rows={6}
-          value={content}
-          onChange={(event) => {
-            setContent(event.target.value);
-          }}
-          className={cn(
-            "contentInput mt-3 w-full resize-y rounded border border-sky-200 bg-slate-50 px-3 py-3 text-[16px] leading-relaxed text-slate-900 placeholder:text-slate-500 focus:border-sky-400 focus:outline-none",
-            contentTypeClassName,
-          )}
-        />
+          <textarea
+            ref={contentRef}
+            onInput={resizeTextarea}
+            name="content"
+            placeholder="내용(4만자 이내)"
+            rows={6}
+            value={content}
+            onChange={(event) => {
+              setContent(event.target.value);
+            }}
+            className={cn(
+              "contentInput mt-3 w-full resize-y rounded border border-sky-200 bg-slate-50 px-3 py-3 text-[16px] leading-relaxed text-slate-900 placeholder:text-slate-500 focus:border-sky-400 focus:outline-none",
+              contentTypeClassName,
+            )}
+          />
 
-        <PostImagePicker
-          imageInputRef={imageInputRef}
-          imageInputId={imageInputId}
-          selectedImages={selectedImages}
-          onImageChange={applyImageLimit}
-          onClearSelectedImages={clearSelectedImages}
-          onRemoveSelectedImage={removeSelectedImage}
-        />
+          <PostImagePicker
+            imageInputRef={imageInputRef}
+            imageInputId={imageInputId}
+            selectedImages={selectedImages}
+            onImageChange={applyImageLimit}
+            onClearSelectedImages={clearSelectedImages}
+            onRemoveSelectedImage={removeSelectedImage}
+          />
 
           <button
             type="submit"
@@ -544,12 +549,6 @@ export function ThreadForm({
             작성
           </button>
         </fieldset>
-
-        {!isSignedIn ? (
-          <p className="mt-3 rounded border border-amber-200 bg-amber-50 px-3 py-2 text-xs font-medium text-amber-700">
-            로그인 후 스레드를 작성할 수 있습니다.
-          </p>
-        ) : null}
       </form>
 
       {isPreviewOpen ? (

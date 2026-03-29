@@ -609,6 +609,11 @@ export function PostForm({
         action={submitCreatePost}
         className="rounded-lg border border-sky-200 bg-slate-100 p-4"
       >
+        {!isSignedIn ? (
+          <p className="my-3 rounded border border-amber-200 bg-amber-50 px-3 py-2 text-xs font-medium text-amber-700">
+            로그인 후 레스를 작성할 수 있습니다.
+          </p>
+        ) : null}
         <fieldset
           disabled={!isSignedIn}
           className={cn(!isSignedIn ? "cursor-not-allowed opacity-60" : "")}
@@ -616,88 +621,88 @@ export function PostForm({
           <input type="hidden" name="boardKey" value={boardKey} />
           <input type="hidden" name="threadIndex" value={threadIndex} />
 
-        <PostFormControls
-          canManageThread={canManageThread}
-          isAutosizeEnabled={isAutosizeEnabled}
-          isBottomLockEnabled={isBottomLockEnabled}
-          isReplyAlertEnabled={isReplyAlertEnabled}
-          isAdminMenuOpen={isAdminMenuOpen}
-          threadPostLimit={thread.postLimit}
-          onRefresh={handleRefresh}
-          onLoadIdentity={handleLoadIdentity}
-          onClearIdentity={handleClearIdentity}
-          onRepairAa={handleRepairAa}
-          onToggleAutosize={handleToggleAutosize}
-          onOpenPreview={handleOpenPreview}
-          onOpenDice={() => {
-            setIsDiceOpen(true);
-          }}
-          onToggleBottomLock={() => {
-            onToggleBottomLock(!isBottomLockEnabled);
-          }}
-          onToggleReplyAlert={() => {
-            onToggleReplyAlert(!isReplyAlertEnabled);
-          }}
-          onToggleAdminMenu={() => {
-            setIsAdminMenuOpen((current) => !current);
-          }}
-          onAdjustPostLimit={adjustPostLimit}
-          onCopyExternalText={copyExternalText}
-          onCopyExternalHtml={copyExternalHtml}
-          onCopyExternalImage={copyExternalImage}
-          onOpenThreadSettings={() => {
-            setIsThreadEditOpen(true);
-          }}
-          onOpenAutoManagePage={openAutoManagePage}
-        />
-
-        <div className="flex flex-col gap-3">
-          <input
-            name="author"
-            type="text"
-            placeholder="이름(60자 이내)"
-            value={author}
-            onChange={(event) => {
-              setAuthor(event.target.value);
+          <PostFormControls
+            canManageThread={canManageThread}
+            isAutosizeEnabled={isAutosizeEnabled}
+            isBottomLockEnabled={isBottomLockEnabled}
+            isReplyAlertEnabled={isReplyAlertEnabled}
+            isAdminMenuOpen={isAdminMenuOpen}
+            threadPostLimit={thread.postLimit}
+            onRefresh={handleRefresh}
+            onLoadIdentity={handleLoadIdentity}
+            onClearIdentity={handleClearIdentity}
+            onRepairAa={handleRepairAa}
+            onToggleAutosize={handleToggleAutosize}
+            onOpenPreview={handleOpenPreview}
+            onOpenDice={() => {
+              setIsDiceOpen(true);
             }}
-            className="h-11 rounded border border-sky-200 bg-slate-50 px-3 text-[16px] text-slate-900 placeholder:text-slate-500 focus:border-sky-400 focus:outline-none"
-          />
-          <input
-            name="command"
-            type="text"
-            placeholder="콘솔 명령어"
-            value={command}
-            onChange={(event) => {
-              setCommand(event.target.value);
+            onToggleBottomLock={() => {
+              onToggleBottomLock(!isBottomLockEnabled);
             }}
-            className="h-11 rounded border border-sky-200 bg-slate-50 px-3 text-[16px] text-slate-900 placeholder:text-slate-500 focus:border-sky-400 focus:outline-none"
+            onToggleReplyAlert={() => {
+              onToggleReplyAlert(!isReplyAlertEnabled);
+            }}
+            onToggleAdminMenu={() => {
+              setIsAdminMenuOpen((current) => !current);
+            }}
+            onAdjustPostLimit={adjustPostLimit}
+            onCopyExternalText={copyExternalText}
+            onCopyExternalHtml={copyExternalHtml}
+            onCopyExternalImage={copyExternalImage}
+            onOpenThreadSettings={() => {
+              setIsThreadEditOpen(true);
+            }}
+            onOpenAutoManagePage={openAutoManagePage}
           />
-        </div>
 
-        <textarea
-          ref={contentRef}
-          onInput={resizeTextarea}
-          name="content"
-          placeholder="내용(4만자 이내)"
-          rows={6}
-          value={content}
-          onChange={(event) => {
-            setContent(event.target.value);
-          }}
-          className={cn(
-            "contentInput mt-3 w-full resize-y rounded border border-sky-200 bg-slate-50 px-3 py-3 text-[16px] leading-relaxed text-slate-900 placeholder:text-slate-500 focus:border-sky-400 focus:outline-none",
-            contentTypeClassName,
-          )}
-        />
+          <div className="flex flex-col gap-3">
+            <input
+              name="author"
+              type="text"
+              placeholder="이름(60자 이내)"
+              value={author}
+              onChange={(event) => {
+                setAuthor(event.target.value);
+              }}
+              className="h-11 rounded border border-sky-200 bg-slate-50 px-3 text-[16px] text-slate-900 placeholder:text-slate-500 focus:border-sky-400 focus:outline-none"
+            />
+            <input
+              name="command"
+              type="text"
+              placeholder="콘솔 명령어"
+              value={command}
+              onChange={(event) => {
+                setCommand(event.target.value);
+              }}
+              className="h-11 rounded border border-sky-200 bg-slate-50 px-3 text-[16px] text-slate-900 placeholder:text-slate-500 focus:border-sky-400 focus:outline-none"
+            />
+          </div>
 
-        <PostImagePicker
-          imageInputRef={imageInputRef}
-          imageInputId={imageInputId}
-          selectedImages={selectedImages}
-          onImageChange={applyImageLimit}
-          onClearSelectedImages={clearSelectedImages}
-          onRemoveSelectedImage={removeSelectedImage}
-        />
+          <textarea
+            ref={contentRef}
+            onInput={resizeTextarea}
+            name="content"
+            placeholder="내용(4만자 이내)"
+            rows={6}
+            value={content}
+            onChange={(event) => {
+              setContent(event.target.value);
+            }}
+            className={cn(
+              "contentInput mt-3 w-full resize-y rounded border border-sky-200 bg-slate-50 px-3 py-3 text-[16px] leading-relaxed text-slate-900 placeholder:text-slate-500 focus:border-sky-400 focus:outline-none",
+              contentTypeClassName,
+            )}
+          />
+
+          <PostImagePicker
+            imageInputRef={imageInputRef}
+            imageInputId={imageInputId}
+            selectedImages={selectedImages}
+            onImageChange={applyImageLimit}
+            onClearSelectedImages={clearSelectedImages}
+            onRemoveSelectedImage={removeSelectedImage}
+          />
 
           <button
             type="submit"
@@ -706,12 +711,6 @@ export function PostForm({
             작성
           </button>
         </fieldset>
-
-        {!isSignedIn ? (
-          <p className="mt-3 rounded border border-amber-200 bg-amber-50 px-3 py-2 text-xs font-medium text-amber-700">
-            로그인 후 레스를 작성할 수 있습니다.
-          </p>
-        ) : null}
       </form>
 
       {isPreviewOpen ? (
