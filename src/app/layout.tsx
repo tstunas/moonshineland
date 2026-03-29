@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 
 import { AppShell } from "@/components/layout/AppShell";
+import { getCurrentUser } from "@/features/auth/queries";
 
 import "./globals.css";
 
@@ -20,18 +21,20 @@ export const metadata: Metadata = {
   description: "문샤인랜드는 AA연재를 위한 사이트입니다.",
 };
 
-export default function RootLayout({
+export default async function RootLayout({
   children,
 }: Readonly<{
   children: React.ReactNode;
 }>) {
+  const currentUser = await getCurrentUser();
+
   return (
     <html
       lang="ko"
       className={`${geistSans.variable} ${geistMono.variable} h-full overflow-hidden antialiased`}
     >
       <body className="h-full overflow-hidden bg-slate-300 text-slate-900">
-        <AppShell>{children}</AppShell>
+        <AppShell isAuthenticated={Boolean(currentUser)}>{children}</AppShell>
       </body>
     </html>
   );

@@ -8,9 +8,10 @@ import { cn } from "@/lib/cn";
 
 interface AppShellProps {
   children: React.ReactNode;
+  isAuthenticated: boolean;
 }
 
-export function AppShell({ children }: AppShellProps) {
+export function AppShell({ children, isAuthenticated }: AppShellProps) {
   const [isDesktop, setIsDesktop] = useState(false);
   const [isMobileSidebarOpen, setIsMobileSidebarOpen] = useState(false);
   const [isDesktopSidebarVisible, setIsDesktopSidebarVisible] = useState(true);
@@ -66,6 +67,7 @@ export function AppShell({ children }: AppShellProps) {
     <div className="flex h-dvh flex-col overflow-hidden">
       <Header
         brandName="문샤인랜드"
+        isAuthenticated={isAuthenticated}
         isSidebarOpen={isSidebarOpen}
         onMenuToggle={handleMenuToggle}
       />

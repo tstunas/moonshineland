@@ -4,6 +4,7 @@ import { signAccessToken } from "@/lib/jwt";
 import prisma from "@/lib/prisma";
 import bcrypt from "bcrypt";
 import { cookies } from "next/headers";
+import { redirect } from "next/navigation";
 
 export interface AuthActionResult {
   success: boolean;
@@ -140,4 +141,9 @@ export async function logoutAction(): Promise<AuthActionResult> {
   });
 
   return { success: true, message: "로그아웃되었습니다." };
+}
+
+export async function logoutAndRedirectAction(): Promise<void> {
+  await logoutAction();
+  redirect("/login");
 }

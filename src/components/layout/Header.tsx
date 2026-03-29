@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 
+import { logoutAndRedirectAction } from "@/features/auth/actions";
 import { cn } from "@/lib/cn";
 
 export interface HeaderNavItem {
@@ -20,6 +21,7 @@ interface HeaderProps {
   brandName?: string;
   brandHref?: string;
   actions?: HeaderAction[];
+  isAuthenticated?: boolean;
   className?: string;
   onMenuToggle?: () => void;
   isSidebarOpen?: boolean;
@@ -34,6 +36,7 @@ export function Header({
   brandName = "MoonshineLand",
   brandHref = "/",
   actions = DEFAULT_ACTIONS,
+  isAuthenticated = false,
   className,
   onMenuToggle,
   isSidebarOpen = true,
@@ -78,20 +81,31 @@ export function Header({
         </div>
 
         <div className="flex items-center gap-1.5 sm:gap-2">
-          {actions.map((action) => (
-            <Link
-              key={action.href}
-              href={action.href}
-              className={cn(
-                "rounded-md border px-3 py-1.5 text-xs font-semibold transition-colors sm:text-sm",
-                action.variant === "primary"
-                  ? "border-sky-100 bg-sky-700 text-white hover:bg-sky-800"
-                  : "border-sky-200/70 text-sky-50 hover:bg-sky-700/70 hover:text-white",
-              )}
-            >
-              {action.label}
-            </Link>
-          ))}
+          {isAuthenticated ? (
+            <form action={logoutAndRedirectAction}>
+              <button
+                type="submit"
+                className="rounded-md border border-sky-200/70 px-3 py-1.5 text-xs font-semibold text-sky-50 transition-colors hover:bg-sky-700/70 hover:text-white sm:text-sm"
+              >
+                로그아웃
+              </button>
+            </form>
+          ) : (
+            actions.map((action) => (
+              <Link
+                key={action.href}
+                href={action.href}
+                className={cn(
+                  "rounded-md border px-3 py-1.5 text-xs font-semibold transition-colors sm:text-sm",
+                  action.variant === "primary"
+                    ? "border-sky-100 bg-sky-700 text-white hover:bg-sky-800"
+                    : "border-sky-200/70 text-sky-50 hover:bg-sky-700/70 hover:text-white",
+                )}
+              >
+                {action.label}
+              </Link>
+            ))
+          )}
         </div>
       </div>
     </header>
