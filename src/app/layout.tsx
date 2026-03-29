@@ -18,7 +18,10 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "문샤인랜드",
+  title: {
+    default: "문샤인랜드",
+    template: "%s",
+  },
   description: "문샤인랜드는 AA연재를 위한 사이트입니다.",
 };
 

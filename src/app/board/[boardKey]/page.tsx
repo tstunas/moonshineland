@@ -1,3 +1,4 @@
+import type { Metadata } from "next";
 import { BoardThreadFilters } from "@/features/board/components/BoardThreadFilters";
 import { ThreadForm } from "@/features/board/components/ThreadForm";
 import { ThreadItem } from "@/features/board/components/ThreadItem";
@@ -7,6 +8,18 @@ import { getNextThreadIndex } from "@/features/board/lib/getNextThreadIndex";
 import { getThreads } from "@/features/board/lib/getThreads";
 import { getTotalThreads } from "@/features/board/lib/getTotalThreads";
 import { BOARDS } from "@/lib/constants";
+
+export async function generateMetadata({
+  params,
+}: {
+  params: Promise<{ boardKey: string }>;
+}): Promise<Metadata> {
+  const { boardKey } = await params;
+  const board = BOARDS.find((b) => b.key === boardKey);
+  return {
+    title: board ? `문샤인랜드: ${board.label}` : "문샤인랜드",
+  };
+}
 
 export default async function BoardPage({
   params,

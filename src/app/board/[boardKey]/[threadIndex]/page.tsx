@@ -1,7 +1,20 @@
+import type { Metadata } from "next";
 import { ThreadLiveClient } from "@/features/board/components/ThreadLiveClient";
 import { canManageThread } from "@/features/board/lib/canManageThread";
 import { getPosts } from "@/features/board/lib/getPosts";
 import { getThread } from "@/features/board/lib/getThread";
+import { getThreadTitle } from "@/features/board/lib/getThreadTitle";
+
+export async function generateMetadata({
+  params,
+}: {
+  params: Promise<{ boardKey: string; threadIndex: string }>;
+}): Promise<Metadata> {
+  const { boardKey, threadIndex: threadIndexParam } = await params;
+  const threadIndex = Number(threadIndexParam);
+  const title = await getThreadTitle(boardKey, threadIndex);
+  return { title: title ?? "문샤인랜드" };
+}
 
 export default async function ThreadPage({
   params,
