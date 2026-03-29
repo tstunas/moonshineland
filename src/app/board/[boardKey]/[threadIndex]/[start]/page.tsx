@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { ThreadLiveClient } from "@/features/board/components/ThreadLiveClient";
+import { getCurrentUser } from "@/features/auth/queries";
 import { canManageThread } from "@/features/board/lib/canManageThread";
 import { getPosts } from "@/features/board/lib/getPosts";
 import { getThread } from "@/features/board/lib/getThread";
@@ -72,13 +73,17 @@ export default async function ThreadTargetPage({
     end: start,
     includeZero: true,
   });
-  const canManage = await canManageThread(thread.userId ?? null);
+  const [canManage, currentUser] = await Promise.all([
+    canManageThread(thread.userId ?? null),
+    getCurrentUser(),
+  ]);
 
   return (
     <ThreadLiveClient
       boardKey={boardKey}
       initialThread={thread}
       initialPosts={visiblePosts}
+      isSignedIn={Boolean(currentUser)}
       mode="range"
       rangeStart={start}
       rangeEnd={start}

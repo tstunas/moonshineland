@@ -63,6 +63,8 @@ export default async function BoardPage({
   }
 
   const currentPage = Math.max(1, Number.parseInt(page ?? "1", 10) || 1);
+  const currentUser = await getCurrentUser();
+  const isSignedIn = Boolean(currentUser);
   const threadTypeFilter =
     threadType === "chat"
       ? "chat"
@@ -75,12 +77,12 @@ export default async function BoardPage({
             : "all";
   const isChatFilter =
     threadTypeFilter === "all" ? undefined : threadTypeFilter === "chat";
-  const includeAdultOnlyThreads = includeAdultOnly === "true";
+  const includeAdultOnlyThreads = isSignedIn && includeAdultOnly === "true";
   const isAdultOnlyFilter = includeAdultOnlyThreads ? undefined : false;
   const titleFilter = title?.trim() ? title.trim() : undefined;
   const authorFilter = author?.trim() ? author.trim() : undefined;
 
-  const [threadItems, totalThreads, nextThreadIndex, currentUser] = await Promise.all([
+  const [threadItems, totalThreads, nextThreadIndex] = await Promise.all([
     getThreads(boardKey, {
       page: currentPage,
       isChat: isChatFilter,
@@ -95,7 +97,6 @@ export default async function BoardPage({
       author: authorFilter,
     }),
     getNextThreadIndex(boardKey),
-    getCurrentUser(),
   ]);
   const totalPages = Math.ceil(totalThreads / 20);
   const extraQuery = {
@@ -119,6 +120,7 @@ export default async function BoardPage({
           author={authorFilter}
           includeAdultOnly={includeAdultOnlyThreads}
           threadType={threadTypeFilter}
+          isSignedIn={isSignedIn}
           isAdultVerified={Boolean(currentUser?.isAdultVerified)}
         />
       </div>
@@ -146,6 +148,7 @@ export default async function BoardPage({
       <ThreadForm
         boardKey={boardKey}
         threadIndex={nextThreadIndex}
+        isSignedIn={isSignedIn}
         isAdultVerified={Boolean(currentUser?.isAdultVerified)}
       />
     </>

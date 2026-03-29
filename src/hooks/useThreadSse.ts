@@ -23,7 +23,7 @@ interface UseThreadSseOptions {
 interface UseThreadSseResult {
   /** 연결 수립 후 서버가 부여한 connectionId */
   connectionId: string | null;
-  /** 스레드 로그인 실시간 접속자 수 */
+  /** 스레드 로그인 실시간 접속회원 수 */
   userCount: number | null;
   /** 새 레스 수신 여부를 서버에 PATCH로 변경 */
   setReceiveNewPosts: (value: boolean) => Promise<void>;

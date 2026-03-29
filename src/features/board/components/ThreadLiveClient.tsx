@@ -16,6 +16,7 @@ interface ThreadLiveClientProps {
   boardKey: string;
   initialPosts: Post[];
   initialThread: Thread;
+  isSignedIn: boolean;
   mode?: "recent" | "range" | "all";
   rangeStart?: number;
   rangeEnd?: number;
@@ -26,6 +27,7 @@ export function ThreadLiveClient({
   initialThread,
   initialPosts,
   boardKey,
+  isSignedIn,
   mode = "recent",
   rangeStart,
   rangeEnd,
@@ -450,7 +452,7 @@ export function ThreadLiveClient({
             className="h-2 w-2 rounded-full bg-emerald-500"
             aria-hidden="true"
           />
-          <span>실시간 접속자</span>
+          <span>실시간 접속회원</span>
           <strong className="font-semibold text-sky-900">
             {userCount ?? 0}
           </strong>
@@ -496,6 +498,7 @@ export function ThreadLiveClient({
         <PostForm
           boardKey={boardKey}
           threadIndex={liveThread.threadIndex}
+          isSignedIn={isSignedIn}
           posts={posts}
           thread={thread}
           mode={mode}

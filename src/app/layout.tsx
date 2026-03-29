@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 
 import { AppShell } from "@/components/layout/AppShell";
+import { PerformanceMeasureGuard } from "@/components/PerformanceMeasureGuard";
 import { PreferencesCssApplier } from "@/components/PreferencesCssApplier";
 import { Toaster } from "@/components/ui/Toaster";
 import { getCurrentUser } from "@/features/auth/queries";
@@ -39,6 +40,7 @@ export default async function RootLayout({
       className={`${geistSans.variable} ${geistMono.variable} h-full overflow-hidden antialiased`}
     >
       <body className="h-full overflow-hidden bg-slate-300 text-slate-900">
+        <PerformanceMeasureGuard />
         <PreferencesCssApplier />
         <AppShell
           isAuthenticated={Boolean(currentUser)}

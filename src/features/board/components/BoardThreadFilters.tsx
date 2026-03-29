@@ -24,6 +24,7 @@ type BoardThreadFiltersProps = {
   author?: string;
   includeAdultOnly: boolean;
   threadType: "all" | "serial" | "chat";
+  isSignedIn: boolean;
   isAdultVerified: boolean;
 };
 
@@ -34,6 +35,7 @@ export function BoardThreadFilters({
   author,
   includeAdultOnly,
   threadType,
+  isSignedIn,
   isAdultVerified,
 }: BoardThreadFiltersProps) {
   const pathname = usePathname();
@@ -46,6 +48,10 @@ export function BoardThreadFilters({
   const [includeAdultOnlyValue, setIncludeAdultOnlyValue] = useState(() => {
     if (typeof window === "undefined") {
       return includeAdultOnly;
+    }
+
+    if (!isSignedIn) {
+      return false;
     }
 
     if (includeAdultOnly) {
@@ -79,12 +85,17 @@ export function BoardThreadFilters({
   }, [threadType]);
 
   useEffect(() => {
+    if (!isSignedIn) {
+      setIncludeAdultOnlyValue(false);
+      return;
+    }
+
     if (!hasIncludeAdultOnlyParam) {
       return;
     }
 
     setIncludeAdultOnlyValue(includeAdultOnly);
-  }, [hasIncludeAdultOnlyParam, includeAdultOnly]);
+  }, [hasIncludeAdultOnlyParam, includeAdultOnly, isSignedIn]);
 
   useEffect(() => {
     window.localStorage.setItem(
@@ -114,7 +125,7 @@ export function BoardThreadFilters({
       params.set("threadType", nextValues.threadType);
     }
 
-    if (nextValues.includeAdultOnly) {
+    if (isSignedIn && nextValues.includeAdultOnly) {
       params.set("includeAdultOnly", "true");
     }
 
@@ -137,7 +148,7 @@ export function BoardThreadFilters({
     startTransition(() => {
       router.replace(nextUrl, { scroll: false });
     });
-  }, [pathname, router, searchParams]);
+  }, [isSignedIn, pathname, router, searchParams]);
 
   const buildFilterQuery = useCallback((nextValues: {
     title: string;
@@ -153,7 +164,7 @@ export function BoardThreadFilters({
       params.set("threadType", nextValues.threadType);
     }
 
-    if (nextValues.includeAdultOnly) {
+    if (isSignedIn && nextValues.includeAdultOnly) {
       params.set("includeAdultOnly", "true");
     }
 
@@ -166,7 +177,7 @@ export function BoardThreadFilters({
     }
 
     return params.toString();
-  }, []);
+  }, [isSignedIn]);
 
   const moveToAdultRequired = useCallback((nextValues: {
     title: string;
@@ -461,9 +472,15 @@ export function BoardThreadFilters({
                 <p className="text-xs font-semibold text-slate-800">
                   성인 전용 스레드 포함
                 </p>
-                <p className="mt-0.5 text-[11px] text-slate-500">
-                  꺼져 있으면 목록에서 제외됩니다.
-                </p>
+                {isSignedIn ? (
+                  <p className="mt-0.5 text-[11px] text-slate-500">
+                    꺼져 있으면 목록에서 제외됩니다.
+                  </p>
+                ) : (
+                  <p className="mt-0.5 text-[11px] text-amber-700">
+                    로그인 후 사용할 수 있습니다.
+                  </p>
+                )}
               </div>
               <span className="relative inline-flex shrink-0 items-center">
                 <input
@@ -473,6 +490,11 @@ export function BoardThreadFilters({
                   checked={includeAdultOnlyValue}
                   onChange={(event) => {
                     const nextChecked = event.target.checked;
+
+                    if (nextChecked && !isSignedIn) {
+                      setIncludeAdultOnlyValue(false);
+                      return;
+                    }
 
                     if (nextChecked && !isAdultVerified) {
                       moveToAdultRequired({
@@ -486,9 +508,10 @@ export function BoardThreadFilters({
 
                     setIncludeAdultOnlyValue(nextChecked);
                   }}
+                  disabled={!isSignedIn}
                   className="peer sr-only"
                 />
-                <span className="h-6 w-11 rounded-full bg-slate-300 transition peer-checked:bg-rose-400" />
+                <span className="h-6 w-11 rounded-full bg-slate-300 transition peer-checked:bg-rose-400 peer-disabled:opacity-50" />
                 <span className="absolute left-1 h-[18px] w-[18px] rounded-full bg-white shadow-sm transition peer-checked:translate-x-5" />
               </span>
             </label>

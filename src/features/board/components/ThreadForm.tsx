@@ -65,10 +65,12 @@ function parseContentType(command: string): ParsedContentType {
 export function ThreadForm({
   boardKey,
   threadIndex,
+  isSignedIn,
   isAdultVerified,
 }: {
   boardKey: string;
   threadIndex: number;
+  isSignedIn: boolean;
   isAdultVerified: boolean;
 }) {
   const searchParams = useSearchParams();
@@ -241,6 +243,10 @@ export function ThreadForm({
   }, []);
 
   useEffect(() => {
+    if (!isSignedIn) {
+      return;
+    }
+
     const onKeyDown = (event: KeyboardEvent) => {
       if (!event.ctrlKey || event.metaKey || event.altKey) {
         return;
@@ -298,6 +304,7 @@ export function ThreadForm({
       window.removeEventListener("keydown", onKeyDown);
     };
   }, [
+    isSignedIn,
     handleLoadIdentity,
     handleOpenPreview,
     handleRepairAa,
@@ -307,6 +314,11 @@ export function ThreadForm({
 
   const submitCreateThread = async (formData: FormData) => {
     try {
+      if (!isSignedIn) {
+        toast.error("로그인 후 작성할 수 있습니다.");
+        return;
+      }
+
       if (isAdultOnly && !isAdultVerified) {
         toast.error("성인인증이 필요합니다.");
         moveToAdultRequiredPage();
@@ -359,20 +371,24 @@ export function ThreadForm({
         action={submitCreateThread}
         className="rounded-lg border border-sky-200 bg-slate-100 p-4"
       >
-        <input type="hidden" name="boardKey" value={boardKey} />
+        <fieldset
+          disabled={!isSignedIn}
+          className={cn(!isSignedIn ? "cursor-not-allowed opacity-60" : "")}
+        >
+          <input type="hidden" name="boardKey" value={boardKey} />
 
-        <ThreadFormControls
-          isAutosizeEnabled={isAutosizeEnabled}
-          onRefresh={handleRefresh}
-          onLoadIdentity={handleLoadIdentity}
-          onClearIdentity={handleClearIdentity}
-          onToggleAutosize={handleToggleAutosize}
-          onRepairAa={handleRepairAa}
-          onOpenPreview={handleOpenPreview}
-          onOpenDice={() => {
-            setIsDiceOpen(true);
-          }}
-        />
+          <ThreadFormControls
+            isAutosizeEnabled={isAutosizeEnabled}
+            onRefresh={handleRefresh}
+            onLoadIdentity={handleLoadIdentity}
+            onClearIdentity={handleClearIdentity}
+            onToggleAutosize={handleToggleAutosize}
+            onRepairAa={handleRepairAa}
+            onOpenPreview={handleOpenPreview}
+            onOpenDice={() => {
+              setIsDiceOpen(true);
+            }}
+          />
 
         <div className="flex flex-col gap-3">
           <div className="grid gap-2 rounded-2xl border border-sky-200 bg-[linear-gradient(180deg,_rgba(240,249,255,1),_rgba(248,250,252,1))] p-3 text-[15px] text-slate-700 sm:grid-cols-2">
@@ -521,12 +537,19 @@ export function ThreadForm({
           onRemoveSelectedImage={removeSelectedImage}
         />
 
-        <button
-          type="submit"
-          className="mt-4 h-11 w-full rounded bg-sky-500 text-[20px] font-semibold text-white transition-colors hover:bg-sky-600"
-        >
-          작성
-        </button>
+          <button
+            type="submit"
+            className="mt-4 h-11 w-full rounded bg-sky-500 text-[20px] font-semibold text-white transition-colors hover:bg-sky-600"
+          >
+            작성
+          </button>
+        </fieldset>
+
+        {!isSignedIn ? (
+          <p className="mt-3 rounded border border-amber-200 bg-amber-50 px-3 py-2 text-xs font-medium text-amber-700">
+            로그인 후 스레드를 작성할 수 있습니다.
+          </p>
+        ) : null}
       </form>
 
       {isPreviewOpen ? (

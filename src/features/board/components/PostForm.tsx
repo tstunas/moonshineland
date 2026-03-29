@@ -69,6 +69,7 @@ type ThreadPatch = Partial<
 interface PostFormProps {
   boardKey: string;
   threadIndex: number;
+  isSignedIn: boolean;
   posts: Post[];
   thread: Thread;
   mode: "recent" | "range" | "all";
@@ -106,6 +107,7 @@ function parseContentType(command: string): ParsedContentType {
 export function PostForm({
   boardKey,
   threadIndex,
+  isSignedIn,
   posts,
   thread,
   mode,
@@ -398,6 +400,11 @@ export function PostForm({
 
   const submitCreatePost = async (formData: FormData) => {
     try {
+      if (!isSignedIn) {
+        toast.error("로그인 후 레스를 작성할 수 있습니다.");
+        return;
+      }
+
       const selectedCount = imageInputRef.current?.files?.length ?? 0;
       if (selectedCount > MAX_IMAGE_COUNT) {
         toast.error(
@@ -437,6 +444,10 @@ export function PostForm({
   }, [onRequestRefresh]);
 
   useEffect(() => {
+    if (!isSignedIn) {
+      return;
+    }
+
     const onKeyDown = (event: KeyboardEvent) => {
       if (!event.ctrlKey || event.metaKey || event.altKey) {
         return;
@@ -506,6 +517,7 @@ export function PostForm({
       window.removeEventListener("keydown", onKeyDown);
     };
   }, [
+    isSignedIn,
     handleLoadIdentity,
     handleOpenPreview,
     handleRefresh,
@@ -597,8 +609,12 @@ export function PostForm({
         action={submitCreatePost}
         className="rounded-lg border border-sky-200 bg-slate-100 p-4"
       >
-        <input type="hidden" name="boardKey" value={boardKey} />
-        <input type="hidden" name="threadIndex" value={threadIndex} />
+        <fieldset
+          disabled={!isSignedIn}
+          className={cn(!isSignedIn ? "cursor-not-allowed opacity-60" : "")}
+        >
+          <input type="hidden" name="boardKey" value={boardKey} />
+          <input type="hidden" name="threadIndex" value={threadIndex} />
 
         <PostFormControls
           canManageThread={canManageThread}
@@ -683,12 +699,19 @@ export function PostForm({
           onRemoveSelectedImage={removeSelectedImage}
         />
 
-        <button
-          type="submit"
-          className="mt-4 h-11 w-full rounded bg-sky-500 text-[20px] font-semibold text-white transition-colors hover:bg-sky-600"
-        >
-          작성
-        </button>
+          <button
+            type="submit"
+            className="mt-4 h-11 w-full rounded bg-sky-500 text-[20px] font-semibold text-white transition-colors hover:bg-sky-600"
+          >
+            작성
+          </button>
+        </fieldset>
+
+        {!isSignedIn ? (
+          <p className="mt-3 rounded border border-amber-200 bg-amber-50 px-3 py-2 text-xs font-medium text-amber-700">
+            로그인 후 레스를 작성할 수 있습니다.
+          </p>
+        ) : null}
       </form>
 
       {isPreviewOpen ? (

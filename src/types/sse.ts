@@ -14,7 +14,7 @@ export interface SseBoardUserCountEvent {
   count: number;
 }
 
-/** 스레드 실시간 접속자 수 이벤트 */
+/** 스레드 실시간 접속회원 수 이벤트 */
 export interface SseThreadUserCountEvent {
   boardKey: string;
   threadIndex: number;

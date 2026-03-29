@@ -82,12 +82,10 @@ function redirectToAdultRequired(
   redirect(`/adult-required?${params.toString()}`);
 }
 
-async function getBoardViewerAuthOrRedirect(
-  nextPath: string,
-): Promise<BoardViewerAuth> {
+async function getBoardViewerAuth(): Promise<BoardViewerAuth | null> {
   const token = (await cookies()).get("access_token")?.value;
   if (!token) {
-    redirectToLogin(nextPath);
+    return null;
   }
 
   try {
@@ -95,7 +93,7 @@ async function getBoardViewerAuthOrRedirect(
     const userId = Number(payload.sub);
 
     if (!Number.isInteger(userId) || userId <= 0) {
-      redirectToLogin(nextPath);
+      return null;
     }
 
     return {
@@ -103,15 +101,19 @@ async function getBoardViewerAuthOrRedirect(
       isAdultVerified: payload.isAdultVerified === true,
     };
   } catch {
-    redirectToLogin(nextPath);
+    return null;
   }
 }
 
-function ensureAdultVerifiedOrRedirect(
-  viewer: BoardViewerAuth,
+function ensureAdultAccessOrRedirect(
+  viewer: BoardViewerAuth | null,
   nextPath: string,
   options?: { clearAdultFilter?: boolean },
 ) {
+  if (!viewer) {
+    redirectToLogin(nextPath);
+  }
+
   if (!viewer.isAdultVerified) {
     redirectToAdultRequired(nextPath, options);
   }
@@ -163,10 +165,10 @@ export async function getThreadListQuery(
   filters: ThreadListFilters,
 ): Promise<ThreadListResult> {
   const nextPath = buildBoardListPath(filters);
-  const viewer = await getBoardViewerAuthOrRedirect(nextPath);
+  const viewer = await getBoardViewerAuth();
 
   if (filters.isAdultOnly !== false) {
-    ensureAdultVerifiedOrRedirect(viewer, nextPath, { clearAdultFilter: true });
+    ensureAdultAccessOrRedirect(viewer, nextPath, { clearAdultFilter: true });
   }
 
   const page = normalizePage(filters.page);
@@ -199,7 +201,7 @@ export async function getThreadListQuery(
   ]);
 
   if (threads.some((thread) => thread.isAdultOnly)) {
-    ensureAdultVerifiedOrRedirect(viewer, nextPath, { clearAdultFilter: true });
+    ensureAdultAccessOrRedirect(viewer, nextPath, { clearAdultFilter: true });
   }
 
   return {
@@ -219,7 +221,7 @@ export async function getThreadQuery(
   }
 
   const nextPath = `/board/${boardKey}/${threadIndex}`;
-  const viewer = await getBoardViewerAuthOrRedirect(nextPath);
+  const viewer = await getBoardViewerAuth();
 
   return prisma.thread.findFirst({
     where: {
@@ -230,7 +232,7 @@ export async function getThreadQuery(
     },
   }).then((thread) => {
     if (thread?.isAdultOnly) {
-      ensureAdultVerifiedOrRedirect(viewer, nextPath);
+      ensureAdultAccessOrRedirect(viewer, nextPath);
     }
     return thread;
   });
@@ -238,8 +240,8 @@ export async function getThreadQuery(
 
 export async function getPostListQuery(filters: PostListFilters): Promise<Post[]> {
   const nextPath = `/board/${filters.boardKey}/${filters.threadIndex}`;
-  const viewer = await getBoardViewerAuthOrRedirect(nextPath);
-  const viewerUserId = await resolveViewerUserIdFromAccessToken();
+  const viewer = await getBoardViewerAuth();
+  const viewerUserId = viewer?.userId ?? null;
 
   const thread = await prisma.thread.findFirst({
     where: {
@@ -260,7 +262,7 @@ export async function getPostListQuery(filters: PostListFilters): Promise<Post[]
   }
 
   if (thread.isAdultOnly) {
-    ensureAdultVerifiedOrRedirect(viewer, nextPath);
+    ensureAdultAccessOrRedirect(viewer, nextPath);
   }
 
   const mode = filters.mode ?? "all";
@@ -350,7 +352,7 @@ export async function getPostsAfterOrderQuery(
   lastPostOrder: number,
 ): Promise<Post[]> {
   const nextPath = `/board/${boardKey}/${threadIndex}`;
-  const viewer = await getBoardViewerAuthOrRedirect(nextPath);
+  const viewer = await getBoardViewerAuth();
 
   const thread = await prisma.thread.findFirst({
     where: {
@@ -370,7 +372,7 @@ export async function getPostsAfterOrderQuery(
   }
 
   if (thread.isAdultOnly) {
-    ensureAdultVerifiedOrRedirect(viewer, nextPath);
+    ensureAdultAccessOrRedirect(viewer, nextPath);
   }
 
   return prisma.post.findMany({
