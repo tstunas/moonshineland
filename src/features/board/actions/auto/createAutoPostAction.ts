@@ -10,6 +10,8 @@ import prisma from "@/lib/prisma";
 
 import { listAutoPostsByThreadId, resolveAutoPostOwnerContext } from "./helpers";
 import type { AutoPostActionResult } from "./types";
+import { createAuthorWithTripcode } from "../../lib/createAuthorWithTripcode";
+import { createIdcode } from "../../lib/createIdcode";
 
 const MAX_IMAGE_COUNT = 10;
 
@@ -90,8 +92,8 @@ export async function createAutoPostAction(
           threadId: context.thread.id,
           userId: context.userId,
           autoPostSequence: nextSequence,
-          author,
-          idcode: "TODO-IDCODE",
+          author: createAuthorWithTripcode(author),
+          idcode: createIdcode(context.userId),
           rawContent: content,
           content: htmlContent,
           contentType,

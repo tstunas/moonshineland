@@ -233,7 +233,11 @@ export function PostItem({
       <header className="border-b border-sky-200 bg-slate-200 px-6 py-4">
         <p className="text-[18px] leading-tight text-sky-900">
           <span className="font-medium">#{post.postOrder}</span>{" "}
-          <span>{author}</span>{" "}
+          <span
+            dangerouslySetInnerHTML={{
+              __html: author,
+            }}
+          ></span>{" "}
           <span className="text-[14px] leading-tight text-slate-500">
             ({post.idcode})
           </span>{" "}

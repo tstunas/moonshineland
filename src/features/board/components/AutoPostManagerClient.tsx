@@ -1,26 +1,22 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useRef, useState, type FormEvent, type MouseEvent } from "react";
+import {
+  useCallback,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+  type FormEvent,
+  type MouseEvent,
+} from "react";
 
-import {
-  createAutoPostAction,
-} from "@/features/board/actions/auto/createAutoPostAction";
-import {
-  editAutoPostAction,
-} from "@/features/board/actions/auto/editAutoPostAction";
-import {
-  getAutoPostScheduleAction,
-} from "@/features/board/actions/auto/getAutoPostScheduleAction";
+import { createAutoPostAction } from "@/features/board/actions/auto/createAutoPostAction";
+import { editAutoPostAction } from "@/features/board/actions/auto/editAutoPostAction";
+import { getAutoPostScheduleAction } from "@/features/board/actions/auto/getAutoPostScheduleAction";
 import { getAutoPostsAction } from "@/features/board/actions/auto/getAutoPostsAction";
-import {
-  saveAutoPostScheduleAction,
-} from "@/features/board/actions/auto/saveAutoPostScheduleAction";
-import {
-  startAutoPostAction,
-} from "@/features/board/actions/auto/startAutoPostAction";
-import {
-  stopAutoPostAction,
-} from "@/features/board/actions/auto/stopAutoPostAction";
+import { saveAutoPostScheduleAction } from "@/features/board/actions/auto/saveAutoPostScheduleAction";
+import { startAutoPostAction } from "@/features/board/actions/auto/startAutoPostAction";
+import { stopAutoPostAction } from "@/features/board/actions/auto/stopAutoPostAction";
 import {
   AUTO_POST_INTERVAL_OPTIONS,
   type AutoPostPayload,
@@ -55,7 +51,9 @@ function toggleCommandToken(command: string, token: string): string {
     .split(".")
     .map((value) => value.trim())
     .filter(Boolean);
-  const hasToken = tokens.some((value) => value.toLowerCase() === normalizedToken);
+  const hasToken = tokens.some(
+    (value) => value.toLowerCase() === normalizedToken,
+  );
 
   if (hasToken) {
     return tokens
@@ -137,15 +135,25 @@ export function AutoPostManagerClient({
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [isScheduleSaving, setIsScheduleSaving] = useState(false);
   const [isScheduleLoading, setIsScheduleLoading] = useState(false);
-  const [schedule, setSchedule] = useState<AutoPostSchedulePayload | null>(null);
+  const [schedule, setSchedule] = useState<AutoPostSchedulePayload | null>(
+    null,
+  );
   const [scheduleIntervalSeconds, setScheduleIntervalSeconds] = useState(60);
-  const [scheduleOrderMode, setScheduleOrderMode] = useState<"sequence" | "random">("sequence");
-  const [scheduleStopWhenArchived, setScheduleStopWhenArchived] = useState(true);
+  const [scheduleOrderMode, setScheduleOrderMode] = useState<
+    "sequence" | "random"
+  >("sequence");
+  const [scheduleStopWhenArchived, setScheduleStopWhenArchived] =
+    useState(true);
   const [fadingAutoPostIds, setFadingAutoPostIds] = useState<number[]>([]);
-  const [dismissedAutoPostIds, setDismissedAutoPostIds] = useState<number[]>([]);
+  const [dismissedAutoPostIds, setDismissedAutoPostIds] = useState<number[]>(
+    [],
+  );
 
-  const [editingAutoPost, setEditingAutoPost] = useState<AutoPostPayload | null>(null);
-  const [fullscreenInlineImageUrl, setFullscreenInlineImageUrl] = useState<string | null>(null);
+  const [editingAutoPost, setEditingAutoPost] =
+    useState<AutoPostPayload | null>(null);
+  const [fullscreenInlineImageUrl, setFullscreenInlineImageUrl] = useState<
+    string | null
+  >(null);
   const [editAuthor, setEditAuthor] = useState("");
   const [editCommand, setEditCommand] = useState("");
   const [editContent, setEditContent] = useState("");
@@ -185,7 +193,10 @@ export function AutoPostManagerClient({
       return;
     }
 
-    window.localStorage.setItem(autosizeStorageKey, isAutosizeEnabled ? "1" : "0");
+    window.localStorage.setItem(
+      autosizeStorageKey,
+      isAutosizeEnabled ? "1" : "0",
+    );
   }, [autosizeStorageKey, isAutosizeEnabled, isStorageHydrated]);
 
   useEffect(() => {
@@ -237,7 +248,9 @@ export function AutoPostManagerClient({
 
   const removeSelectedImage = useCallback(
     (indexToRemove: number) => {
-      const nextFiles = selectedImages.filter((_, index) => index !== indexToRemove);
+      const nextFiles = selectedImages.filter(
+        (_, index) => index !== indexToRemove,
+      );
       syncSelectedImages(nextFiles);
     },
     [selectedImages, syncSelectedImages],
@@ -345,10 +358,14 @@ export function AutoPostManagerClient({
 
         setAutoPosts(result.autoPosts ?? []);
         setDismissedAutoPostIds((current) =>
-          current.filter((id) => (result.autoPosts ?? []).some((item) => item.id === id)),
+          current.filter((id) =>
+            (result.autoPosts ?? []).some((item) => item.id === id),
+          ),
         );
         setFadingAutoPostIds((current) =>
-          current.filter((id) => (result.autoPosts ?? []).some((item) => item.id === id)),
+          current.filter((id) =>
+            (result.autoPosts ?? []).some((item) => item.id === id),
+          ),
         );
 
         if (isBottomLockEnabled && !silent) {
@@ -380,7 +397,9 @@ export function AutoPostManagerClient({
 
       const selectedCount = imageInputRef.current?.files?.length ?? 0;
       if (selectedCount > MAX_IMAGE_COUNT) {
-        toast.error(`이미지는 최대 ${MAX_IMAGE_COUNT}개까지 첨부할 수 있습니다.`);
+        toast.error(
+          `이미지는 최대 ${MAX_IMAGE_COUNT}개까지 첨부할 수 있습니다.`,
+        );
         return;
       }
 
@@ -395,10 +414,14 @@ export function AutoPostManagerClient({
 
         setAutoPosts(result.autoPosts ?? []);
         setDismissedAutoPostIds((current) =>
-          current.filter((id) => (result.autoPosts ?? []).some((item) => item.id === id)),
+          current.filter((id) =>
+            (result.autoPosts ?? []).some((item) => item.id === id),
+          ),
         );
         setFadingAutoPostIds((current) =>
-          current.filter((id) => (result.autoPosts ?? []).some((item) => item.id === id)),
+          current.filter((id) =>
+            (result.autoPosts ?? []).some((item) => item.id === id),
+          ),
         );
         window.localStorage.setItem(authorStorageKey, author.trim());
         window.localStorage.setItem(commandStorageKey, command.trim());
@@ -463,32 +486,46 @@ export function AutoPostManagerClient({
 
       setAutoPosts(result.autoPosts ?? []);
       setDismissedAutoPostIds((current) =>
-        current.filter((id) => (result.autoPosts ?? []).some((item) => item.id === id)),
+        current.filter((id) =>
+          (result.autoPosts ?? []).some((item) => item.id === id),
+        ),
       );
       setFadingAutoPostIds((current) =>
-        current.filter((id) => (result.autoPosts ?? []).some((item) => item.id === id)),
+        current.filter((id) =>
+          (result.autoPosts ?? []).some((item) => item.id === id),
+        ),
       );
       setEditingAutoPost(null);
       toast.success(result.message);
     } finally {
       setIsEditingSaving(false);
     }
-  }, [boardKey, editAuthor, editCommand, editContent, editingAutoPost, threadIndex]);
+  }, [
+    boardKey,
+    editAuthor,
+    editCommand,
+    editContent,
+    editingAutoPost,
+    threadIndex,
+  ]);
 
   const autoPostCountLabel = useMemo(() => {
     return `${autoPosts.length}개`;
   }, [autoPosts.length]);
 
-  const applyScheduleState = useCallback((nextSchedule: AutoPostSchedulePayload | null) => {
-    setSchedule(nextSchedule);
-    if (!nextSchedule) {
-      return;
-    }
+  const applyScheduleState = useCallback(
+    (nextSchedule: AutoPostSchedulePayload | null) => {
+      setSchedule(nextSchedule);
+      if (!nextSchedule) {
+        return;
+      }
 
-    setScheduleIntervalSeconds(nextSchedule.intervalSeconds);
-    setScheduleOrderMode(nextSchedule.orderMode);
-    setScheduleStopWhenArchived(nextSchedule.stopWhenArchived);
-  }, []);
+      setScheduleIntervalSeconds(nextSchedule.intervalSeconds);
+      setScheduleOrderMode(nextSchedule.orderMode);
+      setScheduleStopWhenArchived(nextSchedule.stopWhenArchived);
+    },
+    [],
+  );
 
   useEffect(() => {
     let cancelled = false;
@@ -601,8 +638,11 @@ export function AutoPostManagerClient({
     }
   }, [applyScheduleState, boardKey, threadIndex]);
 
-  const scheduleStatusLabel =
-    schedule?.isEnabled ? "실행 중" : schedule ? "중지" : "미설정";
+  const scheduleStatusLabel = schedule?.isEnabled
+    ? "실행 중"
+    : schedule
+      ? "중지"
+      : "미설정";
 
   const scheduleNextRunLabel = schedule?.nextRunAt
     ? formatPostDate(schedule.nextRunAt)
@@ -710,36 +750,49 @@ export function AutoPostManagerClient({
     eventSource.addEventListener("thread:auto-post-fired", onAutoPostFired);
 
     return () => {
-      eventSource.removeEventListener("thread:auto-post-fired", onAutoPostFired);
+      eventSource.removeEventListener(
+        "thread:auto-post-fired",
+        onAutoPostFired,
+      );
       eventSource.close();
     };
   }, [boardKey, threadIndex]);
 
   const visibleAutoPosts = useMemo(
-    () => autoPosts.filter((autoPost) => !dismissedAutoPostIds.includes(autoPost.id)),
+    () =>
+      autoPosts.filter(
+        (autoPost) => !dismissedAutoPostIds.includes(autoPost.id),
+      ),
     [autoPosts, dismissedAutoPostIds],
   );
 
-  const openInlineImageFullscreen = useCallback((event: MouseEvent<HTMLDivElement>) => {
-    const target = event.target as HTMLElement | null;
-    if (!target) {
-      return;
-    }
+  const openInlineImageFullscreen = useCallback(
+    (event: MouseEvent<HTMLDivElement>) => {
+      const target = event.target as HTMLElement | null;
+      if (!target) {
+        return;
+      }
 
-    const image = target.closest("img.content-inline-image") as HTMLImageElement | null;
-    if (!image) {
-      return;
-    }
+      const image = target.closest(
+        "img.content-inline-image",
+      ) as HTMLImageElement | null;
+      if (!image) {
+        return;
+      }
 
-    event.preventDefault();
-    setFullscreenInlineImageUrl(image.currentSrc || image.src);
-  }, []);
+      event.preventDefault();
+      setFullscreenInlineImageUrl(image.currentSrc || image.src);
+    },
+    [],
+  );
 
   return (
     <div ref={rootContainerRef} className="space-y-4">
       <section className="rounded-2xl border border-slate-200 bg-white p-4">
         <div className="mb-3 flex items-center justify-between">
-          <h2 className="text-lg font-bold text-slate-900">자동투하 레스 목록</h2>
+          <h2 className="text-lg font-bold text-slate-900">
+            자동투하 레스 목록
+          </h2>
           <button
             type="button"
             disabled={isRefreshing}
@@ -766,9 +819,17 @@ export function AutoPostManagerClient({
                 >
                   <header className="border-b border-sky-200 bg-slate-200 px-5 py-3">
                     <p className="text-[16px] leading-tight text-sky-900">
-                      <span className="font-medium">AUTO#{autoPost.autoPostSequence}</span>{" "}
-                      <span>{autoPost.author || AnonymousAuthor}</span>{" "}
-                      <span className="text-[13px] text-slate-500">({autoPost.idcode})</span>{" "}
+                      <span className="font-medium">
+                        AUTO#{autoPost.autoPostSequence}
+                      </span>{" "}
+                      <span
+                        dangerouslySetInnerHTML={{
+                          __html: autoPost.author || AnonymousAuthor,
+                        }}
+                      ></span>{" "}
+                      <span className="text-[13px] text-slate-500">
+                        ({autoPost.idcode})
+                      </span>{" "}
                       <button
                         type="button"
                         onClick={() => {
@@ -823,7 +884,9 @@ export function AutoPostManagerClient({
 
       <section className="rounded-2xl border border-sky-200 bg-white p-4 shadow-sm">
         <div className="mb-2 flex items-center justify-between">
-          <h2 className="text-xl font-bold text-slate-900">자동투하 레스 작성</h2>
+          <h2 className="text-xl font-bold text-slate-900">
+            자동투하 레스 작성
+          </h2>
           <span className="rounded border border-sky-200 bg-sky-50 px-2 py-1 text-xs font-medium text-sky-700">
             현재 저장: {autoPostCountLabel}
           </span>
@@ -872,7 +935,9 @@ export function AutoPostManagerClient({
               <select
                 value={scheduleOrderMode}
                 onChange={(event) => {
-                  setScheduleOrderMode(event.target.value === "random" ? "random" : "sequence");
+                  setScheduleOrderMode(
+                    event.target.value === "random" ? "random" : "sequence",
+                  );
                 }}
                 className="h-9 rounded border border-indigo-200 bg-white px-2 text-sm text-slate-900"
               >
@@ -1035,7 +1100,9 @@ export function AutoPostManagerClient({
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/55 p-4">
           <div className="w-full max-w-2xl overflow-hidden rounded-2xl border border-sky-200 bg-gradient-to-b from-white to-sky-50 shadow-2xl">
             <div className="flex items-center justify-between border-b border-sky-100 bg-white/90 px-5 py-4">
-              <h3 className="text-lg font-bold text-slate-900">자동투하 레스 수정</h3>
+              <h3 className="text-lg font-bold text-slate-900">
+                자동투하 레스 수정
+              </h3>
               <button
                 type="button"
                 onClick={() => {

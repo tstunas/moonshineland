@@ -13,6 +13,8 @@ import {
   uploadImages,
 } from "../helpers";
 import type { BoardActionResult } from "../types";
+import { createAuthorWithTripcode } from "../../lib/createAuthorWithTripcode";
+import { createIdcode } from "../../lib/createIdcode";
 
 const MAX_POST_ORDER_RETRY = 5;
 
@@ -65,7 +67,7 @@ export async function createPostAction(
     return { success: false, message: "내용은 필수입니다." };
   }
 
-  const commands = command.split('.')
+  const commands = command.split(".");
 
   const contentType = parseContentType(command) ?? "text";
   const off = commands.includes("off");
@@ -160,8 +162,8 @@ export async function createPostAction(
               threadId: thread.id,
               userId,
               postOrder: nextPostOrder,
-              author,
-              idcode: "TODO-IDCODE",
+              author: createAuthorWithTripcode(author),
+              idcode: createIdcode(userId),
               content: htmlContent,
               rawContent: content,
               contentType,
@@ -172,11 +174,16 @@ export async function createPostAction(
                 : {}),
             },
             include: {
-              postImages: { orderBy: { sortOrder: "asc" }, select: { id: true, imageUrl: true, sortOrder: true } },
+              postImages: {
+                orderBy: { sortOrder: "asc" },
+                select: { id: true, imageUrl: true, sortOrder: true },
+              },
             },
           });
 
-          const updatePostUpdatedAt = noup ? {} : { postUpdatedAt: createdPost.createdAt };
+          const updatePostUpdatedAt = noup
+            ? {}
+            : { postUpdatedAt: createdPost.createdAt };
 
           await tx.thread.update({
             where: {
@@ -194,8 +201,7 @@ export async function createPostAction(
         break;
       } catch (error) {
         const canRetry =
-          attempt < MAX_POST_ORDER_RETRY - 1 &&
-          isPostOrderConflictError(error);
+          attempt < MAX_POST_ORDER_RETRY - 1 && isPostOrderConflictError(error);
 
         if (canRetry) {
           continue;
@@ -208,7 +214,8 @@ export async function createPostAction(
     if (!createdPostForBroadcast) {
       return {
         success: false,
-        message: "너무 많은 사람이 동시에 작성 중입니다. 잠시 후 다시 시도해 주세요.",
+        message:
+          "너무 많은 사람이 동시에 작성 중입니다. 잠시 후 다시 시도해 주세요.",
       };
     }
 

@@ -1,5 +1,7 @@
 "use client";
 
+import { createAuthorWithTripcode } from "../lib/createAuthorWithTripcode";
+
 interface PreviewModalProps {
   content: string;
   author?: string;
@@ -20,7 +22,7 @@ export function PreviewModal({
   onClose,
 }: PreviewModalProps) {
   const primaryLine =
-    titleLine ?? `#? ${author || "이름 없음"}${command ? ` (${command})` : ""}`;
+    titleLine ?? `#? ${createAuthorWithTripcode(author || "")}${command ? ` (${command})` : ""}`;
   const secondaryLine = subLine ?? "방금";
 
   return (
@@ -47,8 +49,10 @@ export function PreviewModal({
         <div className="p-4">
           <article className="overflow-hidden rounded-lg border border-sky-200 bg-white">
             <header className="border-b border-sky-200 bg-slate-200 px-6 py-4">
-              <p className="text-[20px] leading-tight text-sky-900">
-                {primaryLine}
+              <p className="text-[20px] leading-tight text-sky-900" dangerouslySetInnerHTML={{
+                __html: primaryLine
+              }}>
+                
               </p>
               <p className="mt-2 text-[16px] leading-tight text-slate-700">
                 {secondaryLine}

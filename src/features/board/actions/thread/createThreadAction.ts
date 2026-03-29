@@ -11,6 +11,8 @@ import {
   uploadImages,
 } from "../helpers";
 import type { BoardActionResult } from "../types";
+import { createAuthorWithTripcode } from "../../lib/createAuthorWithTripcode";
+import { createIdcode } from "../../lib/createIdcode";
 
 const MAX_THREAD_INDEX_RETRY = 5;
 
@@ -141,8 +143,8 @@ export async function createThreadAction(
               userId,
               threadIndex: nextThreadIndex,
               title,
-              author: author || "",
-              idcode: "TODO-IDCODE",
+              author: createAuthorWithTripcode(author),
+              idcode: createIdcode(userId),
               postCount: 0,
               isAdultOnly,
               isChat,
@@ -168,8 +170,8 @@ export async function createThreadAction(
               threadId: thread.id,
               userId,
               postOrder: 0,
-              author: author || "",
-              idcode: "TODO-IDCODE",
+              author: createAuthorWithTripcode(author),
+              idcode: createIdcode(userId),
               content: nextHtmlContent,
               rawContent: content,
               contentType,
