@@ -135,7 +135,7 @@ model Thread {
   isArchive    Boolean  @default(false)
   createdAt    DateTime @default(now()) @db.DateTime(3)
   updatedAt    DateTime @updatedAt @db.DateTime(3)
-  postUpdatedAt DateTime? @db.DateTime(3)
+  postUpdatedAt DateTime @default(now()) @db.DateTime(3)
   boardId      Int
   userId       Int?
 

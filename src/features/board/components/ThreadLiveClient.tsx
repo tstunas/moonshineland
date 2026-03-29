@@ -29,6 +29,7 @@ export function ThreadLiveClient({
   rangeEnd,
 }: ThreadLiveClientProps) {
   const [posts, setPosts] = useState(initialPosts);
+  const [thread, setThread] = useState(initialThread);
   const [receiveNewPosts, setReceiveNewPostsState] = useState(['recent', 'all'].includes(mode));
 
   const { userCount, setReceiveNewPosts } = useThreadSse(
@@ -48,6 +49,11 @@ export function ThreadLiveClient({
               (a, b) => a.postOrder - b.postOrder,
             );
           });
+          setThread((currentThread) => ({
+            ...currentThread,
+            postCount: Math.max(currentThread.postCount, post.postOrder),
+            postUpdatedAt: new Date(Math.max(new Date(currentThread.postUpdatedAt).getTime(), new Date(post.createdAt).getTime())),
+          }));
         });
       },
       onPostContentEdited: (data) => {
@@ -87,7 +93,7 @@ export function ThreadLiveClient({
   );
 
   const liveThread: Thread = {
-    ...initialThread,
+    ...thread,
     postCount: posts.length,
   };
 
