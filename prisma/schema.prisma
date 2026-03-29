@@ -126,7 +126,7 @@ model Thread {
   author       String   @db.VarChar(60)
   idcode       String   @db.VarChar(32)
   postCount    Int      @default(0)
-  postLimit    Int      @default(500)
+  postLimit    Int      @default(1001)
   passwordHash String?  @db.VarChar(255)
   isAdultOnly  Boolean  @default(false)
   isHidden     Boolean  @default(false)
