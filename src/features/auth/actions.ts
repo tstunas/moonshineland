@@ -61,6 +61,7 @@ export async function loginAction(
       sub: String(user.id),
       email: user.email,
       isAdultVerified: user.isAdultVerified,
+      isAdmin: user.isAdmin,
     });
 
     (await cookies()).set(
@@ -115,6 +116,7 @@ export async function signupAction(
       sub: String(user.id),
       email: user.email,
       isAdultVerified: user.isAdultVerified,
+      isAdmin: user.isAdmin,
     });
 
     (await cookies()).set(

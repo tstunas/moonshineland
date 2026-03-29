@@ -40,7 +40,12 @@ export default async function RootLayout({
     >
       <body className="h-full overflow-hidden bg-slate-300 text-slate-900">
         <PreferencesCssApplier />
-        <AppShell isAuthenticated={Boolean(currentUser)}>{children}</AppShell>
+        <AppShell
+          isAuthenticated={Boolean(currentUser)}
+          isAdmin={Boolean(currentUser?.isAdmin)}
+        >
+          {children}
+        </AppShell>
         <Toaster />
       </body>
     </html>

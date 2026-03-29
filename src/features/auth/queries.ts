@@ -4,6 +4,7 @@ import { cookies } from "next/headers";
 export interface CurrentUser {
   id: string;
   email: string;
+  isAdmin: boolean;
 }
 
 /**
@@ -21,6 +22,7 @@ export async function getCurrentUser(): Promise<CurrentUser | null> {
     return {
       id: String(payload.sub),
       email: String(payload.email ?? ""),
+      isAdmin: Boolean(payload.isAdmin),
     };
   } catch {
     return null;

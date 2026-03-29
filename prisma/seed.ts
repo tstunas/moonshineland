@@ -1,4 +1,5 @@
 import prisma from "../src/lib/prisma";
+import bcrypt from "bcrypt";
 
 type SeedBoard = {
   boardKey: string;
@@ -42,7 +43,45 @@ const DEFAULT_BOARDS: SeedBoard[] = [
   },
 ];
 
+const ADMIN_EMAIL = process.env.ADMIN_EMAIL?.trim().toLowerCase();
+const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD?.trim();
+const ADMIN_USERNAME = process.env.ADMIN_USERNAME?.trim() || "admin";
+
+function assertAdminSeedEnv() {
+  if (!ADMIN_EMAIL) {
+    throw new Error("ADMIN_EMAIL 환경변수가 필요합니다.");
+  }
+
+  if (!ADMIN_PASSWORD) {
+    throw new Error("ADMIN_PASSWORD 환경변수가 필요합니다.");
+  }
+
+  if (ADMIN_PASSWORD.length < 8) {
+    throw new Error("ADMIN_PASSWORD는 8자 이상이어야 합니다.");
+  }
+}
+
 async function main() {
+  assertAdminSeedEnv();
+
+  const passwordHash = await bcrypt.hash(ADMIN_PASSWORD!, 10);
+  const adminUser = await prisma.user.upsert({
+    where: { email: ADMIN_EMAIL! },
+    create: {
+      email: ADMIN_EMAIL!,
+      username: ADMIN_USERNAME,
+      passwordHash,
+      isAdmin: true,
+      isActive: true,
+    },
+    update: {
+      username: ADMIN_USERNAME,
+      passwordHash,
+      isAdmin: true,
+      isActive: true,
+    },
+  });
+
   await prisma.$transaction(
     DEFAULT_BOARDS.map((board) =>
       prisma.board.upsert({
@@ -54,6 +93,7 @@ async function main() {
           isBasic: board.isBasic ?? false,
           isArchive: board.isArchive ?? false,
           isAdultOnly: board.isAdultOnly ?? false,
+          userId: adminUser.id,
         },
         update: {
           name: board.name,
@@ -61,11 +101,13 @@ async function main() {
           isBasic: board.isBasic ?? false,
           isArchive: board.isArchive ?? false,
           isAdultOnly: board.isAdultOnly ?? false,
+          userId: adminUser.id,
         },
       }),
     ),
   );
 
+  console.info(`Seeded admin account: ${ADMIN_EMAIL}`);
   console.info(`Seeded default boards: ${DEFAULT_BOARDS.length}`);
 }
 

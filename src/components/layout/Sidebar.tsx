@@ -14,12 +14,14 @@ export interface SidebarItem {
 export interface SidebarSection {
   title: string;
   items: SidebarItem[];
+  requiresAdmin?: boolean;
 }
 
 interface SidebarProps {
   sections?: SidebarSection[];
   className?: string;
   title?: string;
+  isAdmin?: boolean;
   onItemClick?: () => void;
 }
 
@@ -36,6 +38,7 @@ const DEFAULT_SECTIONS: SidebarSection[] = [
       { label: "테스트판", href: "/board/test" },
       { label: "번역판", href: "/board/trans" },
       { label: "명예의 전당", href: "/board/honor" },
+      { label: "게시판 목록", href: "/board" },
     ],
   },
   {
@@ -51,7 +54,11 @@ const DEFAULT_SECTIONS: SidebarSection[] = [
   },
   {
     title: "관리자 페이지",
-    items: [{ label: "대시보드", href: "/dashboard" }],
+    requiresAdmin: true,
+    items: [
+      { label: "대시보드", href: "/dashboard" },
+      { label: "감사 로그", href: "/audits" },
+    ],
   },
 ];
 
@@ -59,9 +66,11 @@ export function Sidebar({
   sections = DEFAULT_SECTIONS,
   className,
   title = "네비게이션",
+  isAdmin = false,
   onItemClick,
 }: SidebarProps) {
   const pathname = usePathname();
+  const visibleSections = sections.filter((section) => !section.requiresAdmin || isAdmin);
 
   const isItemActive = (item: SidebarItem) => {
     if (item.href === "/") {
@@ -89,7 +98,7 @@ export function Sidebar({
         </p>
 
         <div className="space-y-5">
-          {sections.map((section) => (
+          {visibleSections.map((section) => (
             <section key={section.title}>
               <h2 className="mb-2 px-1 text-xs font-semibold uppercase tracking-wide text-slate-500">
                 {section.title}

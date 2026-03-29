@@ -9,9 +9,10 @@ import { cn } from "@/lib/cn";
 interface AppShellProps {
   children: React.ReactNode;
   isAuthenticated: boolean;
+  isAdmin: boolean;
 }
 
-export function AppShell({ children, isAuthenticated }: AppShellProps) {
+export function AppShell({ children, isAuthenticated, isAdmin }: AppShellProps) {
   const [isDesktop, setIsDesktop] = useState(false);
   const [isMobileSidebarOpen, setIsMobileSidebarOpen] = useState(false);
   const [isDesktopSidebarVisible, setIsDesktopSidebarVisible] = useState(true);
@@ -68,6 +69,7 @@ export function AppShell({ children, isAuthenticated }: AppShellProps) {
       <Header
         brandName="문샤인랜드"
         isAuthenticated={isAuthenticated}
+        isAdmin={isAdmin}
         isSidebarOpen={isSidebarOpen}
         onMenuToggle={handleMenuToggle}
       />
@@ -93,7 +95,7 @@ export function AppShell({ children, isAuthenticated }: AppShellProps) {
             isMobileSidebarOpen ? "translate-x-0" : "-translate-x-full",
           )}
         >
-          <Sidebar onItemClick={() => setIsMobileSidebarOpen(false)} />
+          <Sidebar isAdmin={isAdmin} onItemClick={() => setIsMobileSidebarOpen(false)} />
         </div>
 
         {/* Desktop in-flow sidebar with sticky viewport height and independent scroll */}
@@ -103,7 +105,7 @@ export function AppShell({ children, isAuthenticated }: AppShellProps) {
             isDesktopSidebarVisible ? "w-36" : "w-0",
           )}
         >
-          <Sidebar />
+          <Sidebar isAdmin={isAdmin} />
         </div>
 
         <main className="box-border h-full min-w-0 flex-1 overflow-y-auto bg-slate-100 px-4 py-5 sm:px-6">

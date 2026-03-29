@@ -38,6 +38,25 @@ You can start editing the page by modifying `app/page.tsx`. The page auto-update
 
 This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
 
+## Prisma Seed (관리자 + 기본 게시판)
+
+`prisma db seed` 실행 시 아래 환경변수로 운영자 계정을 생성/갱신하고,
+기본 게시판 데이터를 함께 삽입합니다.
+
+```bash
+ADMIN_EMAIL=admin@example.com
+ADMIN_PASSWORD=change-this-password
+ADMIN_USERNAME=admin
+```
+
+실행 명령:
+
+```bash
+npm run prisma:seed
+```
+
+`ADMIN_EMAIL`, `ADMIN_PASSWORD`가 없으면 seed는 실패합니다.
+
 ## Learn More
 
 To learn more about Next.js, take a look at the following resources:

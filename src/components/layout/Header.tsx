@@ -22,6 +22,7 @@ interface HeaderProps {
   brandHref?: string;
   actions?: HeaderAction[];
   isAuthenticated?: boolean;
+  isAdmin?: boolean;
   className?: string;
   onMenuToggle?: () => void;
   isSidebarOpen?: boolean;
@@ -37,12 +38,14 @@ export function Header({
   brandHref = "/",
   actions = DEFAULT_ACTIONS,
   isAuthenticated = false,
+  isAdmin = false,
   className,
   onMenuToggle,
   isSidebarOpen = true,
 }: HeaderProps) {
   return (
     <header
+      data-is-admin={isAdmin ? "true" : "false"}
       className={cn(
         "sticky top-0 z-50 border-b border-sky-700 bg-sky-600 text-white",
         className,

@@ -52,6 +52,7 @@ model User {
   posts               Post[]
   autoPosts           AutoPost[]
   autoPostSchedules   AutoPostSchedule[]
+  adminAuditLogs      AdminAuditLog[]
 } 
 
 model Announcement {
@@ -314,4 +315,21 @@ model AutoPostSchedule {
   @@index([isEnabled, nextRunAt, lockUntil])
   @@index([nextRunAt])
   @@index([userId])
+}
+
+model AdminAuditLog {
+  id          Int      @id @default(autoincrement())
+  action      String   @db.VarChar(80)
+  targetType  String   @db.VarChar(40)
+  targetIds   Json     @db.Json
+  summary     String   @db.VarChar(255)
+  details     Json?    @db.Json
+  createdAt   DateTime @default(now()) @db.DateTime(3)
+  adminUserId Int
+
+  adminUser User @relation(fields: [adminUserId], references: [id], onDelete: Cascade)
+
+  @@index([createdAt])
+  @@index([targetType, createdAt])
+  @@index([adminUserId, createdAt])
 }
