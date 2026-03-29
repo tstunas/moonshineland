@@ -1,3 +1,9 @@
+import type { Metadata } from "next";
+
+export const metadata: Metadata = {
+  title: "문샤인랜드: 아카이브",
+};
+
 export default function ArchivePage() {
   return (
     <div className="flex h-full items-center justify-center">

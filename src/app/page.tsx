@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useSyncExternalStore } from "react";
+import { useEffect, useSyncExternalStore } from "react";
 
 import { PREFS_PRIMARY_BOARD } from "@/lib/preferences";
 
@@ -74,6 +74,10 @@ const reactionMoments = [
 const quickFacts = ["AA 중심", "실시간 갱신", "참여형 연재", "ORPG", "번역판"] as const;
 
 export default function Home() {
+  useEffect(() => {
+    document.title = "문샤인랜드: 홈";
+  }, []);
+
   const primaryBoard = useSyncExternalStore(
     (onStoreChange) => {
       window.addEventListener("storage", onStoreChange);

@@ -2,6 +2,7 @@
 
 import {
   useCallback,
+  useEffect,
   useRef,
   useState,
   type PointerEvent as ReactPointerEvent,
@@ -218,6 +219,10 @@ function ToastPreview({ size }: { size: number }) {
 // ============================================================================
 
 export default function PreferencesPage() {
+  useEffect(() => {
+    document.title = "문샤인랜드: 개인선호설정";
+  }, []);
+
   // ── 주 게시판 ──────────────────────────────────────────────────────────────
   const [primaryBoard, setPrimaryBoard] = useState(() =>
     typeof window === "undefined"

@@ -1,8 +1,13 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
+import type { Metadata } from "next";
 
 import { loginAction } from "@/features/auth/actions";
 import { getCurrentUser } from "@/features/auth/queries";
+
+export const metadata: Metadata = {
+  title: "문샤인랜드: 로그인",
+};
 
 interface LoginPageProps {
   searchParams: Promise<{

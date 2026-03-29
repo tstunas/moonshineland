@@ -1,7 +1,12 @@
 import Link from "next/link";
 import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
+import type { Metadata } from "next";
 import { verifyAccessToken } from "@/lib/jwt";
+
+export const metadata: Metadata = {
+  title: "문샤인랜드: 성인인증 완료",
+};
 
 export default async function AdultVerificationSuccessPage({
   searchParams,

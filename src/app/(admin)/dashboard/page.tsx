@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { revalidatePath } from "next/cache";
 import { forbidden, redirect } from "next/navigation";
+import type { Metadata } from "next";
 import type { Prisma } from "@/generated/prisma/client";
 
 import { getCurrentUser } from "@/features/auth/queries";
@@ -10,6 +11,10 @@ const MAX_RECENT_USERS = 8;
 const MAX_RECENT_BOARDS = 8;
 const MAX_RECENT_THREADS = 8;
 const MAX_RECENT_POSTS = 12;
+
+export const metadata: Metadata = {
+  title: "문샤인랜드: 관리자 대시보드",
+};
 
 type DashboardSearchParams = Record<string, string | string[] | undefined>;
 type ConfirmActionKey =

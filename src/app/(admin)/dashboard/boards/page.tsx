@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { revalidatePath } from "next/cache";
 import { forbidden, redirect } from "next/navigation";
+import type { Metadata } from "next";
 import type { Prisma } from "@/generated/prisma/client";
 
 import { getCurrentUser } from "@/features/auth/queries";
@@ -23,6 +24,10 @@ import {
   toPersistentParams,
   withToastQuery,
 } from "@/app/(admin)/dashboard/_lib/pageHelpers";
+
+export const metadata: Metadata = {
+  title: "문샤인랜드: 관리자 게시판 관리",
+};
 
 const PATHNAME = "/dashboard/boards";
 const PAGE_SIZE_OPTIONS = [20, 50, 100] as const;

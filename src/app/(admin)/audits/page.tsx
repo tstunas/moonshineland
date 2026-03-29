@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { forbidden } from "next/navigation";
+import type { Metadata } from "next";
 import type { Prisma } from "@/generated/prisma/client";
 
 import { getCurrentUser } from "@/features/auth/queries";
@@ -18,6 +19,10 @@ import {
 
 const PATHNAME = "/audits";
 const PAGE_SIZE_OPTIONS = [20, 50, 100] as const;
+
+export const metadata: Metadata = {
+  title: "문샤인랜드: 감사 로그",
+};
 
 async function requireAdmin() {
   const currentUser = await getCurrentUser();
