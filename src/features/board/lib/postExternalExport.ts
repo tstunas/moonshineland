@@ -1,5 +1,6 @@
 import { AnonymousAuthor } from "@/lib/constants";
 import type { Post } from "@/types/post";
+import html2canvas from "html2canvas";
 
 function formatPostDate(value: Date | string): string {
   const date = value instanceof Date ? value : new Date(value);
@@ -23,40 +24,6 @@ function escapeHtml(value: string): string {
     .replaceAll(">", "&gt;");
 }
 
-function wrapText(
-  context: CanvasRenderingContext2D,
-  text: string,
-  maxWidth: number,
-): string[] {
-  const lines: string[] = [];
-  for (const paragraph of text.split("\n")) {
-    if (!paragraph) {
-      lines.push("");
-      continue;
-    }
-
-    let current = "";
-    for (const char of paragraph) {
-      const test = `${current}${char}`;
-      if (context.measureText(test).width <= maxWidth) {
-        current = test;
-        continue;
-      }
-
-      if (current) {
-        lines.push(current);
-      }
-      current = char;
-    }
-
-    if (current) {
-      lines.push(current);
-    }
-  }
-
-  return lines;
-}
-
 export function buildExternalText(posts: Post[]): string {
   return posts
     .map((post) => {
@@ -74,9 +41,8 @@ export function buildExternalHtml(threadTitle: string, posts: Post[]): string {
   const escapedTitle = escapeHtml(threadTitle);
   const items = posts
     .map((post) => {
-      const escapedContent = escapeHtml(post.content).replaceAll("\n", "<br />");
       const escapedDate = escapeHtml(formatPostDate(post.createdAt));
-      return `<article style="border:1px solid #bae6fd;border-radius:10px;overflow:hidden;margin:0 0 12px 0;font-family:'Noto Sans KR',sans-serif;"><header style="background:#e2e8f0;padding:10px 14px;border-bottom:1px solid #bae6fd;"><div><strong>#${post.postOrder}</strong> ${post.author || AnonymousAuthor} (${post.idcode})</div><div style="margin-top:4px;font-size:12px;color:#475569;">작성일: ${escapedDate}</div></header><div style="padding:14px;line-height:1.5;white-space:normal;">${escapedContent}</div></article>`;
+      return `<article style="border:1px solid #bae6fd;border-radius:10px;overflow:hidden;margin:0 0 12px 0;font-family:'Noto Sans KR',sans-serif;"><header style="background:#e2e8f0;padding:10px 14px;border-bottom:1px solid #bae6fd;"><div><strong>#${post.postOrder}</strong> ${post.author || AnonymousAuthor} (${post.idcode})</div><div style="margin-top:4px;font-size:12px;color:#475569;">작성일: ${escapedDate}</div></header><div style="padding:14px;line-height:1.5;white-space:normal;">${post.content}</div></article>`;
     })
     .join("");
 
@@ -109,105 +75,253 @@ interface CopyExternalImageParams {
   posts: Post[];
 }
 
+const EXTERNAL_IMAGE_WIDTH = 2800;
+
+function normalizeHtmlForSvg(value: string): string {
+  const container = document.createElement("div");
+  container.innerHTML = value;
+
+  return container.innerHTML
+    .replaceAll("&nbsp;", "&#160;")
+    .replaceAll("&ensp;", "&#8194;")
+    .replaceAll("&emsp;", "&#8195;");
+}
+
+function buildExternalImageMarkup(
+  params: CopyExternalImageParams,
+  origin: string,
+): string {
+  const { boardKey, threadIndex, threadTitle, posts } = params;
+  const escapedTitle = escapeHtml(threadTitle);
+  const escapedBoardKey = escapeHtml(boardKey);
+
+  const cards = posts
+    .map((post) => {
+      const escapedAuthor = escapeHtml(post.author || AnonymousAuthor);
+      const escapedIdcode = escapeHtml(post.idcode || "");
+      const escapedDate = escapeHtml(formatPostDate(post.createdAt));
+      const contentHtml = normalizeHtmlForSvg(post.content);
+
+      const baseContentStyle = "display:block;word-break:break-word;overflow-wrap:anywhere;letter-spacing:normal;margin-top:2px;font-size:27px;color:#0f172a;font-family:ExportSans,ExportMono,monospace;";
+      const contentTypeStyle = post.contentType === "aa"
+        ? "white-space:nowrap;overflow-x:auto;line-height:1.125em;background-color:#fff;"
+        : post.contentType === "novel"
+          ? "white-space:pre-wrap;background-color:#f3f4f6;line-height:1.8em;font-size:29.7px;font-family:ExportMono,Dotum,sans-serif;"
+          : post.contentType === "line"
+            ? "white-space:pre-wrap;line-height:1.5em;"
+            : "white-space:pre-wrap;line-height:1.45;";
+
+      return `
+<article style="border:3px solid #cbd5e1;border-radius:20px;overflow:hidden;background:#ffffff;margin:0 0 22px 0;box-shadow:0 2px 10px rgba(15, 23, 42, 0.08);">
+  <header style="background:#e5e7eb;padding:18px 26px;border-bottom:2px solid #cbd5e1;min-height:96px;box-sizing:border-box;">
+    <div style="font-size:32px;font-weight:700;color:#1e293b;line-height:1.2;">#${post.postOrder} ${escapedAuthor} (${escapedIdcode})</div>
+    <div style="margin-top:8px;font-size:20px;color:#475569;">작성일: ${escapedDate}</div>
+  </header>
+  <div style="padding:28px 30px;min-height:140px;box-sizing:border-box;">
+    <div class="export-content export-content--${post.contentType}" style="${baseContentStyle}${contentTypeStyle}">${contentHtml}</div>
+  </div>
+</article>`;
+    })
+    .join("");
+
+  return `
+<div xmlns="http://www.w3.org/1999/xhtml" class="external-export-root" style="width:${EXTERNAL_IMAGE_WIDTH}px;box-sizing:border-box;padding:36px;background:linear-gradient(135deg,#f3f4f6 0%,#e5e7eb 100%);color:#0f172a;font-family:'ExportSans','ExportMono','Noto Sans KR',sans-serif;">
+  <style>
+    @font-face {
+      font-family: "ExportMono";
+      src: url("${origin}/font/NanumGothicCoding.woff2") format("woff2"),
+           url("${origin}/font/NanumGothicCoding.woff") format("woff"),
+           url("${origin}/font/NanumGothicCoding.ttf") format("truetype");
+      font-display: swap;
+    }
+    @font-face {
+      font-family: "ExportSans";
+      src: url("${origin}/font/Saitamaar.woff2") format("woff2"),
+           url("${origin}/font/Saitamaar.woff") format("woff"),
+           url("${origin}/font/Saitamaar.ttf") format("truetype");
+      font-display: swap;
+    }
+    .external-export-root .export-content {
+      display: block;
+      word-break: break-word;
+      overflow-wrap: anywhere;
+      letter-spacing: normal;
+      margin-top: 2px;
+      font-family: ExportSans, ExportMono, monospace;
+      white-space: pre-wrap;
+      background: transparent;
+    }
+    .external-export-root .export-content--aa {
+      background-color: #fff;
+      white-space: nowrap;
+      overflow-x: visible;
+      line-height: 1.2em;
+      padding-bottom: 8px;
+      font-family: ExportSans, ExportMono, monospace;
+    }
+    .external-export-root .export-content--novel {
+      background-color: #f3f4f6;
+      line-height: 1.8em;
+      font-size: 1.1em;
+      font-family: ExportMono, Dotum, sans-serif;
+    }
+    .external-export-root .export-content--line {
+      line-height: 1.5em;
+    }
+    .external-export-root .export-content .vib-1 {
+      display: inline-block;
+      transform: skewX(-15deg);
+    }
+    .external-export-root .export-content .beat-1 {
+      display: inline-block;
+      transform: scale(1);
+    }
+    .external-export-root .export-content .sub {
+      vertical-align: bottom;
+      font-size: 50%;
+      line-height: inherit;
+    }
+    .external-export-root .export-content .youtube {
+      position: relative;
+      padding-bottom: 56.25%;
+      padding-top: 25px;
+      height: 0;
+      overflow: hidden;
+    }
+    .external-export-root .export-content .youtube iframe {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      border: 0;
+    }
+    .external-export-root .export-content .youtube-wrap {
+      width: 100%;
+      max-width: 600px;
+    }
+    .external-export-root .export-content .dice {
+      color: #dc2626;
+      font-weight: 700;
+    }
+    .external-export-root .export-content .dice:hover {
+      color: #2563eb;
+    }
+    .external-export-root .export-content b {
+      font-weight: 700;
+    }
+    .external-export-root .export-content .inner-line {
+      line-height: 1.5em !important;
+    }
+    .external-export-root .export-content .aa {
+      background-color: #fff;
+      white-space: nowrap;
+      overflow-x: auto;
+      overflow-y: hidden;
+      margin-left: 0;
+      line-height: 1.1em;
+    }
+  </style>
+  <h2 style="margin:0;font-size:56px;line-height:1.2;font-weight:700;">${escapedTitle}</h2>
+  <p style="margin:8px 0 20px 0;font-size:28px;font-weight:500;color:#334155;">게시판 ${escapedBoardKey} / 스레드 ${threadIndex}</p>
+  ${cards}
+</div>`;
+}
+
+function createExternalImageNode(
+  params: CopyExternalImageParams,
+  origin: string,
+): HTMLDivElement {
+  const wrapper = document.createElement("div");
+  wrapper.style.position = "fixed";
+  wrapper.style.left = "-99999px";
+  wrapper.style.top = "0";
+  wrapper.style.width = `${EXTERNAL_IMAGE_WIDTH}px`;
+  wrapper.style.pointerEvents = "none";
+  wrapper.style.zIndex = "-1";
+  wrapper.innerHTML = buildExternalImageMarkup(params, origin);
+  return wrapper;
+}
+
+async function loadExportFonts(origin: string): Promise<void> {
+  if (!document.fonts.check('400 16px "ExportMono"')) {
+    const mono = new FontFace(
+      "ExportMono",
+      `url(${origin}/font/NanumGothicCoding.woff2) format("woff2"), url(${origin}/font/NanumGothicCoding.woff) format("woff"), url(${origin}/font/NanumGothicCoding.ttf) format("truetype")`,
+      { display: "swap" },
+    );
+    document.fonts.add(await mono.load());
+  }
+
+  if (!document.fonts.check('400 16px "ExportSans"')) {
+    const sans = new FontFace(
+      "ExportSans",
+      `url(${origin}/font/Saitamaar.woff2) format("woff2"), url(${origin}/font/Saitamaar.woff) format("woff"), url(${origin}/font/Saitamaar.ttf) format("truetype")`,
+      { display: "swap" },
+    );
+    document.fonts.add(await sans.load());
+  }
+
+  await Promise.all([
+    document.fonts.load('400 16px "ExportMono"'),
+    document.fonts.load('400 16px "ExportSans"'),
+  ]);
+  await document.fonts.ready;
+}
+
+function createExportStyleTag(): HTMLStyleElement {
+  const style = document.createElement("style");
+  style.id = "__external-export-styles__";
+  style.textContent = `
+    .external-export-root .export-content .dice { color: #dc2626 !important; font-weight: 700 !important; }
+    .external-export-root .export-content b { font-weight: 700 !important; }
+    .external-export-root .export-content .sub { vertical-align: bottom !important; font-size: 50% !important; line-height: inherit !important; }
+    .external-export-root .export-content .inner-line { line-height: 1.5em !important; }
+    .external-export-root .export-content .aa { background-color: #fff !important; white-space: nowrap !important; overflow-x: auto !important; overflow-y: hidden !important; margin-left: 0 !important; line-height: 1.1em !important; }
+    .external-export-root .export-content .vib-1 { display: inline-block; transform: skewX(-15deg); }
+    .external-export-root .export-content .beat-1 { display: inline-block; transform: scale(1); }
+    .external-export-root .export-content .youtube { position: relative; padding-bottom: 56.25%; padding-top: 25px; height: 0; overflow: hidden; }
+    .external-export-root .export-content .youtube iframe { position: absolute; top: 0; left: 0; width: 100%; height: 100%; border: 0; }
+    .external-export-root .export-content .youtube-wrap { width: 100%; max-width: 600px; }
+  `;
+  return style;
+}
+
 export async function copyExternalImage(
   params: CopyExternalImageParams,
 ): Promise<"clipboard" | "download"> {
   const { boardKey, threadIndex, threadTitle, posts } = params;
-  const canvas = document.createElement("canvas");
-  const outerPadding = 36;
-  const width = 1200;
-  const cardSpacing = 18;
-  const titleAreaHeight = 96;
-  const cardHeaderHeight = 50;
-  const cardPaddingX = 22;
-  const cardPaddingY = 18;
-  const bodyLineHeight = 27;
-  canvas.width = width;
-  const context = canvas.getContext("2d");
-  if (!context) {
-    throw new Error("NO_CONTEXT");
-  }
+  const origin = window.location.origin;
+  await loadExportFonts(origin);
 
-  context.font = "500 22px sans-serif";
-  const measured = posts.map((post) => {
-    const cardInnerWidth = width - outerPadding * 2 - cardPaddingX * 2;
-    const wrapped = wrapText(context, post.content, cardInnerWidth);
-    const bodyHeight = Math.max(bodyLineHeight, wrapped.length * bodyLineHeight);
-    const cardHeight = cardHeaderHeight + cardPaddingY * 2 + bodyHeight;
-    return {
-      post,
-      dateText: formatPostDate(post.createdAt),
-      wrapped,
-      cardHeight,
-    };
-  });
-
-  const cardsHeight = measured.reduce(
-    (sum, item) => sum + item.cardHeight + cardSpacing,
-    0,
+  const node = createExternalImageNode(
+    {
+      boardKey,
+      threadIndex,
+      threadTitle,
+      posts,
+    },
+    origin,
   );
-  const height = Math.max(300, titleAreaHeight + outerPadding * 2 + cardsHeight);
-  canvas.height = height;
+  const styleTag = createExportStyleTag();
+  document.head.appendChild(styleTag);
+  document.body.appendChild(node);
 
-  const gradient = context.createLinearGradient(0, 0, width, height);
-  gradient.addColorStop(0, "#f8fafc");
-  gradient.addColorStop(1, "#e0f2fe");
-  context.fillStyle = gradient;
-  context.fillRect(0, 0, width, height);
-
-  context.fillStyle = "#0f172a";
-  context.font = "700 42px sans-serif";
-  context.fillText(threadTitle, outerPadding, outerPadding + 44);
-
-  context.font = "500 20px sans-serif";
-  context.fillStyle = "#0c4a6e";
-  context.fillText(
-    `게시판 ${boardKey} / 스레드 ${threadIndex}`,
-    outerPadding,
-    outerPadding + 76,
-  );
-
-  let y = outerPadding + titleAreaHeight;
-  for (const item of measured) {
-    const x = outerPadding;
-    const w = width - outerPadding * 2;
-    const h = item.cardHeight;
-
-    context.fillStyle = "#ffffff";
-    context.strokeStyle = "#7dd3fc";
-    context.lineWidth = 2;
-    context.beginPath();
-    context.roundRect(x, y, w, h, 16);
-    context.fill();
-    context.stroke();
-
-    context.fillStyle = "#e2e8f0";
-    context.beginPath();
-    context.roundRect(x + 2, y + 2, w - 4, cardHeaderHeight, 12);
-    context.fill();
-
-    context.fillStyle = "#0c4a6e";
-    context.font = "700 24px sans-serif";
-    context.fillText(
-      `#${item.post.postOrder} ${item.post.author || AnonymousAuthor} (${item.post.idcode})`,
-      x + cardPaddingX,
-      y + 35,
-    );
-
-    context.fillStyle = "#475569";
-    context.font = "500 16px sans-serif";
-    context.fillText(`작성일: ${item.dateText}`, x + cardPaddingX, y + 55);
-
-    context.fillStyle = "#0f172a";
-    context.font = "500 22px sans-serif";
-    let lineY = y + cardHeaderHeight + cardPaddingY + 26;
-    for (const line of item.wrapped) {
-      context.fillText(line, x + cardPaddingX, lineY);
-      lineY += bodyLineHeight;
-    }
-
-    y += h + cardSpacing;
+  let canvas: HTMLCanvasElement;
+  try {
+    canvas = await html2canvas(node, {
+      backgroundColor: null,
+      scale: 1,
+      useCORS: true,
+      logging: false,
+    });
+  } catch {
+    node.remove();
+    styleTag.remove();
+    throw new Error("HTML2CANVAS_FAIL");
   }
+  node.remove();
+  styleTag.remove();
 
   const blob: Blob | null = await new Promise((resolve) => {
     canvas.toBlob(resolve, "image/png");

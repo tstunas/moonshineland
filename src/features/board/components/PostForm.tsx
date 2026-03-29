@@ -385,8 +385,9 @@ export function PostForm({
         return;
       }
       toast.success("이미지를 파일로 저장했습니다.");
-    } catch {
-      toast.error("이미지 생성 또는 복사에 실패했습니다.");
+    } catch (error) {
+      const reason = error instanceof Error ? error.message : "UNKNOWN";
+      toast.error(`이미지 생성 또는 복사에 실패했습니다. (${reason})`);
     }
   }, [boardKey, postsForExternalCopy, thread.title, threadIndex]);
 
