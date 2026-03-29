@@ -1,0 +1,66 @@
+.archive-viewer {
+  background: linear-gradient(180deg, #f8fafc 0%, #f1f5f9 100%);
+  border: 1px solid #cbd5e1;
+  border-radius: 0.95rem;
+  padding: 1rem;
+}
+
+.archive-viewer article {
+  display: block;
+}
+
+.archive-viewer header {
+  margin-bottom: 0.9rem;
+}
+
+.archive-viewer h1,
+.archive-viewer h2,
+.archive-viewer h3 {
+  margin: 0;
+  line-height: 1.25;
+  color: #0f172a;
+}
+
+.archive-viewer p {
+  margin: 0.45rem 0;
+  color: #334155;
+  line-height: 1.75;
+}
+
+.archive-viewer section {
+  margin-top: 0.8rem;
+  border: 1px solid #cbd5e1;
+  border-radius: 0.75rem;
+  padding: 0.75rem;
+  background: #ffffff;
+}
+
+.archive-viewer .aa {
+  background: #ffffff;
+  border: 1px solid #e2e8f0;
+  border-radius: 0.55rem;
+  padding: 0.5rem;
+  white-space: pre;
+  overflow-x: auto;
+  line-height: 1.1;
+}
+
+.archive-viewer .line,
+.archive-viewer .inner-line {
+  line-height: 1.6;
+}
+
+.archive-viewer a {
+  color: #0369a1;
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+
+.archive-viewer pre {
+  margin: 0.55rem 0;
+  border: 1px solid #cbd5e1;
+  border-radius: 0.55rem;
+  background: #f8fafc;
+  padding: 0.75rem;
+  overflow-x: auto;
+}
