@@ -268,6 +268,11 @@ export function ThreadForm({
         event.preventDefault();
         handleToggleAutosize();
       }
+
+	  if (key === "i") {
+      event.preventDefault();
+      imageInputRef.current?.click();
+    }
     };
 
     window.addEventListener("keydown", onKeyDown);
