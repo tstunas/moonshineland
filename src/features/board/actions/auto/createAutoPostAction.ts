@@ -53,6 +53,9 @@ export async function createAutoPostAction(
     };
   }
 
+  const commands = command.split(".");
+  const off = commands.includes("off");
+
   const contentType = parseContentType(command) ?? "text";
 
   try {
@@ -81,7 +84,7 @@ export async function createAutoPostAction(
           author,
           idcode: "TODO-IDCODE",
           rawContent: content,
-          content: generateHtmlContent(content),
+          content: generateHtmlContent(content, { off, location: { boardKey, threadIndex } }),
           contentType,
           contentUpdatedAt: new Date(),
           ...(uploaded.length > 0

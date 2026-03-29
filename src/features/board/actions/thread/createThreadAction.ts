@@ -43,7 +43,7 @@ export async function createThreadAction(
   formData: FormData,
 ): Promise<BoardActionResult> {
   const boardKey = String(formData.get("boardKey") ?? "").trim();
-  const threadIndex = Number(formData.get("threadIndex") ?? 0);
+  const threadIndex = 0; // 스레드 번호는 자동으로 할당하므로 클라이언트에서 입력받지 않습니다.
   const title = String(formData.get("title") ?? "").trim();
   const author = String(formData.get("author") ?? "").trim();
   const command = String(formData.get("command") ?? "").trim();
@@ -54,10 +54,10 @@ export async function createThreadAction(
     .getAll("images")
     .filter((value): value is File => value instanceof File);
 
-  if (!boardKey || !Number.isInteger(threadIndex) || threadIndex <= 0) {
+  if (!boardKey) {
     return {
       success: false,
-      message: "게시판 키 또는 스레드 번호가 올바르지 않습니다.",
+      message: "게시판 키가 올바르지 않습니다.",
     };
   }
 
@@ -112,9 +112,6 @@ export async function createThreadAction(
   }
 
   try {
-    const uploaded = await uploadImages(imageFiles, boardKey, threadIndex);
-    const htmlContent = generateHtmlContent(content);
-
     let created = false;
     for (let attempt = 0; attempt < MAX_THREAD_INDEX_RETRY; attempt += 1) {
       try {
@@ -150,6 +147,16 @@ export async function createThreadAction(
               isChat,
               postUpdatedAt: new Date(),
             },
+          });
+
+          const uploaded = await uploadImages(
+            imageFiles,
+            boardKey,
+            nextThreadIndex,
+          );
+          const htmlContent = generateHtmlContent(content, {
+            off: command.split(".").includes("off"),
+            location: { boardKey, threadIndex: nextThreadIndex },
           });
 
           // TODO: 이미지 다중 첨부 스키마(별도 테이블)로 확장하세요. 현재는 첫 번째 이미지만 저장합니다.

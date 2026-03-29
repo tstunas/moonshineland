@@ -45,7 +45,6 @@ const DEFAULT_SECTIONS: SidebarSection[] = [
     title: "보관",
     items: [
       { label: "아카이브", href: "/archive" },
-      { label: "마토메", href: "/matome" },
     ],
   },
   {

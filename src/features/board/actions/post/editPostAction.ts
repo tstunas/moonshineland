@@ -90,7 +90,7 @@ export async function editPostAction(
 
       const nextRawContent = hasContent ? content : post.rawContent;
       const nextHtmlContent = hasContent
-        ? generateHtmlContent(content)
+        ? generateHtmlContent(content, { off: command.split(".").includes("off"), location: { boardKey, threadIndex } })
         : post.content;
 
       if (hasContent) {

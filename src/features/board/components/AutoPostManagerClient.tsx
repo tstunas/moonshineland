@@ -267,7 +267,7 @@ export function AutoPostManagerClient({
     setIsAutosizeEnabled((current) => !current);
   }, []);
 
-  const handleToggleCommandToken = useCallback((token: "aa" | "relay") => {
+  const handleToggleCommandToken = useCallback((token: "aa" | "novel") => {
     setCommand((current) => toggleCommandToken(current, token));
   }, []);
 
@@ -591,7 +591,7 @@ export function AutoPostManagerClient({
 
       if (event.shiftKey && key === "z") {
         event.preventDefault();
-        handleToggleCommandToken("relay");
+        handleToggleCommandToken("novel");
         return;
       }
 

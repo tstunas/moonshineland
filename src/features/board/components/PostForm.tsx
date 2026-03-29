@@ -335,7 +335,7 @@ export function PostForm({
     setIsAutosizeEnabled((current) => !current);
   }, []);
 
-  const handleToggleCommandToken = useCallback((token: "aa" | "relay") => {
+  const handleToggleCommandToken = useCallback((token: "aa" | "novel") => {
     setCommand((current) => toggleCommandToken(current, token));
   }, []);
 
@@ -458,7 +458,7 @@ export function PostForm({
 
       if (event.shiftKey && key === "z") {
         event.preventDefault();
-        handleToggleCommandToken("relay");
+        handleToggleCommandToken("novel");
         return;
       }
 

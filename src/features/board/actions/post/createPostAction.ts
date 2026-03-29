@@ -64,7 +64,11 @@ export async function createPostAction(
     return { success: false, message: "내용은 필수입니다." };
   }
 
+  const commands = command.split('.')
+
   const contentType = parseContentType(command) ?? "text";
+  const off = commands.includes("off");
+  const noup = commands.includes("noup");
 
   const currentUser = await getCurrentUser();
   if (!currentUser?.id) {
@@ -141,7 +145,7 @@ export async function createPostAction(
             throw new Error("POST_LIMIT_EXCEEDED");
           }
 
-          const htmlContent = generateHtmlContent(content);
+          const htmlContent = generateHtmlContent(content, { off, location: { boardKey, threadIndex } });
 
           const createdPost = await tx.post.create({
             data: {
@@ -160,13 +164,15 @@ export async function createPostAction(
             },
           });
 
+          const updatePostUpdatedAt = noup ? {} : { postUpdatedAt: createdPost.createdAt };
+
           await tx.thread.update({
             where: {
               id: thread.id,
             },
             data: {
               postCount: createdPost.postOrder,
-              postUpdatedAt: createdPost.createdAt,
+              ...updatePostUpdatedAt,
             },
           });
 

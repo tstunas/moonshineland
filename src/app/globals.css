@@ -255,3 +255,8 @@ body {
     transform: scale(1);
   }
 }
+
+.content a {
+  color: #3b82f6;
+  text-decoration: underline;
+}

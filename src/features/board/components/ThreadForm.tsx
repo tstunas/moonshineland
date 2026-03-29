@@ -234,7 +234,7 @@ export function ThreadForm({
     setIsAutosizeEnabled((current) => !current);
   }, []);
 
-  const handleToggleCommandToken = useCallback((token: "aa" | "relay") => {
+  const handleToggleCommandToken = useCallback((token: "aa" | "novel") => {
     setCommand((current) => toggleCommandToken(current, token));
   }, []);
 
@@ -254,7 +254,7 @@ export function ThreadForm({
 
       if (event.shiftKey && key === "z") {
         event.preventDefault();
-        handleToggleCommandToken("relay");
+        handleToggleCommandToken("novel");
         return;
       }
 
@@ -358,7 +358,6 @@ export function ThreadForm({
         className="rounded-lg border border-sky-200 bg-slate-100 p-4"
       >
         <input type="hidden" name="boardKey" value={boardKey} />
-        <input type="hidden" name="threadIndex" value={threadIndex} />
 
         <ThreadFormControls
           isAutosizeEnabled={isAutosizeEnabled}
