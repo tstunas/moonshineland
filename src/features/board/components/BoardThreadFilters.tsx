@@ -24,6 +24,7 @@ type BoardThreadFiltersProps = {
   author?: string;
   includeAdultOnly: boolean;
   threadType: "all" | "serial" | "chat";
+  isAdultVerified: boolean;
 };
 
 export function BoardThreadFilters({
@@ -33,6 +34,7 @@ export function BoardThreadFilters({
   author,
   includeAdultOnly,
   threadType,
+  isAdultVerified,
 }: BoardThreadFiltersProps) {
   const pathname = usePathname();
   const router = useRouter();
@@ -136,6 +138,48 @@ export function BoardThreadFilters({
       router.replace(nextUrl, { scroll: false });
     });
   }, [pathname, router, searchParams]);
+
+  const buildFilterQuery = useCallback((nextValues: {
+    title: string;
+    author: string;
+    threadType: "all" | "serial" | "chat";
+    includeAdultOnly: boolean;
+  }) => {
+    const params = new URLSearchParams();
+    const normalizedTitle = nextValues.title.trim();
+    const normalizedAuthor = nextValues.author.trim();
+
+    if (nextValues.threadType !== "all") {
+      params.set("threadType", nextValues.threadType);
+    }
+
+    if (nextValues.includeAdultOnly) {
+      params.set("includeAdultOnly", "true");
+    }
+
+    if (normalizedTitle) {
+      params.set("title", normalizedTitle);
+    }
+
+    if (normalizedAuthor) {
+      params.set("author", normalizedAuthor);
+    }
+
+    return params.toString();
+  }, []);
+
+  const moveToAdultRequired = useCallback((nextValues: {
+    title: string;
+    author: string;
+    threadType: "all" | "serial" | "chat";
+    includeAdultOnly: boolean;
+  }) => {
+    const nextQuery = buildFilterQuery(nextValues);
+    const nextPath = nextQuery ? `${pathname}?${nextQuery}` : pathname;
+    const params = new URLSearchParams({ next: nextPath });
+
+    router.push(`/adult-required?${params.toString()}`);
+  }, [buildFilterQuery, pathname, router]);
 
   function syncFilterState(nextValues: {
     title: string;
@@ -428,7 +472,19 @@ export function BoardThreadFilters({
                   value="true"
                   checked={includeAdultOnlyValue}
                   onChange={(event) => {
-                    setIncludeAdultOnlyValue(event.target.checked);
+                    const nextChecked = event.target.checked;
+
+                    if (nextChecked && !isAdultVerified) {
+                      moveToAdultRequired({
+                        title: titleValue,
+                        author: authorValue,
+                        threadType: threadTypeValue,
+                        includeAdultOnly: true,
+                      });
+                      return;
+                    }
+
+                    setIncludeAdultOnlyValue(nextChecked);
                   }}
                   className="peer sr-only"
                 />

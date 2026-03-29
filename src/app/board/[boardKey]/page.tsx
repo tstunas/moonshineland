@@ -7,6 +7,7 @@ import { BoardPresenceClient } from "@/features/board/components/BoardPresenceCl
 import { getNextThreadIndex } from "@/features/board/lib/getNextThreadIndex";
 import { getThreads } from "@/features/board/lib/getThreads";
 import { getTotalThreads } from "@/features/board/lib/getTotalThreads";
+import { getCurrentUser } from "@/features/auth/queries";
 import { BOARDS } from "@/lib/constants";
 
 export async function generateMetadata({
@@ -79,7 +80,7 @@ export default async function BoardPage({
   const titleFilter = title?.trim() ? title.trim() : undefined;
   const authorFilter = author?.trim() ? author.trim() : undefined;
 
-  const [threadItems, totalThreads, nextThreadIndex] = await Promise.all([
+  const [threadItems, totalThreads, nextThreadIndex, currentUser] = await Promise.all([
     getThreads(boardKey, {
       page: currentPage,
       isChat: isChatFilter,
@@ -94,6 +95,7 @@ export default async function BoardPage({
       author: authorFilter,
     }),
     getNextThreadIndex(boardKey),
+    getCurrentUser(),
   ]);
   const totalPages = Math.ceil(totalThreads / 20);
   const extraQuery = {
@@ -117,6 +119,7 @@ export default async function BoardPage({
           author={authorFilter}
           includeAdultOnly={includeAdultOnlyThreads}
           threadType={threadTypeFilter}
+          isAdultVerified={Boolean(currentUser?.isAdultVerified)}
         />
       </div>
       <ul className="mt-5 space-y-3">
@@ -140,7 +143,11 @@ export default async function BoardPage({
           extraQuery={extraQuery}
         />
       </div>
-      <ThreadForm boardKey={boardKey} threadIndex={nextThreadIndex} />
+      <ThreadForm
+        boardKey={boardKey}
+        threadIndex={nextThreadIndex}
+        isAdultVerified={Boolean(currentUser?.isAdultVerified)}
+      />
     </>
   );
 }

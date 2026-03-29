@@ -63,9 +63,11 @@ function parseContentType(command: string): ParsedContentType {
 export function ThreadForm({
   boardKey,
   threadIndex,
+  isAdultVerified,
 }: {
   boardKey: string;
   threadIndex: number;
+  isAdultVerified: boolean;
 }) {
   const searchParams = useSearchParams();
   const router = useRouter();
@@ -219,6 +221,15 @@ export function ThreadForm({
     setIsPreviewOpen(true);
   }, []);
 
+  const moveToAdultRequiredPage = useCallback(() => {
+    const nextPath = `${window.location.pathname}${window.location.search}`;
+    const params = new URLSearchParams({ next: nextPath });
+
+    window.setTimeout(() => {
+      router.push(`/adult-required?${params.toString()}`);
+    }, 300);
+  }, [router]);
+
   const handleToggleAutosize = useCallback(() => {
     setIsAutosizeEnabled((current) => !current);
   }, []);
@@ -294,6 +305,12 @@ export function ThreadForm({
 
   const submitCreateThread = async (formData: FormData) => {
     try {
+      if (isAdultOnly && !isAdultVerified) {
+        toast.error("성인인증이 필요합니다.");
+        moveToAdultRequiredPage();
+        return;
+      }
+
       const selectedCount = imageInputRef.current?.files?.length ?? 0;
       if (selectedCount > MAX_IMAGE_COUNT) {
         toast.error(
@@ -305,6 +322,11 @@ export function ThreadForm({
       const result = await createThreadAction(formData);
       if (!result.success) {
         toast.error(result.message);
+
+        if (result.message.includes("성인인증")) {
+          moveToAdultRequiredPage();
+        }
+
         return;
       }
 
@@ -367,7 +389,13 @@ export function ThreadForm({
                 value="true"
                 checked={isAdultOnly}
                 onChange={(event) => {
-                  setIsAdultOnly(event.target.checked);
+                  const nextChecked = event.target.checked;
+                  if (nextChecked && !isAdultVerified) {
+                    toast.error("성인인증이 필요합니다.");
+                    moveToAdultRequiredPage();
+                    return;
+                  }
+                  setIsAdultOnly(nextChecked);
                 }}
                 className="sr-only"
               />

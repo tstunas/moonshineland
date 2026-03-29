@@ -5,6 +5,7 @@ export interface CurrentUser {
   id: string;
   email: string;
   isAdmin: boolean;
+  isAdultVerified: boolean;
 }
 
 /**
@@ -23,6 +24,7 @@ export async function getCurrentUser(): Promise<CurrentUser | null> {
       id: String(payload.sub),
       email: String(payload.email ?? ""),
       isAdmin: Boolean(payload.isAdmin),
+      isAdultVerified: Boolean(payload.isAdultVerified),
     };
   } catch {
     return null;

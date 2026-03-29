@@ -72,22 +72,43 @@ export async function createThreadAction(
     return { success: false, message: "로그인 후 작성할 수 있습니다." };
   }
 
-  const board = await prisma.board.findUnique({
-    where: {
-      boardKey,
-    },
-    select: {
-      id: true,
-    },
-  });
+  const userId = Number(currentUser.id);
+  if (!Number.isInteger(userId) || userId <= 0) {
+    return { success: false, message: "유효하지 않은 사용자 정보입니다." };
+  }
+
+  const [board, user] = await Promise.all([
+    prisma.board.findUnique({
+      where: {
+        boardKey,
+      },
+      select: {
+        id: true,
+      },
+    }),
+    prisma.user.findUnique({
+      where: {
+        id: userId,
+      },
+      select: {
+        isAdultVerified: true,
+      },
+    }),
+  ]);
 
   if (!board) {
     return { success: false, message: "존재하지 않는 게시판입니다." };
   }
 
-  const userId = Number(currentUser.id);
-  if (!Number.isInteger(userId) || userId <= 0) {
+  if (!user) {
     return { success: false, message: "유효하지 않은 사용자 정보입니다." };
+  }
+
+  if (isAdultOnly && !user.isAdultVerified) {
+    return {
+      success: false,
+      message: "성인인증이 필요합니다.",
+    };
   }
 
   try {
