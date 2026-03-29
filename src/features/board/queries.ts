@@ -191,7 +191,7 @@ export async function getThreadListQuery(
   const [threads, total] = await Promise.all([
     prisma.thread.findMany({
       where,
-      orderBy: { threadIndex: "desc" },
+      orderBy: [{ updatedAt: "desc" }, { threadIndex: "desc" }],
       skip,
       take: pageSize,
     }),
