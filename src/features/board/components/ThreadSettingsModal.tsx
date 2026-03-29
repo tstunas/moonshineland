@@ -5,6 +5,8 @@ interface ThreadSettingsModalProps {
   threadTitle: string;
   threadPassword: string;
   clearPassword: boolean;
+  threadIsAdultOnly: boolean;
+  threadIsChat: boolean;
   threadIsHidden: boolean;
   threadIsSecret: boolean;
   allowOthersReply: boolean;
@@ -14,6 +16,8 @@ interface ThreadSettingsModalProps {
   onThreadTitleChange: (value: string) => void;
   onThreadPasswordChange: (value: string) => void;
   onClearPasswordChange: (checked: boolean) => void;
+  onThreadIsAdultOnlyChange: (checked: boolean) => void;
+  onThreadIsChatChange: (checked: boolean) => void;
   onThreadIsHiddenChange: (checked: boolean) => void;
   onThreadIsSecretChange: (checked: boolean) => void;
   onAllowOthersReplyChange: (checked: boolean) => void;
@@ -25,9 +29,16 @@ interface ToggleFieldProps {
   onChange: (checked: boolean) => void;
 }
 
-function ToggleField({ label, checked, onChange }: ToggleFieldProps) {
+function ToggleField({
+  label,
+  checked,
+  disabled,
+  onChange,
+}: ToggleFieldProps & { disabled?: boolean }) {
   return (
-    <label className="flex cursor-pointer items-center justify-between rounded-lg border border-sky-100 bg-white px-3 py-2.5 text-sm text-slate-700 transition-colors hover:border-sky-300 hover:bg-sky-50/70">
+    <label
+      className={`flex cursor-pointer items-center justify-between rounded-lg border border-sky-100 bg-white px-3 py-2.5 text-sm text-slate-700 transition-colors hover:border-sky-300 hover:bg-sky-50/70 ${disabled ? "opacity-50 cursor-not-allowed" : ""}`}
+    >
       <span className="font-medium">{label}</span>
       <span className="flex items-center gap-2">
         <span
@@ -56,6 +67,8 @@ export function ThreadSettingsModal({
   threadTitle,
   threadPassword,
   clearPassword,
+  threadIsAdultOnly,
+  threadIsChat,
   threadIsHidden,
   threadIsSecret,
   allowOthersReply,
@@ -65,6 +78,8 @@ export function ThreadSettingsModal({
   onThreadTitleChange,
   onThreadPasswordChange,
   onClearPasswordChange,
+  onThreadIsAdultOnlyChange,
+  onThreadIsChatChange,
   onThreadIsHiddenChange,
   onThreadIsSecretChange,
   onAllowOthersReplyChange,
@@ -88,7 +103,9 @@ export function ThreadSettingsModal({
         </div>
         <div className="space-y-4 p-5">
           <div className="space-y-2 rounded-xl border border-sky-100 bg-white/90 p-3 shadow-sm">
-            <label className="block text-sm font-semibold text-slate-700">제목</label>
+            <label className="block text-sm font-semibold text-slate-700">
+              제목
+            </label>
             <input
               type="text"
               value={threadTitle}
@@ -105,6 +122,7 @@ export function ThreadSettingsModal({
             </label>
             <input
               type="password"
+              disabled
               value={threadPassword}
               onChange={(event) => {
                 onThreadPasswordChange(event.target.value);
@@ -114,6 +132,7 @@ export function ThreadSettingsModal({
             <label className="inline-flex items-center gap-2 rounded-full border border-slate-200 bg-slate-50 px-3 py-1.5 text-sm text-slate-700 transition-colors hover:bg-slate-100">
               <input
                 type="checkbox"
+                disabled
                 checked={clearPassword}
                 onChange={(event) => {
                   onClearPasswordChange(event.target.checked);
@@ -126,12 +145,23 @@ export function ThreadSettingsModal({
 
           <div className="space-y-2 rounded-xl border border-sky-100 bg-white/90 p-3 shadow-sm">
             <ToggleField
+              label="성인만"
+              checked={threadIsAdultOnly}
+              onChange={onThreadIsAdultOnlyChange}
+            />
+            <ToggleField
+              label="잡담판(OFF면 연재판)"
+              checked={threadIsChat}
+              onChange={onThreadIsChatChange}
+            />
+            <ToggleField
               label="숨김 상태"
               checked={threadIsHidden}
               onChange={onThreadIsHiddenChange}
             />
             <ToggleField
               label="비밀 여부"
+              disabled={true}
               checked={threadIsSecret}
               onChange={onThreadIsSecretChange}
             />

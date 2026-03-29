@@ -18,6 +18,8 @@ export async function updateThreadSettingsAction(
   const title = String(formData.get("title") ?? "").trim();
   const password = String(formData.get("password") ?? "").trim();
   const clearPassword = parseBooleanFormValue(formData.get("clearPassword"));
+  const isAdultOnly = parseBooleanFormValue(formData.get("isAdultOnly"));
+  const isChat = parseBooleanFormValue(formData.get("isChat"));
   const isHidden = parseBooleanFormValue(formData.get("isHidden"));
   const isSecret = parseBooleanFormValue(formData.get("isSecret"));
   const allowOthersReply = parseBooleanFormValue(
@@ -56,6 +58,8 @@ export async function updateThreadSettingsAction(
     },
     data: {
       title,
+      isAdultOnly,
+      isChat,
       isHidden,
       isSecret,
       // 레스 허용 여부는 isPrivate 반전값으로 저장합니다.
@@ -67,6 +71,8 @@ export async function updateThreadSettingsAction(
     },
     select: {
       title: true,
+      isAdultOnly: true,
+      isChat: true,
       isHidden: true,
       isSecret: true,
       isPrivate: true,
@@ -78,6 +84,8 @@ export async function updateThreadSettingsAction(
     message: "스레드 정보를 수정했습니다.",
     thread: {
       title: updated.title,
+      isAdultOnly: updated.isAdultOnly,
+      isChat: updated.isChat,
       isHidden: updated.isHidden,
       isSecret: updated.isSecret,
       allowOthersReply: !updated.isPrivate,

@@ -53,7 +53,16 @@ function toggleCommandToken(command: string, token: string): string {
 }
 
 type ThreadPatch = Partial<
-  Pick<Thread, "title" | "isHidden" | "isSecret" | "postLimit" | "isArchive">
+  Pick<
+    Thread,
+    | "title"
+    | "isAdultOnly"
+    | "isChat"
+    | "isHidden"
+    | "isSecret"
+    | "postLimit"
+    | "isArchive"
+  >
 >;
 
 interface PostFormProps {
@@ -133,6 +142,8 @@ export function PostForm({
   const [threadTitle, setThreadTitle] = useState(thread.title);
   const [threadPassword, setThreadPassword] = useState("");
   const [clearPassword, setClearPassword] = useState(false);
+  const [threadIsAdultOnly, setThreadIsAdultOnly] = useState(thread.isAdultOnly);
+  const [threadIsChat, setThreadIsChat] = useState(thread.isChat);
   const [threadIsHidden, setThreadIsHidden] = useState(thread.isHidden);
   const [threadIsSecret, setThreadIsSecret] = useState(thread.isSecret);
   const [allowOthersReply, setAllowOthersReply] = useState(!thread.isArchive);
@@ -232,6 +243,8 @@ export function PostForm({
 
   useEffect(() => {
     setThreadTitle(thread.title);
+    setThreadIsAdultOnly(thread.isAdultOnly);
+    setThreadIsChat(thread.isChat);
     setThreadIsHidden(thread.isHidden);
     setThreadIsSecret(thread.isSecret);
     setAllowOthersReply(!thread.isArchive);
@@ -517,6 +530,8 @@ export function PostForm({
       formData.set("title", threadTitle);
       formData.set("password", threadPassword);
       formData.set("clearPassword", clearPassword ? "1" : "0");
+      formData.set("isAdultOnly", threadIsAdultOnly ? "1" : "0");
+      formData.set("isChat", threadIsChat ? "1" : "0");
       formData.set("isHidden", threadIsHidden ? "1" : "0");
       formData.set("isSecret", threadIsSecret ? "1" : "0");
       formData.set("allowOthersReply", allowOthersReply ? "1" : "0");
@@ -528,6 +543,8 @@ export function PostForm({
       if (result.thread) {
         onThreadChanged({
           title: result.thread.title,
+          isAdultOnly: result.thread.isAdultOnly,
+          isChat: result.thread.isChat,
           isHidden: result.thread.isHidden,
           isSecret: result.thread.isSecret,
           isArchive: !result.thread.allowOthersReply,
@@ -544,6 +561,8 @@ export function PostForm({
     allowOthersReply,
     boardKey,
     clearPassword,
+    threadIsAdultOnly,
+    threadIsChat,
     onThreadChanged,
     threadIndex,
     threadIsHidden,
@@ -688,6 +707,8 @@ export function PostForm({
         threadTitle={threadTitle}
         threadPassword={threadPassword}
         clearPassword={clearPassword}
+        threadIsAdultOnly={threadIsAdultOnly}
+        threadIsChat={threadIsChat}
         threadIsHidden={threadIsHidden}
         threadIsSecret={threadIsSecret}
         allowOthersReply={allowOthersReply}
@@ -701,6 +722,8 @@ export function PostForm({
         onThreadTitleChange={setThreadTitle}
         onThreadPasswordChange={setThreadPassword}
         onClearPasswordChange={setClearPassword}
+        onThreadIsAdultOnlyChange={setThreadIsAdultOnly}
+        onThreadIsChatChange={setThreadIsChat}
         onThreadIsHiddenChange={setThreadIsHidden}
         onThreadIsSecretChange={setThreadIsSecret}
         onAllowOthersReplyChange={setAllowOthersReply}
