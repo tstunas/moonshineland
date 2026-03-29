@@ -7,6 +7,7 @@ import type {
   SseConnectedEvent,
   SsePostContentEditedEvent,
   SsePostContentTypeEditedEvent,
+  SsePostVisibilityEditedEvent,
   SseThreadUserCountEvent,
 } from "@/types/sse";
 
@@ -16,6 +17,7 @@ interface UseThreadSseOptions {
   onNewPost?: (post: Post) => void;
   onPostContentEdited?: (data: SsePostContentEditedEvent) => void;
   onPostContentTypeEdited?: (data: SsePostContentTypeEditedEvent) => void;
+  onPostVisibilityEdited?: (data: SsePostVisibilityEditedEvent) => void;
 }
 
 interface UseThreadSseResult {
@@ -114,6 +116,11 @@ export function useThreadSse(
     es.addEventListener("thread:post-content-type-edited", (e: MessageEvent) => {
       const data = JSON.parse(e.data) as SsePostContentTypeEditedEvent;
       callbacksRef.current.onPostContentTypeEdited?.(data);
+    });
+
+    es.addEventListener("thread:post-visibility-edited", (e: MessageEvent) => {
+      const data = JSON.parse(e.data) as SsePostVisibilityEditedEvent;
+      callbacksRef.current.onPostVisibilityEdited?.(data);
     });
 
     return () => {

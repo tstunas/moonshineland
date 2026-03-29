@@ -72,6 +72,22 @@ export async function createPostAction(
           throw new Error("THREAD_NOT_FOUND");
         }
 
+        const isThreadBanned = await tx.threadBan.findUnique({
+          where: {
+            threadId_userId: {
+              threadId: thread.id,
+              userId,
+            },
+          },
+          select: {
+            threadId: true,
+          },
+        });
+
+        if (isThreadBanned) {
+          throw new Error("THREAD_BANNED");
+        }
+
         // TODO: 동시성 경쟁이 있을 수 있으므로 락/재시도 전략을 추가하세요.
         const lastPost = await tx.post.findFirst({
           where: {
@@ -146,6 +162,13 @@ export async function createPostAction(
       return {
         success: false,
         message: "현재 스레드 설정으로 인해 레스을 작성할 수 없습니다.",
+      };
+    }
+
+    if (error instanceof Error && error.message === "THREAD_BANNED") {
+      return {
+        success: false,
+        message: "이 스레드에서 밴된 사용자라 레스을 작성할 수 없습니다.",
       };
     }
 

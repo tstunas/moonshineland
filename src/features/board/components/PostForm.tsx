@@ -79,6 +79,7 @@ interface PostFormProps {
   onRequestRefresh: () => Promise<void> | void;
   onPostCreated: () => void;
   onThreadChanged: (patch: ThreadPatch) => void;
+  onAdminModeChange?: (enabled: boolean) => void;
 }
 
 function fixBrokenAa(value: string): string {
@@ -115,6 +116,7 @@ export function PostForm({
   onRequestRefresh,
   onPostCreated,
   onThreadChanged,
+  onAdminModeChange,
 }: PostFormProps) {
   const contentRef = useRef<HTMLTextAreaElement | null>(null);
   const imageInputRef = useRef<HTMLInputElement | null>(null);
@@ -240,6 +242,10 @@ export function PostForm({
       window.removeEventListener("storage", handleStorage);
     };
   }, [autosizeStorageKey, replyAlertStorageKey]);
+
+  useEffect(() => {
+    onAdminModeChange?.(isAdminMenuOpen);
+  }, [isAdminMenuOpen, onAdminModeChange]);
 
   useEffect(() => {
     setThreadTitle(thread.title);

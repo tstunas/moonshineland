@@ -39,6 +39,7 @@ export function ThreadLiveClient({
   );
   const [isReplyAlertEnabled, setIsReplyAlertEnabled] = useState(true);
   const [isBottomLockEnabled, setIsBottomLockEnabled] = useState(false);
+  const [isAdminMode, setIsAdminMode] = useState(false);
   const [showScrollBottomButton, setShowScrollBottomButton] = useState(false);
   const postsRef = useRef(posts);
   const pendingScrollBottomAfterRenderRef = useRef(false);
@@ -275,10 +276,29 @@ export function ThreadLiveClient({
           );
         });
       },
+      onPostVisibilityEdited: (data) => {
+        startTransition(() => {
+          setPosts((currentPosts) =>
+            currentPosts.map((post) =>
+              post.id === data.postId
+                ? {
+                    ...post,
+                    isHidden: data.isHidden,
+                    updatedAt: new Date(data.updatedAt),
+                  }
+                : post,
+            ),
+          );
+        });
+      },
     },
   );
 
   const liveThread: Thread = thread;
+  const visiblePosts =
+    canManageThread && isAdminMode
+      ? posts
+      : posts.filter((post) => !post.isHidden);
 
   const connectionStatusLabel =
     connectionStatus === "connected"
@@ -419,9 +439,15 @@ export function ThreadLiveClient({
       <ThreadHeader thread={thread} />
 
       <ul className="mt-6 space-y-4">
-        {posts.map((post) => (
+        {visiblePosts.map((post) => (
           <li key={post.id}>
-            <PostItem post={post} />
+            <PostItem
+              post={post}
+              boardKey={boardKey}
+              threadIndex={liveThread.threadIndex}
+              canManageThread={canManageThread}
+              isAdminMode={isAdminMode}
+            />
           </li>
         ))}
       </ul>
@@ -455,6 +481,7 @@ export function ThreadLiveClient({
           onPostCreated={() => {
             queueScrollBottomAfterRender();
           }}
+          onAdminModeChange={setIsAdminMode}
           onThreadChanged={(nextThread) => {
             setThread((currentThread) => ({
               ...currentThread,

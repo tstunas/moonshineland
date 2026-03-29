@@ -41,6 +41,13 @@ export interface SsePostContentTypeEditedEvent {
   updatedAt: string;
 }
 
+/** 레스 숨김 상태 수정 이벤트 (스레드 접속 중 모든 클라이언트에게 전송) */
+export interface SsePostVisibilityEditedEvent {
+  postId: number;
+  isHidden: boolean;
+  updatedAt: string;
+}
+
 // ─── 이벤트 이름 상수 ─────────────────────────────────────────────────────────
 
 export const SSE_EVENTS = {
@@ -50,6 +57,7 @@ export const SSE_EVENTS = {
   NEW_POST: "thread:new-post",
   POST_CONTENT_EDITED: "thread:post-content-edited",
   POST_CONTENT_TYPE_EDITED: "thread:post-content-type-edited",
+  POST_VISIBILITY_EDITED: "thread:post-visibility-edited",
 } as const;
 
 export type SseEventName = (typeof SSE_EVENTS)[keyof typeof SSE_EVENTS];

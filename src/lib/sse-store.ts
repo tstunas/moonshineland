@@ -275,3 +275,24 @@ export function broadcastPostContentTypeEdited(
     sendToClient(client, "thread:post-content-type-edited", data);
   }
 }
+
+/**
+ * 레스 숨김 상태(isHidden) 변경 브로드캐스트.
+ * 해당 스레드에 접속 중인 모든 클라이언트에게 전송합니다.
+ */
+export function broadcastPostVisibilityEdited(
+  boardKey: string,
+  threadIndex: number,
+  data: {
+    postId: number;
+    isHidden: boolean;
+    updatedAt: string;
+  },
+) {
+  const threadKey = `${boardKey}:${threadIndex}`;
+  const tc = threadClients.get(threadKey);
+  if (!tc) return;
+  for (const client of tc.values()) {
+    sendToClient(client, "thread:post-visibility-edited", data);
+  }
+}

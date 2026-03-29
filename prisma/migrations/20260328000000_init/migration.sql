@@ -279,6 +279,7 @@ CREATE TABLE `PostContentHistory` (
     `postId` INTEGER NOT NULL,
     `previousContent` LONGTEXT NOT NULL,
     `previousRawContent` LONGTEXT NOT NULL,
+    `previousContentType` ENUM('text', 'aa', 'novel', 'line') NOT NULL DEFAULT 'text',
     `previousCreatedAt` DATETIME(3) NOT NULL,
     `previousContentUpdatedAt` DATETIME(3) NULL,
     `createdAt` DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
