@@ -39,7 +39,7 @@ const DEFAULT_BOARDS: SeedBoard[] = [
     boardKey: "honor",
     name: "명예의 전당",
     description: "보관/기념 게시판",
-    isArchive: true,
+    isBasic: true,
   },
 ];
 
