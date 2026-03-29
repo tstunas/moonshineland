@@ -99,6 +99,7 @@ export async function editPostAction(
             postId: post.id,
             previousContent: post.content,
             previousRawContent: post.rawContent,
+            previousContentType: post.contentType,
             previousCreatedAt: post.createdAt,
             previousContentUpdatedAt: post.contentUpdatedAt,
           },

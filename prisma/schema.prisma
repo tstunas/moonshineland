@@ -232,6 +232,7 @@ model PostContentHistory {
   postId                   Int
   previousContent          String    @db.LongText
   previousRawContent       String    @db.LongText
+  previousContentType      ContentType @default(text)
   previousCreatedAt        DateTime  @db.DateTime(3)
   previousContentUpdatedAt DateTime? @db.DateTime(3)
   createdAt                DateTime  @default(now()) @db.DateTime(3)
