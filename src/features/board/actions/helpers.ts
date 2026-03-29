@@ -218,7 +218,7 @@ export function generateRawContent(
 
   if (options?.autoFixBreakAA) {
     rawContent = rawContent.replace(
-      BREAK_UNICODE_REGEX,
+      /&#x([0-9A-Fa-f]+);|&#([0-9]+);/g,
       (_: unknown, hex: string, dec: string) => {
         const code = hex ? parseInt(hex, 16) : parseInt(dec, 10);
         return String.fromCharCode(code);
