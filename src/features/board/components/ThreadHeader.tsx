@@ -39,7 +39,7 @@ export function ThreadHeader({ thread }: { thread: Thread }) {
         </p>
         <p>
           <span className="mr-3 text-sky-900">갱신일:</span>
-          {formatThreadDate(thread.updatedAt)}
+          {formatThreadDate(thread.postUpdatedAt)}
         </p>
       </div>
     </header>

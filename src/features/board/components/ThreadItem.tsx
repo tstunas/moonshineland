@@ -46,7 +46,7 @@ export function ThreadItem({ thread, boardKey }: ThreadItemProps) {
     }).format(date);
   };
 
-  const dateRange = `${formatThreadDate(thread.createdAt)} - ${formatThreadDate(thread.updatedAt)}`;
+  const dateRange = `${formatThreadDate(thread.createdAt)} - ${formatThreadDate(thread.postUpdatedAt)}`;
   const threadRecentHref = `/board/${boardKey}/${thread.threadIndex}/recent`;
   const threadHref = `/board/${boardKey}/${thread.threadIndex}`;
 
