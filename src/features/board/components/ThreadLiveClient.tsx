@@ -6,6 +6,7 @@ import { getPostsAfterAction } from "@/features/board/actions/post/getPostsAfter
 import { useThreadSse } from "@/hooks/useThreadSse";
 import type { Post } from "@/types/post";
 import type { Thread } from "@/types/thread";
+import { ScrollQuickButtons } from "@/components/ui/ScrollQuickButtons";
 
 import { PostForm } from "./PostForm";
 import { PostItem } from "./PostItem";
@@ -42,8 +43,8 @@ export function ThreadLiveClient({
   const [isReplyAlertEnabled, setIsReplyAlertEnabled] = useState(true);
   const [isBottomLockEnabled, setIsBottomLockEnabled] = useState(false);
   const [isAdminMode, setIsAdminMode] = useState(false);
-  const [showScrollBottomButton, setShowScrollBottomButton] = useState(false);
   const postsRef = useRef(posts);
+  const rootContainerRef = useRef<HTMLDivElement | null>(null);
   const pendingScrollBottomAfterRenderRef = useRef(false);
   const bottomScrollTimeoutIdsRef = useRef<number[]>([]);
   const postFormContainerRef = useRef<HTMLDivElement | null>(null);
@@ -91,6 +92,15 @@ export function ThreadLiveClient({
   }, []);
 
   const scrollToBottom = useCallback(() => {
+    const scroller = rootContainerRef.current?.closest("main") ?? null;
+    if (scroller) {
+      scroller.scrollTo({
+        top: scroller.scrollHeight,
+        behavior: "smooth",
+      });
+      return;
+    }
+
     window.scrollTo({
       top: document.documentElement.scrollHeight,
       behavior: "smooth",
@@ -225,23 +235,6 @@ export function ThreadLiveClient({
     // 상태 반영 후 실제 DOM 높이가 확정된 뒤 하단으로 이동
     scrollToBottomAfterRender();
   }, [posts, thread.postCount, scrollToBottomAfterRender]);
-
-  useEffect(() => {
-    const updateButtonVisibility = () => {
-      const doc = document.documentElement;
-      const remaining = doc.scrollHeight - (window.scrollY + window.innerHeight);
-      setShowScrollBottomButton(remaining > 140);
-    };
-
-    updateButtonVisibility();
-    window.addEventListener("scroll", updateButtonVisibility, { passive: true });
-    window.addEventListener("resize", updateButtonVisibility);
-
-    return () => {
-      window.removeEventListener("scroll", updateButtonVisibility);
-      window.removeEventListener("resize", updateButtonVisibility);
-    };
-  }, []);
 
   useEffect(() => {
     const stored = window.localStorage.getItem(bottomLockStorageKey);
@@ -434,7 +427,7 @@ export function ThreadLiveClient({
   }, [clearBottomScrollTimeouts]);
 
   return (
-    <div className="relative">
+    <div ref={rootContainerRef} className="relative">
       <div className="mb-4">
         <ThreadNavigation
           boardKey={boardKey}
@@ -534,17 +527,7 @@ export function ThreadLiveClient({
         />
       </div>
 
-      {showScrollBottomButton ? (
-        <button
-          type="button"
-          onClick={scrollToBottom}
-          title="페이지 하단으로 이동"
-          className="fixed bottom-6 right-6 z-40 inline-flex items-center gap-2 rounded-full border border-sky-300 bg-sky-500 px-4 py-2 text-sm font-semibold text-white shadow-lg shadow-sky-900/20 transition hover:bg-sky-600"
-        >
-          <span aria-hidden="true">↓</span>
-          하단 고정
-        </button>
-      ) : null}
+      <ScrollQuickButtons containerRef={rootContainerRef} />
     </div>
   );
 }

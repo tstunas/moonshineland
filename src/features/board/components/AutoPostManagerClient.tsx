@@ -27,6 +27,7 @@ import {
   type AutoPostPayload,
   type AutoPostSchedulePayload,
 } from "@/features/board/actions/auto/types";
+import { ScrollQuickButtons } from "@/components/ui/ScrollQuickButtons";
 import { cn } from "@/lib/cn";
 import { AnonymousAuthor } from "@/lib/constants";
 import type { SseAutoPostFiredEvent } from "@/types/sse";
@@ -110,6 +111,7 @@ export function AutoPostManagerClient({
   threadIndex,
   initialAutoPosts,
 }: AutoPostManagerClientProps) {
+  const rootContainerRef = useRef<HTMLDivElement | null>(null);
   const contentRef = useRef<HTMLTextAreaElement | null>(null);
   const imageInputRef = useRef<HTMLInputElement | null>(null);
   const authorStorageKey = `moonshineland:auto-form:${boardKey}:author`;
@@ -286,6 +288,15 @@ export function AutoPostManagerClient({
 
   const scrollToBottom = useCallback(() => {
     window.requestAnimationFrame(() => {
+      const scroller = rootContainerRef.current?.closest("main") ?? null;
+      if (scroller) {
+        scroller.scrollTo({
+          top: scroller.scrollHeight,
+          behavior: "smooth",
+        });
+        return;
+      }
+
       window.scrollTo({
         top: document.documentElement.scrollHeight,
         behavior: "smooth",
@@ -706,7 +717,7 @@ export function AutoPostManagerClient({
   }, [fetchAutoPosts, schedule?.isEnabled]);
 
   return (
-    <div className="space-y-4">
+    <div ref={rootContainerRef} className="space-y-4">
       <section className="rounded-2xl border border-slate-200 bg-white p-4">
         <div className="mb-3 flex items-center justify-between">
           <h2 className="text-lg font-bold text-slate-900">자동투하 레스 목록</h2>
@@ -1077,6 +1088,8 @@ export function AutoPostManagerClient({
           </div>
         </div>
       ) : null}
+
+      <ScrollQuickButtons containerRef={rootContainerRef} />
     </div>
   );
 }
