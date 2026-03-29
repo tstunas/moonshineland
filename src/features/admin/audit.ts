@@ -17,7 +17,7 @@ export async function recordAdminAudit(input: RecordAdminAuditInput) {
       targetType: input.targetType,
       targetIds: input.targetIds,
       summary: input.summary,
-      details: input.details,
+      details: input.details as unknown as NonNullable<unknown>,
     },
   });
 }
