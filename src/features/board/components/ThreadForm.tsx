@@ -7,6 +7,7 @@ import { cn } from "@/lib/cn";
 import { useRouter, useSearchParams } from "next/navigation";
 import { toast } from "sonner";
 import { AnonymousAuthor } from "@/lib/constants";
+import { PREFS_DEFAULT_AUTHOR } from "@/lib/preferences";
 
 import { DiceModal } from "./DiceModal";
 import { PostImagePicker } from "./PostImagePicker";
@@ -190,7 +191,11 @@ export function ThreadForm({
   }, [router]);
 
   const handleLoadIdentity = useCallback(() => {
-    setAuthor(window.localStorage.getItem(authorStorageKey) ?? "");
+    setAuthor(
+      window.localStorage.getItem(authorStorageKey) ??
+        window.localStorage.getItem(PREFS_DEFAULT_AUTHOR) ??
+        "",
+    );
     setCommand(window.localStorage.getItem(commandStorageKey) ?? "");
     toast.success("작성자 이름/콘솔 명령어를 불러왔습니다.");
   }, [authorStorageKey, commandStorageKey]);

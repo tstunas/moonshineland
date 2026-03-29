@@ -25,6 +25,7 @@ import { PostImagePicker } from "./PostImagePicker";
 import { PreviewModal } from "./PreviewModal";
 import { ThreadSettingsModal } from "./ThreadSettingsModal";
 import { AnonymousAuthor } from "@/lib/constants";
+import { PREFS_DEFAULT_AUTHOR } from "@/lib/preferences";
 
 const MAX_IMAGE_COUNT = 10;
 const CONTENT_TYPE_DEBOUNCE_MS = 300;
@@ -301,7 +302,11 @@ export function PostForm({
     if (typeof window === "undefined") {
       return;
     }
-    setAuthor(window.localStorage.getItem(authorStorageKey) ?? "");
+    setAuthor(
+      window.localStorage.getItem(authorStorageKey) ??
+        window.localStorage.getItem(PREFS_DEFAULT_AUTHOR) ??
+        "",
+    );
     setCommand(window.localStorage.getItem(commandStorageKey) ?? "");
     toast.success("작성자 이름/콘솔 명령어를 불러왔습니다.");
   }, [authorStorageKey, commandStorageKey]);

@@ -11,6 +11,9 @@ export function Toaster() {
         classNames: {
           toast: "mt-14",
         },
+        style: {
+          fontSize: "var(--pref-toast-font-size, 14px)",
+        },
       }}
     />
   );
