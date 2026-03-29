@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 
 import { AppShell } from "@/components/layout/AppShell";
+import { Toaster } from "@/components/ui/Toaster";
 import { getCurrentUser } from "@/features/auth/queries";
 
 import "./globals.css";
@@ -35,6 +36,7 @@ export default async function RootLayout({
     >
       <body className="h-full overflow-hidden bg-slate-300 text-slate-900">
         <AppShell isAuthenticated={Boolean(currentUser)}>{children}</AppShell>
+        <Toaster />
       </body>
     </html>
   );
