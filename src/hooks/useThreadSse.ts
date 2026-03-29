@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useRef, useState } from "react";
 
-import type { Post } from "@/types/post";
+import type { PostWithImages } from "@/types/post";
 import type {
   SseConnectedEvent,
   SsePostContentEditedEvent,
@@ -14,7 +14,7 @@ import type {
 interface UseThreadSseOptions {
   /** 초기 새 레스 수신 여부 (기본값: true) */
   initialReceiveNewPosts?: boolean;
-  onNewPost?: (post: Post) => void;
+  onNewPost?: (post: PostWithImages) => void;
   onPostContentEdited?: (data: SsePostContentEditedEvent) => void;
   onPostContentTypeEdited?: (data: SsePostContentTypeEditedEvent) => void;
   onPostVisibilityEdited?: (data: SsePostVisibilityEditedEvent) => void;
@@ -104,7 +104,7 @@ export function useThreadSse(
     });
 
     es.addEventListener("thread:new-post", (e: MessageEvent) => {
-      const post = JSON.parse(e.data) as Post;
+      const post = JSON.parse(e.data) as PostWithImages;
       callbacksRef.current.onNewPost?.(post);
     });
 

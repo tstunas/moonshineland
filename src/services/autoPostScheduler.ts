@@ -1,6 +1,6 @@
 import { broadcastAutoPostFired, broadcastNewPost } from "@/lib/sse-store";
 import prisma from "@/lib/prisma";
-import type { Post } from "@/types/post";
+import type { PostWithImages } from "@/types/post";
 
 const SCHEDULE_LOCK_WINDOW_MS = 25_000;
 const POST_ORDER_RETRY = 5;
@@ -28,7 +28,7 @@ async function processDueSchedule(scheduleId: number): Promise<{
   status: "posted" | "skipped" | "stopped";
   boardKey?: string;
   threadIndex?: number;
-  post?: Post;
+  post?: PostWithImages;
   autoPostId?: number;
   autoPostSequence?: number;
 }> {
@@ -189,21 +189,51 @@ async function processDueSchedule(scheduleId: number): Promise<{
             content: selectedAutoPost.content,
             rawContent: selectedAutoPost.rawContent,
             contentType: selectedAutoPost.contentType,
+            isInlineImage: selectedAutoPost.isInlineImage,
             isEdited: false,
             isAutoPost: true,
             contentUpdatedAt: now,
-            ...(selectedAutoPost.autoPostImages.length > 0
-              ? {
-                  postImages: {
-                    create: selectedAutoPost.autoPostImages.map((image) => ({
-                      imageUrl: image.imageUrl,
-                      sortOrder: image.sortOrder,
-                    })),
-                  },
-                }
-              : {}),
           },
         });
+
+        const autoPostImages = await tx.autoPostImage.findMany({
+          where: {
+            autoPostId: selectedAutoPost.id,
+          },
+          select: {
+            imageUrl: true,
+            sortOrder: true,
+          },
+          orderBy: {
+            sortOrder: "asc",
+          },
+        });
+
+        if (autoPostImages.length > 0) {
+          await tx.postImage.createMany({
+            data: autoPostImages.map((image) => ({
+              postId: post.id,
+              imageUrl: image.imageUrl,
+              sortOrder: image.sortOrder,
+            })),
+          });
+        }
+
+        const postWithImages = await tx.post.findUnique({
+          where: {
+            id: post.id,
+          },
+          include: {
+            postImages: {
+              orderBy: { sortOrder: "asc" },
+              select: { id: true, imageUrl: true, sortOrder: true },
+            },
+          },
+        });
+
+        if (!postWithImages) {
+          throw new Error("POST_NOT_FOUND_AFTER_AUTOP_POST_CREATE");
+        }
 
         await tx.thread.update({
           where: {
@@ -254,7 +284,7 @@ async function processDueSchedule(scheduleId: number): Promise<{
             },
           });
 
-          return post;
+          return postWithImages;
         }
 
         let nextAutoPostSequence = remainingTemplates[0].autoPostSequence;
@@ -283,7 +313,7 @@ async function processDueSchedule(scheduleId: number): Promise<{
           },
         });
 
-        return post;
+        return postWithImages;
       });
 
       return {

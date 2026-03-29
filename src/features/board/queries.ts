@@ -2,7 +2,7 @@ import prisma from "@/lib/prisma";
 import { verifyAccessToken } from "@/lib/jwt";
 import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
-import type { Post } from "@/types/post";
+import type { Post, PostWithImages } from "@/types/post";
 import type { Thread } from "@/types/thread";
 
 export type ThreadListFilters = {
@@ -238,7 +238,11 @@ export async function getThreadQuery(
   });
 }
 
-export async function getPostListQuery(filters: PostListFilters): Promise<Post[]> {
+const POST_IMAGES_INCLUDE = {
+  postImages: { orderBy: { sortOrder: "asc" as const }, select: { id: true, imageUrl: true, sortOrder: true } },
+} as const;
+
+export async function getPostListQuery(filters: PostListFilters): Promise<PostWithImages[]> {
   const nextPath = `/board/${filters.boardKey}/${filters.threadIndex}`;
   const viewer = await getBoardViewerAuth();
   const viewerUserId = viewer?.userId ?? null;
@@ -270,7 +274,7 @@ export async function getPostListQuery(filters: PostListFilters): Promise<Post[]
   const canViewHiddenPosts = viewerUserId === thread.userId;
   const visibilityWhere = canViewHiddenPosts ? {} : { isHidden: false };
 
-  let posts: Post[] = [];
+  let posts: PostWithImages[] = [];
 
   if (mode === "recent") {
     const recent = await prisma.post.findMany({
@@ -280,6 +284,7 @@ export async function getPostListQuery(filters: PostListFilters): Promise<Post[]
       },
       orderBy: { postOrder: "desc" },
       take: 50,
+      include: POST_IMAGES_INCLUDE,
     });
     posts = [...recent].sort((a, b) => a.postOrder - b.postOrder);
   } else if (mode === "range") {
@@ -311,6 +316,7 @@ export async function getPostListQuery(filters: PostListFilters): Promise<Post[]
           : {}),
       },
       orderBy: { postOrder: "asc" },
+      include: POST_IMAGES_INCLUDE,
     });
   } else {
     posts = await prisma.post.findMany({
@@ -319,6 +325,7 @@ export async function getPostListQuery(filters: PostListFilters): Promise<Post[]
         ...visibilityWhere,
       },
       orderBy: { postOrder: "asc" },
+      include: POST_IMAGES_INCLUDE,
     });
   }
 
@@ -332,6 +339,7 @@ export async function getPostListQuery(filters: PostListFilters): Promise<Post[]
       postOrder: 0,
       ...visibilityWhere,
     },
+    include: POST_IMAGES_INCLUDE,
   });
 
   if (!zeroPost) {
@@ -350,7 +358,7 @@ export async function getPostsAfterOrderQuery(
   boardKey: string,
   threadIndex: number,
   lastPostOrder: number,
-): Promise<Post[]> {
+): Promise<PostWithImages[]> {
   const nextPath = `/board/${boardKey}/${threadIndex}`;
   const viewer = await getBoardViewerAuth();
 
@@ -385,6 +393,7 @@ export async function getPostsAfterOrderQuery(
     orderBy: {
       postOrder: "asc",
     },
+    include: POST_IMAGES_INCLUDE,
   });
 }
 

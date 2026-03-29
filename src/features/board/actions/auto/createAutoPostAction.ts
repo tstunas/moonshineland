@@ -1,6 +1,7 @@
 "use server";
 
 import {
+  applyInlineImagePlaceholders,
   generateHtmlContent,
   parseContentType,
   uploadImages,
@@ -75,6 +76,14 @@ export async function createAutoPostAction(
       });
 
       const nextSequence = (lastAutoPost?.autoPostSequence ?? 0) + 1;
+      const generatedContent = generateHtmlContent(content, {
+        off,
+        location: { boardKey, threadIndex },
+      });
+      const { htmlContent, isInlineImage } = applyInlineImagePlaceholders(
+        generatedContent,
+        uploaded,
+      );
 
       await tx.autoPost.create({
         data: {
@@ -84,8 +93,9 @@ export async function createAutoPostAction(
           author,
           idcode: "TODO-IDCODE",
           rawContent: content,
-          content: generateHtmlContent(content, { off, location: { boardKey, threadIndex } }),
+          content: htmlContent,
           contentType,
+          isInlineImage,
           contentUpdatedAt: new Date(),
           ...(uploaded.length > 0
             ? {

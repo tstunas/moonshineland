@@ -9,7 +9,7 @@
  */
 
 import type { ContentType } from "@/types/post";
-import type { Post } from "@/types/post";
+import type { PostWithImages } from "@/types/post";
 
 // ─── 타입 ────────────────────────────────────────────────────────────────────
 
@@ -218,7 +218,7 @@ export function setReceiveNewPosts(
 export function broadcastNewPost(
   boardKey: string,
   threadIndex: number,
-  post: Post,
+  post: PostWithImages,
 ) {
   const threadKey = `${boardKey}:${threadIndex}`;
   const tc = threadClients.get(threadKey);
@@ -265,6 +265,7 @@ export function broadcastPostContentEdited(
     postId: number;
     content: string;
     rawContent: string;
+    isInlineImage: boolean;
     isEdited: boolean;
     contentUpdatedAt: string;
     updatedAt: string;

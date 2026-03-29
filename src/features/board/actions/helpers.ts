@@ -1,8 +1,8 @@
-import { mkdir, writeFile } from "fs/promises";
 import { randomUUID } from "crypto";
 import path from "path";
 
 import { getCurrentUser } from "@/features/auth/queries";
+import { uploadImageToGcs } from "@/lib/gcs";
 import prisma from "@/lib/prisma";
 import type { ContentType } from "@/types/post";
 
@@ -64,6 +64,7 @@ export const LINE_TAG = '<div class="inner-line">$1</div>';
 
 const LEADING_UNICODE_SPACES_REGEX =
   /(^|\n)([\u0009\u0020\u00A0\u1680\u2000-\u200A\u202F\u205F\u3000]+)/g;
+const INLINE_IMAGE_TOKEN_ESCAPED = "&lt;image&gt;";
 
 function escapeHtml(value: string): string {
   return value
@@ -72,6 +73,13 @@ function escapeHtml(value: string): string {
     .replaceAll(">", "&gt;")
     .replaceAll('"', "&quot;")
     .replaceAll("'", "&#39;");
+}
+
+function buildInlineImageTag(imageUrl: string, order: number): string {
+  const escapedUrl = escapeHtml(imageUrl);
+  const altText = escapeHtml(`inline-image-${String(order)}`);
+
+  return `<a href="${escapedUrl}" target="_blank" rel="noopener noreferrer"><img src="${escapedUrl}" alt="${altText}" class="content-inline-image" loading="lazy" decoding="async"/></a>`;
 }
 
 function randomInt(min: number, max: number): number {
@@ -292,6 +300,33 @@ export function generateHtmlContent(
   return htmlContent;
 }
 
+export function applyInlineImagePlaceholders(
+  htmlContent: string,
+  imageUrls: string[],
+): { htmlContent: string; isInlineImage: boolean } {
+  const hasInlineImageToken = htmlContent.includes(INLINE_IMAGE_TOKEN_ESCAPED);
+  if (!hasInlineImageToken) {
+    return { htmlContent, isInlineImage: false };
+  }
+
+  if (imageUrls.length === 0) {
+    return { htmlContent, isInlineImage: true };
+  }
+
+  let imageIndex = 0;
+  const replaced = htmlContent.replaceAll(INLINE_IMAGE_TOKEN_ESCAPED, () => {
+    const imageUrl = imageUrls[imageIndex];
+    if (!imageUrl) {
+      return INLINE_IMAGE_TOKEN_ESCAPED;
+    }
+
+    imageIndex += 1;
+    return buildInlineImageTag(imageUrl, imageIndex);
+  });
+
+  return { htmlContent: replaced, isInlineImage: true };
+}
+
 export function parseBooleanFormValue(value: FormDataEntryValue | null): boolean {
   if (typeof value !== "string") {
     return false;
@@ -374,17 +409,6 @@ export async function uploadImages(
   boardKey: string,
   threadIndex: number,
 ): Promise<string[]> {
-  const uploadDir = path.join(
-    process.cwd(),
-    "public",
-    "uploads",
-    "boards",
-    boardKey,
-    String(threadIndex),
-  );
-
-  await mkdir(uploadDir, { recursive: true });
-
   const urls: string[] = [];
 
   for (const file of files) {
@@ -393,12 +417,10 @@ export async function uploadImages(
     const safeName = file.name.replace(/[^a-zA-Z0-9._-]/g, "_");
     const ext = path.extname(safeName) || ".bin";
     const fileName = `${Date.now()}-${randomUUID()}${ext}`;
-    const filePath = path.join(uploadDir, fileName);
+    const destPath = `boards/${boardKey}/${String(threadIndex)}/${fileName}`;
 
-    const bytes = await file.arrayBuffer();
-    await writeFile(filePath, Buffer.from(bytes));
-
-    urls.push(`/uploads/boards/${boardKey}/${threadIndex}/${fileName}`);
+    const url = await uploadImageToGcs(file, destPath);
+    urls.push(url);
   }
 
   return urls;

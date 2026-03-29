@@ -15,6 +15,7 @@ interface PostImagePickerProps {
   onImageChange: (files: FileList | null) => void;
   onClearSelectedImages: () => void;
   onRemoveSelectedImage: (index: number) => void;
+  onMoveSelectedImage: (fromIndex: number, toIndex: number) => void;
 }
 
 export function PostImagePicker({
@@ -24,6 +25,7 @@ export function PostImagePicker({
   onImageChange,
   onClearSelectedImages,
   onRemoveSelectedImage,
+  onMoveSelectedImage,
 }: PostImagePickerProps) {
   return (
     <div className="mt-4">
@@ -77,20 +79,45 @@ export function PostImagePicker({
                 className="flex items-center justify-between gap-2 rounded px-1 py-1"
               >
                 <div className="min-w-0">
+                  <div className="text-[11px] font-semibold text-sky-700">
+                    순서 {index + 1}
+                  </div>
                   <div className="truncate">{file.name}</div>
                   <div className="text-xs text-slate-500">
                     {formatFileSize(file.size)}
                   </div>
                 </div>
-                <button
-                  type="button"
-                  onClick={() => {
-                    onRemoveSelectedImage(index);
-                  }}
-                  className="shrink-0 rounded border border-rose-200 bg-rose-50 px-2 py-0.5 text-xs font-semibold text-rose-700 hover:bg-rose-100"
-                >
-                  삭제
-                </button>
+                <div className="flex shrink-0 items-center gap-1">
+                  <button
+                    type="button"
+                    disabled={index === 0}
+                    onClick={() => {
+                      onMoveSelectedImage(index, index - 1);
+                    }}
+                    className="rounded border border-slate-200 bg-slate-50 px-2 py-0.5 text-xs font-semibold text-slate-700 hover:bg-slate-100 disabled:cursor-not-allowed disabled:opacity-40"
+                  >
+                    ↑
+                  </button>
+                  <button
+                    type="button"
+                    disabled={index === selectedImages.length - 1}
+                    onClick={() => {
+                      onMoveSelectedImage(index, index + 1);
+                    }}
+                    className="rounded border border-slate-200 bg-slate-50 px-2 py-0.5 text-xs font-semibold text-slate-700 hover:bg-slate-100 disabled:cursor-not-allowed disabled:opacity-40"
+                  >
+                    ↓
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      onRemoveSelectedImage(index);
+                    }}
+                    className="rounded border border-rose-200 bg-rose-50 px-2 py-0.5 text-xs font-semibold text-rose-700 hover:bg-rose-100"
+                  >
+                    삭제
+                  </button>
+                </div>
               </li>
             ))}
           </ul>

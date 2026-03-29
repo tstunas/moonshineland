@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, type MouseEvent } from "react";
 
 import { banThreadUserByPostAction } from "@/features/board/actions/post/banThreadUserByPostAction";
 import { editPostAction } from "@/features/board/actions/post/editPostAction";
@@ -7,9 +7,12 @@ import { hidePostAction } from "@/features/board/actions/post/hidePostAction";
 import { unbanThreadUserByPostAction } from "@/features/board/actions/post/unbanThreadUserByPostAction";
 import { cn } from "@/lib/cn";
 import { AnonymousAuthor } from "@/lib/constants";
-import { Post } from "@/types/post";
+import type { PostWithImages } from "@/types/post";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
+
+import { ImageGallery } from "./ImageGallery";
+import { InlineImageLightbox } from "./InlineImageLightbox";
 
 export function PostItem({
   post,
@@ -18,7 +21,7 @@ export function PostItem({
   canManageThread,
   isAdminMode,
 }: {
-  post: Post;
+  post: PostWithImages;
   boardKey: string;
   threadIndex: number;
   canManageThread: boolean;
@@ -35,6 +38,7 @@ export function PostItem({
   const [isSavingEdit, setIsSavingEdit] = useState(false);
   const [isHistoryOpen, setIsHistoryOpen] = useState(false);
   const [isHistoryLoading, setIsHistoryLoading] = useState(false);
+  const [fullscreenInlineImageUrl, setFullscreenInlineImageUrl] = useState<string | null>(null);
   const [editHistories, setEditHistories] = useState<
     Array<{
       id: number;
@@ -202,6 +206,21 @@ export function PostItem({
     return `${year}-${month}-${day} (${weekday}) ${hours}:${minutes}:${seconds}`;
   };
 
+  const openInlineImageFullscreen = (event: MouseEvent<HTMLDivElement>) => {
+    const target = event.target as HTMLElement | null;
+    if (!target) {
+      return;
+    }
+
+    const image = target.closest("img.content-inline-image") as HTMLImageElement | null;
+    if (!image) {
+      return;
+    }
+
+    event.preventDefault();
+    setFullscreenInlineImageUrl(image.currentSrc || image.src);
+  };
+
   return (
     <article
       className={cn(
@@ -326,14 +345,30 @@ export function PostItem({
       </header>
 
       <div className="px-3 py-4">
+        {!post.isInlineImage ? (
+          <ImageGallery
+            images={post.postImages}
+            altPrefix={`post-${post.postOrder}`}
+          />
+        ) : null}
         <div
           className={cn(
             "content whitespace-pre-wrap break-words text-[15px] leading-relaxed text-slate-900",
             post.contentType,
           )}
+          onClick={openInlineImageFullscreen}
           dangerouslySetInnerHTML={{ __html: post.content }}
         />
       </div>
+
+      {fullscreenInlineImageUrl ? (
+        <InlineImageLightbox
+          imageUrl={fullscreenInlineImageUrl}
+          onClose={() => {
+            setFullscreenInlineImageUrl(null);
+          }}
+        />
+      ) : null}
 
       {isEditOpen ? (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/55 p-4">

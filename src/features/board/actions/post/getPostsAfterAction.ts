@@ -1,13 +1,13 @@
 "use server";
 
 import { getPostsAfterOrderQuery } from "@/features/board/queries";
-import type { Post } from "@/types/post";
+import type { PostWithImages } from "@/types/post";
 
 export async function getPostsAfterAction(
   boardKey: string,
   threadIndex: number,
   lastPostOrder: number,
-): Promise<Post[]> {
+): Promise<PostWithImages[]> {
   if (!boardKey || !Number.isInteger(threadIndex) || threadIndex <= 0) {
     return [];
   }

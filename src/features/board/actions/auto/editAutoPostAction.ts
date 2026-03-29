@@ -1,6 +1,7 @@
 "use server";
 
 import {
+  applyInlineImagePlaceholders,
   generateHtmlContent,
   parseContentType,
 } from "@/features/board/actions/helpers";
@@ -59,8 +60,18 @@ export async function editAutoPostAction(
       select: {
         id: true,
         contentType: true,
+        isInlineImage: true,
         rawContent: true,
         author: true,
+        autoPostImages: {
+          select: {
+            imageUrl: true,
+            sortOrder: true,
+          },
+          orderBy: {
+            sortOrder: "asc",
+          },
+        },
       },
     });
 
@@ -74,6 +85,15 @@ export async function editAutoPostAction(
     const hasContentChanged = autoPost.rawContent !== content;
     const hasAuthorChanged = autoPost.author !== author;
     const hasContentTypeChanged = autoPost.contentType !== nextContentType;
+    const inlineImageResult = applyInlineImagePlaceholders(
+      generateHtmlContent(content, {
+        off: command.split(".").includes("off"),
+        location: { boardKey, threadIndex },
+      }),
+      autoPost.autoPostImages.map((image) => image.imageUrl),
+    );
+    const hasInlineImageChanged =
+      autoPost.isInlineImage !== inlineImageResult.isInlineImage;
 
     await prisma.autoPost.update({
       where: {
@@ -83,8 +103,13 @@ export async function editAutoPostAction(
         author,
         contentType: nextContentType,
         rawContent: content,
-        content: generateHtmlContent(content),
-        isEdited: hasContentChanged || hasAuthorChanged || hasContentTypeChanged,
+        content: inlineImageResult.htmlContent,
+        isInlineImage: inlineImageResult.isInlineImage,
+        isEdited:
+          hasContentChanged ||
+          hasAuthorChanged ||
+          hasContentTypeChanged ||
+          hasInlineImageChanged,
         contentUpdatedAt: hasContentChanged ? new Date() : undefined,
       },
     });

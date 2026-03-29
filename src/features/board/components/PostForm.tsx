@@ -296,6 +296,26 @@ export function PostForm({
     [selectedImages, syncSelectedImages],
   );
 
+  const moveSelectedImage = useCallback(
+    (fromIndex: number, toIndex: number) => {
+      if (
+        fromIndex === toIndex ||
+        fromIndex < 0 ||
+        toIndex < 0 ||
+        fromIndex >= selectedImages.length ||
+        toIndex >= selectedImages.length
+      ) {
+        return;
+      }
+
+      const nextFiles = [...selectedImages];
+      const [moved] = nextFiles.splice(fromIndex, 1);
+      nextFiles.splice(toIndex, 0, moved);
+      syncSelectedImages(nextFiles);
+    },
+    [selectedImages, syncSelectedImages],
+  );
+
   const clearSelectedImages = useCallback(() => {
     syncSelectedImages([]);
   }, [syncSelectedImages]);
@@ -405,12 +425,18 @@ export function PostForm({
         return;
       }
 
-      const selectedCount = imageInputRef.current?.files?.length ?? 0;
-      if (selectedCount > MAX_IMAGE_COUNT) {
+      if (selectedImages.length > MAX_IMAGE_COUNT) {
         toast.error(
           `이미지는 최대 ${MAX_IMAGE_COUNT}개까지 첨부할 수 있습니다.`,
         );
         return;
+      }
+
+      // form action={}은 제출 후 form을 reset하므로, 이전 실패 시 file input이 비워질 수 있다.
+      // selectedImages state가 항상 정확한 소스이므로 FormData를 덮어쓴다.
+      formData.delete("images");
+      for (const file of selectedImages) {
+        formData.append("images", file);
       }
 
       const result = await createPostAction(formData);
@@ -702,6 +728,7 @@ export function PostForm({
             onImageChange={applyImageLimit}
             onClearSelectedImages={clearSelectedImages}
             onRemoveSelectedImage={removeSelectedImage}
+            onMoveSelectedImage={moveSelectedImage}
           />
 
           <button

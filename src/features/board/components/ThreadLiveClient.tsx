@@ -4,7 +4,7 @@ import { startTransition, useCallback, useEffect, useRef, useState } from "react
 
 import { getPostsAfterAction } from "@/features/board/actions/post/getPostsAfterAction";
 import { useThreadSse } from "@/hooks/useThreadSse";
-import type { Post } from "@/types/post";
+import type { PostWithImages } from "@/types/post";
 import type { Thread } from "@/types/thread";
 import { ScrollQuickButtons } from "@/components/ui/ScrollQuickButtons";
 
@@ -15,7 +15,7 @@ import { ThreadNavigation } from "./ThreadNavigation";
 
 interface ThreadLiveClientProps {
   boardKey: string;
-  initialPosts: Post[];
+  initialPosts: PostWithImages[];
   initialThread: Thread;
   isSignedIn: boolean;
   mode?: "recent" | "range" | "all";
@@ -286,6 +286,7 @@ export function ThreadLiveClient({
                     ...post,
                     content: data.content,
                     rawContent: data.rawContent,
+                    isInlineImage: data.isInlineImage,
                     isEdited: data.isEdited,
                     contentUpdatedAt: new Date(data.contentUpdatedAt),
                     updatedAt: new Date(data.updatedAt),

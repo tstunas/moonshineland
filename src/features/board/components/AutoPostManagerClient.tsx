@@ -1,7 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useRef, useState, type FormEvent } from "react";
-import Image from "next/image";
+import { useCallback, useEffect, useMemo, useRef, useState, type FormEvent, type MouseEvent } from "react";
 
 import {
   createAutoPostAction,
@@ -35,6 +34,8 @@ import { toast } from "sonner";
 
 import { AutoPostFormControls } from "./AutoPostFormControls";
 import { DiceModal } from "./DiceModal";
+import { ImageGallery } from "./ImageGallery";
+import { InlineImageLightbox } from "./InlineImageLightbox";
 import { PostImagePicker } from "./PostImagePicker";
 import { PreviewModal } from "./PreviewModal";
 
@@ -144,6 +145,7 @@ export function AutoPostManagerClient({
   const [dismissedAutoPostIds, setDismissedAutoPostIds] = useState<number[]>([]);
 
   const [editingAutoPost, setEditingAutoPost] = useState<AutoPostPayload | null>(null);
+  const [fullscreenInlineImageUrl, setFullscreenInlineImageUrl] = useState<string | null>(null);
   const [editAuthor, setEditAuthor] = useState("");
   const [editCommand, setEditCommand] = useState("");
   const [editContent, setEditContent] = useState("");
@@ -241,6 +243,26 @@ export function AutoPostManagerClient({
     [selectedImages, syncSelectedImages],
   );
 
+  const moveSelectedImage = useCallback(
+    (fromIndex: number, toIndex: number) => {
+      if (
+        fromIndex === toIndex ||
+        fromIndex < 0 ||
+        toIndex < 0 ||
+        fromIndex >= selectedImages.length ||
+        toIndex >= selectedImages.length
+      ) {
+        return;
+      }
+
+      const nextFiles = [...selectedImages];
+      const [moved] = nextFiles.splice(fromIndex, 1);
+      nextFiles.splice(toIndex, 0, moved);
+      syncSelectedImages(nextFiles);
+    },
+    [selectedImages, syncSelectedImages],
+  );
+
   const clearSelectedImages = useCallback(() => {
     syncSelectedImages([]);
   }, [syncSelectedImages]);
@@ -329,7 +351,7 @@ export function AutoPostManagerClient({
           current.filter((id) => (result.autoPosts ?? []).some((item) => item.id === id)),
         );
 
-        if (isBottomLockEnabled) {
+        if (isBottomLockEnabled && !silent) {
           scrollToBottom();
         }
 
@@ -698,23 +720,20 @@ export function AutoPostManagerClient({
     [autoPosts, dismissedAutoPostIds],
   );
 
-  useEffect(() => {
-    if (!schedule?.isEnabled) {
+  const openInlineImageFullscreen = useCallback((event: MouseEvent<HTMLDivElement>) => {
+    const target = event.target as HTMLElement | null;
+    if (!target) {
       return;
     }
 
-    const intervalId = window.setInterval(() => {
-      if (document.hidden) {
-        return;
-      }
+    const image = target.closest("img.content-inline-image") as HTMLImageElement | null;
+    if (!image) {
+      return;
+    }
 
-      void fetchAutoPosts({ silent: true });
-    }, 4000);
-
-    return () => {
-      window.clearInterval(intervalId);
-    };
-  }, [fetchAutoPosts, schedule?.isEnabled]);
+    event.preventDefault();
+    setFullscreenInlineImageUrl(image.currentSrc || image.src);
+  }, []);
 
   return (
     <div ref={rootContainerRef} className="space-y-4">
@@ -776,36 +795,20 @@ export function AutoPostManagerClient({
                   </header>
 
                   <div className="px-3 py-4">
+                    {!autoPost.isInlineImage ? (
+                      <ImageGallery
+                        images={autoPost.autoPostImages}
+                        altPrefix={`auto-${autoPost.autoPostSequence}`}
+                      />
+                    ) : null}
                     <div
                       className={cn(
                         "content whitespace-pre-wrap break-words text-[15px] leading-relaxed text-slate-900",
                         autoPost.contentType,
                       )}
+                      onClick={openInlineImageFullscreen}
                       dangerouslySetInnerHTML={{ __html: autoPost.content }}
                     />
-
-                    {autoPost.autoPostImages.length > 0 ? (
-                      <ul className="mt-3 grid grid-cols-2 gap-2 sm:grid-cols-3">
-                        {autoPost.autoPostImages.map((image) => (
-                          <li key={image.id}>
-                            <a
-                              href={image.imageUrl}
-                              target="_blank"
-                              rel="noreferrer"
-                              className="block overflow-hidden rounded border border-slate-200 bg-slate-50"
-                            >
-                              <Image
-                                src={image.imageUrl}
-                                alt={`auto-post-${autoPost.autoPostSequence}-${image.sortOrder}`}
-                                width={320}
-                                height={160}
-                                className="h-24 w-full object-cover"
-                              />
-                            </a>
-                          </li>
-                        ))}
-                      </ul>
-                    ) : null}
                   </div>
                 </article>
               </li>
@@ -981,6 +984,7 @@ export function AutoPostManagerClient({
             onImageChange={applyImageLimit}
             onClearSelectedImages={clearSelectedImages}
             onRemoveSelectedImage={removeSelectedImage}
+            onMoveSelectedImage={moveSelectedImage}
           />
 
           <button
@@ -1002,6 +1006,15 @@ export function AutoPostManagerClient({
           titleLine={`AUTO#? ${author || AnonymousAuthor}${command ? ` (${command})` : ""}`}
           onClose={() => {
             setIsPreviewOpen(false);
+          }}
+        />
+      ) : null}
+
+      {fullscreenInlineImageUrl ? (
+        <InlineImageLightbox
+          imageUrl={fullscreenInlineImageUrl}
+          onClose={() => {
+            setFullscreenInlineImageUrl(null);
           }}
         />
       ) : null}

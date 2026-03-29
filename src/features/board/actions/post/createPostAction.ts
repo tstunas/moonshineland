@@ -3,9 +3,10 @@
 import { getCurrentUser } from "@/features/auth/queries";
 import { broadcastNewPost } from "@/lib/sse-store";
 import prisma from "@/lib/prisma";
-import type { Post } from "@/types/post";
+import type { PostWithImages } from "@/types/post";
 
 import {
+  applyInlineImagePlaceholders,
   buildPostImagesCreateData,
   generateHtmlContent,
   parseContentType,
@@ -82,7 +83,7 @@ export async function createPostAction(
 
   try {
     const uploaded = await uploadImages(imageFiles, boardKey, threadIndex);
-    let createdPostForBroadcast: Post | null = null;
+    let createdPostForBroadcast: PostWithImages | null = null;
 
     for (let attempt = 0; attempt < MAX_POST_ORDER_RETRY; attempt += 1) {
       try {
@@ -145,7 +146,14 @@ export async function createPostAction(
             throw new Error("POST_LIMIT_EXCEEDED");
           }
 
-          const htmlContent = generateHtmlContent(content, { off, location: { boardKey, threadIndex } });
+          const generatedContent = generateHtmlContent(content, {
+            off,
+            location: { boardKey, threadIndex },
+          });
+          const { htmlContent, isInlineImage } = applyInlineImagePlaceholders(
+            generatedContent,
+            uploaded,
+          );
 
           const createdPost = await tx.post.create({
             data: {
@@ -157,10 +165,14 @@ export async function createPostAction(
               content: htmlContent,
               rawContent: content,
               contentType,
+              isInlineImage,
               contentUpdatedAt: new Date(),
               ...(buildPostImagesCreateData(uploaded)
                 ? { postImages: buildPostImagesCreateData(uploaded) }
                 : {}),
+            },
+            include: {
+              postImages: { orderBy: { sortOrder: "asc" }, select: { id: true, imageUrl: true, sortOrder: true } },
             },
           });
 

@@ -174,6 +174,26 @@ export function ThreadForm({
     [selectedImages, syncSelectedImages],
   );
 
+  const moveSelectedImage = useCallback(
+    (fromIndex: number, toIndex: number) => {
+      if (
+        fromIndex === toIndex ||
+        fromIndex < 0 ||
+        toIndex < 0 ||
+        fromIndex >= selectedImages.length ||
+        toIndex >= selectedImages.length
+      ) {
+        return;
+      }
+
+      const nextFiles = [...selectedImages];
+      const [moved] = nextFiles.splice(fromIndex, 1);
+      nextFiles.splice(toIndex, 0, moved);
+      syncSelectedImages(nextFiles);
+    },
+    [selectedImages, syncSelectedImages],
+  );
+
   const clearSelectedImages = useCallback(() => {
     syncSelectedImages([]);
   }, [syncSelectedImages]);
@@ -540,6 +560,7 @@ export function ThreadForm({
             onImageChange={applyImageLimit}
             onClearSelectedImages={clearSelectedImages}
             onRemoveSelectedImage={removeSelectedImage}
+            onMoveSelectedImage={moveSelectedImage}
           />
 
           <button

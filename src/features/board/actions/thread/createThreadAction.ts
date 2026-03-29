@@ -4,6 +4,7 @@ import { getCurrentUser } from "@/features/auth/queries";
 import prisma from "@/lib/prisma";
 
 import {
+  applyInlineImagePlaceholders,
   buildPostImagesCreateData,
   generateHtmlContent,
   parseContentType,
@@ -158,6 +159,8 @@ export async function createThreadAction(
             off: command.split(".").includes("off"),
             location: { boardKey, threadIndex: nextThreadIndex },
           });
+          const { htmlContent: nextHtmlContent, isInlineImage } =
+            applyInlineImagePlaceholders(htmlContent, uploaded);
 
           // TODO: 이미지 다중 첨부 스키마(별도 테이블)로 확장하세요. 현재는 첫 번째 이미지만 저장합니다.
           await tx.post.create({
@@ -167,9 +170,10 @@ export async function createThreadAction(
               postOrder: 0,
               author: author || "",
               idcode: "TODO-IDCODE",
-              content: htmlContent,
+              content: nextHtmlContent,
               rawContent: content,
               contentType,
+              isInlineImage,
               contentUpdatedAt: new Date(),
               ...(buildPostImagesCreateData(uploaded)
                 ? { postImages: buildPostImagesCreateData(uploaded) }

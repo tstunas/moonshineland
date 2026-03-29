@@ -7,7 +7,11 @@ import {
 } from "@/lib/sse-store";
 import prisma from "@/lib/prisma";
 
-import { generateHtmlContent, parseContentType } from "../helpers";
+import {
+  applyInlineImagePlaceholders,
+  generateHtmlContent,
+  parseContentType,
+} from "../helpers";
 import type { BoardActionResult } from "../types";
 
 export async function editPostAction(
@@ -70,6 +74,15 @@ export async function editPostAction(
           },
         },
         include: {
+          postImages: {
+            select: {
+              imageUrl: true,
+              sortOrder: true,
+            },
+            orderBy: {
+              sortOrder: "asc",
+            },
+          },
           thread: {
             select: {
               id: true,
@@ -89,9 +102,17 @@ export async function editPostAction(
       }
 
       const nextRawContent = hasContent ? content : post.rawContent;
-      const nextHtmlContent = hasContent
-        ? generateHtmlContent(content, { off: command.split(".").includes("off"), location: { boardKey, threadIndex } })
-        : post.content;
+      const inlineImageResult = hasContent
+        ? applyInlineImagePlaceholders(
+            generateHtmlContent(nextRawContent, {
+              off: command.split(".").includes("off"),
+              location: { boardKey, threadIndex },
+            }),
+            post.postImages.map((image) => image.imageUrl),
+          )
+        : null;
+      const nextHtmlContent = inlineImageResult?.htmlContent ?? post.content;
+      const nextIsInlineImage = inlineImageResult?.isInlineImage ?? post.isInlineImage;
 
       if (hasContent) {
         await tx.postContentHistory.create({
@@ -116,6 +137,7 @@ export async function editPostAction(
             ? {
                 content: nextHtmlContent,
                 rawContent: nextRawContent,
+                isInlineImage: nextIsInlineImage,
                 isEdited: true,
                 contentUpdatedAt: new Date(),
               }
@@ -140,6 +162,7 @@ export async function editPostAction(
             postId: updatedPost.id,
             content: updatedPost.content,
             rawContent: updatedPost.rawContent,
+            isInlineImage: updatedPost.isInlineImage,
             isEdited: updatedPost.isEdited,
             contentUpdatedAt:
               updatedPost.contentUpdatedAt?.toISOString() ??

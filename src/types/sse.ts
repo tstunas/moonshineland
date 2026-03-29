@@ -1,5 +1,5 @@
 import type { ContentType } from "@/types/post";
-import type { Post } from "@/types/post";
+import type { PostWithImages } from "@/types/post";
 
 // ─── 서버 → 클라이언트 이벤트 ────────────────────────────────────────────────
 
@@ -22,13 +22,14 @@ export interface SseThreadUserCountEvent {
 }
 
 /** 새 레스 이벤트 (`receiveNewPosts` 상태인 클라이언트에게만 전송) */
-export type SseNewPostEvent = Post;
+export type SseNewPostEvent = PostWithImages;
 
 /** 레스 내용 수정 이벤트 (스레드 접속 중 모든 클라이언트에게 전송) */
 export interface SsePostContentEditedEvent {
   postId: number;
   content: string;
   rawContent: string;
+  isInlineImage: boolean;
   isEdited: boolean;
   contentUpdatedAt: string;
   updatedAt: string;
