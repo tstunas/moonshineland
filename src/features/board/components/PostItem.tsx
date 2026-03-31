@@ -310,7 +310,7 @@ export function PostItem({
             </>
           ) : null}
         </p>
-        <div className="mt-2 text-[15px] leading-tight text-slate-700 flex flex-wrap items-baseline gap-2">
+        <div className="mt-1 text-[13px] leading-tight text-slate-500">
           <span>{formatPostDate(post.createdAt)}</span>
           {post.isEdited && post.contentUpdatedAt ? (
             <span className="text-[12px] text-slate-500">

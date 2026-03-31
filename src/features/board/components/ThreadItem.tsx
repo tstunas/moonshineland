@@ -1,6 +1,6 @@
 import Link from "next/link";
 import type { Thread } from "@/types/thread";
-import { formatNumber } from "@/lib/format";
+import { formatNumber, formatRelativeTime } from "@/lib/format";
 import { AnonymousAuthor } from "@/lib/constants";
 import { cn } from "@/lib/cn";
 
@@ -10,7 +10,6 @@ interface ThreadItemProps {
 }
 
 export function ThreadItem({ thread, boardKey }: ThreadItemProps) {
-  const threadNo = `#${thread.threadIndex}`;
   const postCountText = `(${formatNumber(thread.postCount)})`;
   const authorLabel = thread.author || AnonymousAuthor;
   const threadBadges = [
@@ -32,27 +31,12 @@ export function ThreadItem({ thread, boardKey }: ThreadItemProps) {
       : []),
   ];
 
-  const formatThreadDate = (value: Date | string) => {
-    const date = value instanceof Date ? value : new Date(value);
-    return new Intl.DateTimeFormat("ko-KR", {
-      year: "numeric",
-      month: "2-digit",
-      day: "2-digit",
-      weekday: "short",
-      hour: "2-digit",
-      minute: "2-digit",
-      second: "2-digit",
-      hour12: false,
-      timeZone: "Asia/Seoul",
-    }).format(date);
-  };
-
-  const dateRange = `${formatThreadDate(thread.createdAt)} - ${formatThreadDate(thread.postUpdatedAt)}`;
+  const relativeUpdate = `${formatRelativeTime(thread.postUpdatedAt)} 갱신`;
   const threadRecentHref = `/board/${boardKey}/${thread.threadIndex}/recent`;
   const threadHref = `/board/${boardKey}/${thread.threadIndex}`;
 
   return (
-    <article className="group rounded-[24px] border border-slate-200 bg-[linear-gradient(180deg,_rgba(255,255,255,0.96),_rgba(241,245,249,0.96))] px-4 py-4 shadow-[0_16px_35px_-28px_rgba(15,23,42,0.55)] transition hover:-translate-y-0.5 hover:border-sky-200 hover:shadow-[0_22px_45px_-30px_rgba(14,116,144,0.45)]">
+    <article className="group rounded-[6px] border border-sky-200 bg-slate-200 px-4 py-4 shadow-[0_16px_35px_-28px_rgba(15,23,42,0.55)] transition hover:-translate-y-0.5 hover:border-sky-200 hover:shadow-[0_22px_45px_-30px_rgba(14,116,144,0.45)]">
       <div className="flex flex-wrap items-center gap-2">
         {threadBadges.map((badge) => (
           <span
@@ -67,16 +51,16 @@ export function ThreadItem({ thread, boardKey }: ThreadItemProps) {
         ))}
       </div>
 
-      <h3 className="mt-3 truncate text-[20px] font-normal leading-tight text-sky-900 transition-colors group-hover:text-sky-700">
-        {threadNo} <Link href={threadRecentHref}>{thread.title}</Link>{" "}
+      <h3 className="mt-3 text-[15px] font-normal leading-snug text-sky-900 transition-colors group-hover:text-sky-700 sm:text-[18px] md:text-[20px]">
+        <Link href={threadRecentHref}>{thread.title}</Link>{" "}
         <Link href={threadHref}>{postCountText}</Link>
       </h3>
       <p className="mt-2 truncate text-[15px] leading-tight text-sky-800">
         {authorLabel}
       </p>
 
-      <p className="mt-1 text-[16px] leading-tight text-slate-700">
-        {dateRange}
+      <p className="mt-1 text-[13px] leading-tight text-slate-500">
+        {relativeUpdate}
       </p>
     </article>
   );

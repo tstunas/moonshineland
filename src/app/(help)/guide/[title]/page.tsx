@@ -6,6 +6,7 @@ import {
   GUIDE_DOCS,
   getGuideDocBySlug,
 } from "../_lib/guide-docs";
+import { MobileGuideToc } from "./MobileGuideToc";
 
 interface GuideDetailPageProps {
   params: Promise<{ title: string }>;
@@ -44,7 +45,9 @@ export default async function GuideDetailPage({ params }: GuideDetailPageProps) 
 
   return (
     <div className="mx-auto flex h-full w-full max-w-6xl flex-col gap-4 px-2 py-2 md:flex-row md:gap-6">
-      <aside className="md:sticky md:top-3 md:h-fit md:w-72">
+      <MobileGuideToc docs={GUIDE_DOCS} activeSlug={guideDoc.slug} />
+
+      <aside className="hidden md:sticky md:top-3 md:block md:h-fit md:w-72">
         <div className="rounded-2xl border border-slate-200 bg-white/95 p-4 shadow-sm backdrop-blur">
           <p className="text-xs font-semibold tracking-[0.22em] text-slate-500 uppercase">
             Guide Index
