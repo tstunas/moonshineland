@@ -60,15 +60,7 @@ export function BoardThreadFilters({
 
     return window.localStorage.getItem(FILTER_INCLUDE_ADULT_ONLY_KEY) === "1";
   });
-  const [isCollapsed, setIsCollapsed] = useState(() => {
-    if (typeof window === "undefined") {
-      return false;
-    }
-
-    return (
-      window.localStorage.getItem(FILTER_PANEL_COLLAPSED_KEY) === "1"
-    );
-  });
+  const [isCollapsed, setIsCollapsed] = useState(true);
   const deferredTitleValue = useDeferredValue(titleValue);
   const deferredAuthorValue = useDeferredValue(authorValue);
 
@@ -96,6 +88,13 @@ export function BoardThreadFilters({
 
     setIncludeAdultOnlyValue(includeAdultOnly);
   }, [hasIncludeAdultOnlyParam, includeAdultOnly, isSignedIn]);
+
+  useEffect(() => {
+    const stored = window.localStorage.getItem(FILTER_PANEL_COLLAPSED_KEY);
+    if (stored !== null) {
+      setIsCollapsed(stored === "1");
+    }
+  }, []);
 
   useEffect(() => {
     window.localStorage.setItem(
