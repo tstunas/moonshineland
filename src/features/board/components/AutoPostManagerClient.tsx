@@ -841,14 +841,14 @@ export function AutoPostManagerClient({
                         수정
                       </button>
                     </p>
-                    <p className="mt-1 text-xs text-slate-700">
-                      {formatPostDate(autoPost.createdAt)}
+                    <div className="mt-1 text-xs text-slate-700 flex flex-wrap items-baseline gap-2">
+                      <span>{formatPostDate(autoPost.createdAt)}</span>
                       {autoPost.contentUpdatedAt ? (
-                        <span className="ml-2 text-xs text-slate-500">
+                        <span className="text-xs text-slate-500">
                           ({formatPostDate(autoPost.contentUpdatedAt)})
                         </span>
                       ) : null}
-                    </p>
+                    </div>
                     {autoPost.isEdited ? (
                       <span className="mt-1 inline-flex items-center rounded-full border border-amber-300 bg-amber-50 px-2 py-0.5 text-[10px] font-medium text-amber-700">
                         수정됨

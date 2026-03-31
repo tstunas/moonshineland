@@ -308,14 +308,14 @@ export function PostItem({
             </>
           ) : null}
         </p>
-        <p className="mt-2 text-[15px] leading-tight text-slate-700">
-          {formatPostDate(post.createdAt)}
+        <div className="mt-2 text-[15px] leading-tight text-slate-700 flex flex-wrap items-baseline gap-2">
+          <span>{formatPostDate(post.createdAt)}</span>
           {post.isEdited && post.contentUpdatedAt ? (
-            <span className="ml-2 text-[12px] text-slate-500">
+            <span className="text-[12px] text-slate-500">
               ({formatPostDate(post.contentUpdatedAt)})
             </span>
           ) : null}
-        </p>
+        </div>
         {post.isEdited || post.isAutoPost ? (
           <div className="mt-2 flex flex-wrap gap-1.5">
             {showHiddenPostStyle ? (
