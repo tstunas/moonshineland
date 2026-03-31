@@ -127,6 +127,7 @@ export function PostForm({
   const formRef = useRef<HTMLFormElement | null>(null);
   const contentRef = useRef<HTMLTextAreaElement | null>(null);
   const imageInputRef = useRef<HTMLInputElement | null>(null);
+  const refreshAudioRef = useRef<HTMLAudioElement | null>(null);
   const textareaRows = useResponsiveTextareaRows();
   const onToggleReplyAlertRef = useRef(onToggleReplyAlert);
   const authorStorageKey = `moonshineland:form:${boardKey}:author`;
@@ -145,6 +146,7 @@ export function PostForm({
   const [selectedImages, setSelectedImages] = useState<File[]>([]);
   const [isPreviewOpen, setIsPreviewOpen] = useState(false);
   const [isDiceOpen, setIsDiceOpen] = useState(false);
+  const [isAudioUnlocked, setIsAudioUnlocked] = useState(false);
   const [isAdminMenuOpen, setIsAdminMenuOpen] = useState(false);
   const [isThreadEditOpen, setIsThreadEditOpen] = useState(false);
   const [isSavingThread, setIsSavingThread] = useState(false);
@@ -203,6 +205,67 @@ export function PostForm({
   useEffect(() => {
     onToggleReplyAlertRef.current = onToggleReplyAlert;
   }, [onToggleReplyAlert]);
+
+  const unlockRefreshAudio = useCallback(async () => {
+    if (isAudioUnlocked) {
+      return true;
+    }
+
+    const audio = refreshAudioRef.current;
+    if (!audio) {
+      return false;
+    }
+
+    try {
+      const previousMuted = audio.muted;
+      const previousVolume = audio.volume;
+      audio.muted = true;
+      audio.volume = 0;
+      audio.currentTime = 0;
+      await audio.play();
+      audio.pause();
+      audio.currentTime = 0;
+      audio.volume = previousVolume;
+      audio.muted = previousMuted;
+      setIsAudioUnlocked(true);
+      return true;
+    } catch {
+      return false;
+    }
+  }, [isAudioUnlocked]);
+
+  useEffect(() => {
+    const audio = new Audio("/sound/post-sound.mp3");
+    audio.preload = "auto";
+    refreshAudioRef.current = audio;
+
+    void unlockRefreshAudio();
+
+    return () => {
+      audio.pause();
+      refreshAudioRef.current = null;
+    };
+  }, [unlockRefreshAudio]);
+
+  useEffect(() => {
+    if (isAudioUnlocked) {
+      return;
+    }
+
+    const handleUnlock = () => {
+      void unlockRefreshAudio();
+    };
+
+    window.addEventListener("pointerdown", handleUnlock);
+    window.addEventListener("keydown", handleUnlock);
+    window.addEventListener("touchstart", handleUnlock);
+
+    return () => {
+      window.removeEventListener("pointerdown", handleUnlock);
+      window.removeEventListener("keydown", handleUnlock);
+      window.removeEventListener("touchstart", handleUnlock);
+    };
+  }, [isAudioUnlocked, unlockRefreshAudio]);
 
   useEffect(() => {
     const autosizeStored = window.localStorage.getItem(autosizeStorageKey);
@@ -494,10 +557,34 @@ export function PostForm({
     }
   };
 
+  const playRefreshSound = useCallback(async () => {
+    if (!isReplyAlertEnabled) {
+      return;
+    }
+
+    const unlocked = await unlockRefreshAudio();
+    if (!unlocked) {
+      return;
+    }
+
+    const audio = refreshAudioRef.current;
+    if (!audio) {
+      return;
+    }
+
+    try {
+      audio.currentTime = 0;
+      await audio.play();
+    } catch {
+      // 브라우저 자동재생 정책으로 재생이 차단될 수 있다.
+    }
+  }, [isReplyAlertEnabled, unlockRefreshAudio]);
+
   const handleRefresh = useCallback(async () => {
+    void playRefreshSound();
     await onRequestRefresh();
     toast.success("이후 레스을 갱신했습니다.");
-  }, [onRequestRefresh]);
+  }, [onRequestRefresh, playRefreshSound]);
 
   useEffect(() => {
     if (!isSignedIn) {
