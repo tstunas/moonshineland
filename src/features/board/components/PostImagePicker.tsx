@@ -35,15 +35,10 @@ export function PostImagePicker({
         onClick={() => {
           imageInputRef.current?.click();
         }}
-        className="group inline-flex cursor-pointer items-center gap-4 rounded-xl border border-sky-300 bg-gradient-to-r from-sky-50 via-white to-cyan-50 px-4 py-3 text-slate-800 shadow-sm transition-all hover:-translate-y-0.5 hover:border-sky-400 hover:shadow-md"
+        className="inline-flex cursor-pointer items-center gap-1.5 rounded-md border border-sky-300 bg-sky-50 px-2.5 py-1.5 text-sm font-medium text-sky-700 transition-all hover:border-sky-400 hover:bg-sky-100"
       >
-        <span className="flex items-center gap-3">
-          <span className="inline-flex h-10 w-10 items-center justify-center rounded-full bg-sky-500 text-[22px] leading-none text-white shadow-sm transition-colors group-hover:bg-sky-600">
-            +
-          </span>
-          <span className="text-[19px] font-semibold">이미지 첨부</span>
-        </span>
-        <span className="text-[15px] text-slate-500">PNG, JPG (최대 10개)</span>
+        <span className="text-lg leading-none">+</span>
+        <span>이미지 (최대 10개)</span>
       </button>
       <input
         ref={imageInputRef}

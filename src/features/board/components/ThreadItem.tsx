@@ -43,6 +43,7 @@ export function ThreadItem({ thread, boardKey }: ThreadItemProps) {
       minute: "2-digit",
       second: "2-digit",
       hour12: false,
+      timeZone: "Asia/Seoul",
     }).format(date);
   };
 

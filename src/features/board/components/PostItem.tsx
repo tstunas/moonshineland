@@ -195,6 +195,7 @@ export function PostItem({
     const date = value instanceof Date ? value : new Date(value);
     const weekday = new Intl.DateTimeFormat("ko-KR", {
       weekday: "short",
+      timeZone: "Asia/Seoul",
     }).format(date);
     const year = date.getFullYear();
     const month = String(date.getMonth() + 1).padStart(2, "0");

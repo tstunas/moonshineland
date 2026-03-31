@@ -4,7 +4,7 @@ import html2canvas from "html2canvas";
 
 function formatPostDate(value: Date | string): string {
   const date = value instanceof Date ? value : new Date(value);
-  const weekday = new Intl.DateTimeFormat("ko-KR", { weekday: "short" }).format(
+  const weekday = new Intl.DateTimeFormat("ko-KR", { weekday: "short", timeZone: "Asia/Seoul" }).format(
     date,
   );
   const year = date.getFullYear();
