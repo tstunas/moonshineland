@@ -12,7 +12,6 @@ import { cn } from "@/lib/cn";
 import { BOARDS } from "@/lib/constants";
 import {
   CSS_VAR_TOAST_SIZE,
-  PREFS_DEFAULT_AUTHOR,
   PREFS_FILTER_COLLAPSED,
   PREFS_FILTER_INCLUDE_ADULT,
   PREFS_PRIMARY_BOARD,
@@ -231,11 +230,6 @@ export default function PreferencesPage() {
   );
 
   // ── 닉네임 ────────────────────────────────────────────────────────────────
-  const [defaultAuthor, setDefaultAuthor] = useState(() =>
-    typeof window === "undefined"
-      ? ""
-      : (window.localStorage.getItem(PREFS_DEFAULT_AUTHOR) ?? ""),
-  );
 
   // ── 게시판 필터 ────────────────────────────────────────────────────────────
   const [includeAdult, setIncludeAdult] = useState(
@@ -290,38 +284,6 @@ export default function PreferencesPage() {
     document.documentElement.style.setProperty(CSS_VAR_TOAST_SIZE, `${val}px`);
   };
 
-  const saveDefaultAuthor = () => {
-    window.localStorage.setItem(PREFS_DEFAULT_AUTHOR, defaultAuthor.trim());
-  };
-
-  /** 기본 닉네임을 모든 게시판의 개별 키에도 일괄 적용 */
-  const applyAuthorToAllBoards = () => {
-    const trimmed = defaultAuthor.trim();
-    window.localStorage.setItem(PREFS_DEFAULT_AUTHOR, trimmed);
-    for (const board of BOARDS) {
-      if (trimmed) {
-        window.localStorage.setItem(
-          `moonshineland:form:${board.key}:author`,
-          trimmed,
-        );
-        window.localStorage.setItem(
-          `moonshineland:auto-form:${board.key}:author`,
-          trimmed,
-        );
-      } else {
-        window.localStorage.removeItem(
-          `moonshineland:form:${board.key}:author`,
-        );
-        window.localStorage.removeItem(
-          `moonshineland:auto-form:${board.key}:author`,
-        );
-      }
-    }
-    setApplyAuthFeedback(true);
-    setTimeout(() => setApplyAuthFeedback(false), 1800);
-  };
-  const [applyAuthFeedback, setApplyAuthFeedback] = useState(false);
-
   /** 글쓰기 폼 자동 크기 조절 상태를 모든 게시판에 일괄 적용 */
   const applyAutosizeToAllBoards = (enabled: boolean) => {
     const val = enabled ? "1" : "0";
@@ -357,13 +319,11 @@ export default function PreferencesPage() {
   const resetAll = () => {
     if (!window.confirm("모든 개인선호설정을 초기화할까요?")) return;
     window.localStorage.removeItem(PREFS_PRIMARY_BOARD);
-    window.localStorage.removeItem(PREFS_DEFAULT_AUTHOR);
     window.localStorage.removeItem(PREFS_FILTER_INCLUDE_ADULT);
     window.localStorage.removeItem(PREFS_FILTER_COLLAPSED);
     window.localStorage.removeItem(PREFS_SOUND_ENABLED);
     window.localStorage.removeItem(PREFS_TOAST_SIZE);
     setPrimaryBoard("");
-    setDefaultAuthor("");
     setIncludeAdult(false);
     setFilterCollapsed(false);
     setSoundEnabled(false);
@@ -410,45 +370,6 @@ export default function PreferencesPage() {
         </div>
       </Section>
 
-      {/* ── 닉네임 기본값 ──────────────────────────────────────────────── */}
-      <Section
-        title="닉네임 기본값"
-        description="이름을 입력하지 않은 게시판에서 사용됩니다."
-      >
-        <div className="space-y-3">
-          <input
-            type="text"
-            placeholder="익명의 부족원"
-            maxLength={50}
-            value={defaultAuthor}
-            onChange={(e) => setDefaultAuthor(e.target.value)}
-            onBlur={saveDefaultAuthor}
-            className={cn(
-              "w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm text-slate-800",
-              "placeholder:text-slate-400",
-              "focus:border-indigo-500 focus:outline-none focus:ring-2 focus:ring-indigo-200",
-            )}
-          />
-          <div className="flex items-center justify-between">
-            <p className="text-xs text-slate-500">
-              게시판별로 개별 설정된 경우, 그 설정이 우선합니다.
-            </p>
-            <button
-              type="button"
-              onClick={applyAuthorToAllBoards}
-              className={cn(
-                "shrink-0 rounded-md px-3 py-1.5 text-xs font-medium transition-colors",
-                applyAuthFeedback
-                  ? "bg-green-100 text-green-700"
-                  : "bg-slate-100 text-slate-700 hover:bg-slate-200",
-              )}
-            >
-              {applyAuthFeedback ? "✓ 적용됨" : "전체 게시판에 지금 적용"}
-            </button>
-          </div>
-        </div>
-      </Section>
-
       {/* ── 게시판 필터 ────────────────────────────────────────────────── */}
       <Section
         title="게시판 필터"
@@ -474,7 +395,9 @@ export default function PreferencesPage() {
         description="게시판별이 아닌 전체에 일괄 적용하는 글쓰기 기본 설정입니다."
       >
         <div className="space-y-2">
-          <p className="text-sm font-medium text-slate-700">내용 자동 크기 조절</p>
+          <p className="text-sm font-medium text-slate-700">
+            내용 자동 크기 조절
+          </p>
           <p className="mt-0.5 text-xs text-slate-500">
             글쓰기 텍스트 영역이 내용에 맞춰 자동으로 커집니다.
           </p>
@@ -569,4 +492,3 @@ export default function PreferencesPage() {
     </div>
   );
 }
-

@@ -5,9 +5,6 @@
 /** / 루트 접속 시 리다이렉트할 게시판 키 */
 export const PREFS_PRIMARY_BOARD = "moonshineland:preferences:primary-board";
 
-/** 모든 게시판에서 사용할 기본 닉네임 (게시판별 설정이 없을 때 폴백) */
-export const PREFS_DEFAULT_AUTHOR = "moonshineland:preferences:default-author";
-
 /** 알림 토스트 폰트 크기 (숫자: px 단위) */
 export const PREFS_TOAST_SIZE = "moonshineland:preferences:toast-size";
 

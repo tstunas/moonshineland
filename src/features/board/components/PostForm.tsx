@@ -2,13 +2,9 @@
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 
-import {
-  adjustThreadPostLimitAction,
-} from "@/features/board/actions/thread/adjustThreadPostLimitAction";
+import { adjustThreadPostLimitAction } from "@/features/board/actions/thread/adjustThreadPostLimitAction";
 import { createPostAction } from "@/features/board/actions/post/createPostAction";
-import {
-  updateThreadSettingsAction,
-} from "@/features/board/actions/thread/updateThreadSettingsAction";
+import { updateThreadSettingsAction } from "@/features/board/actions/thread/updateThreadSettingsAction";
 import {
   buildExternalText,
   copyExternalHtmlToClipboard,
@@ -27,7 +23,6 @@ import { PostImagePicker } from "./PostImagePicker";
 import { PreviewModal } from "./PreviewModal";
 import { ThreadSettingsModal } from "./ThreadSettingsModal";
 import { AnonymousAuthor } from "@/lib/constants";
-import { PREFS_DEFAULT_AUTHOR } from "@/lib/preferences";
 
 const MAX_IMAGE_COUNT = 10;
 const CONTENT_TYPE_DEBOUNCE_MS = 300;
@@ -44,7 +39,9 @@ function toggleCommandToken(command: string, token: string): string {
     .split(".")
     .map((value) => value.trim())
     .filter(Boolean);
-  const hasToken = tokens.some((value) => value.toLowerCase() === normalizedToken);
+  const hasToken = tokens.some(
+    (value) => value.toLowerCase() === normalizedToken,
+  );
 
   if (hasToken) {
     return tokens
@@ -154,7 +151,9 @@ export function PostForm({
   const [threadTitle, setThreadTitle] = useState(thread.title);
   const [threadPassword, setThreadPassword] = useState("");
   const [clearPassword, setClearPassword] = useState(false);
-  const [threadIsAdultOnly, setThreadIsAdultOnly] = useState(thread.isAdultOnly);
+  const [threadIsAdultOnly, setThreadIsAdultOnly] = useState(
+    thread.isAdultOnly,
+  );
   const [threadIsChat, setThreadIsChat] = useState(thread.isChat);
   const [threadIsHidden, setThreadIsHidden] = useState(thread.isHidden);
   const [threadIsSecret, setThreadIsSecret] = useState(thread.isSecret);
@@ -415,11 +414,7 @@ export function PostForm({
     if (typeof window === "undefined") {
       return;
     }
-    setAuthor(
-      window.localStorage.getItem(authorStorageKey) ??
-        window.localStorage.getItem(PREFS_DEFAULT_AUTHOR) ??
-        "",
-    );
+    setAuthor(window.localStorage.getItem(authorStorageKey) ?? "");
     setCommand(window.localStorage.getItem(commandStorageKey) ?? "");
     toast.success("작성자 이름/콘솔 명령어를 불러왔습니다.");
   }, [authorStorageKey, commandStorageKey]);
@@ -462,10 +457,13 @@ export function PostForm({
     return `${base}\n${text}`;
   }, []);
 
-  const appendToContent = useCallback((text: string) => {
-    setContent((current) => buildAppendedContent(current, text));
-    contentRef.current?.focus();
-  }, [buildAppendedContent]);
+  const appendToContent = useCallback(
+    (text: string) => {
+      setContent((current) => buildAppendedContent(current, text));
+      contentRef.current?.focus();
+    },
+    [buildAppendedContent],
+  );
 
   const postsForExternalCopy = useMemo(() => {
     if (mode === "all") {
@@ -476,7 +474,9 @@ export function PostForm({
   }, [mode, posts]);
   const copyExternalText = useCallback(async () => {
     try {
-      await navigator.clipboard.writeText(buildExternalText(postsForExternalCopy));
+      await navigator.clipboard.writeText(
+        buildExternalText(postsForExternalCopy),
+      );
       toast.success("외부게시용 텍스트를 복사했습니다.");
     } catch {
       toast.error("텍스트 복사에 실패했습니다.");
@@ -649,10 +649,10 @@ export function PostForm({
         handleToggleAutosize();
       }
 
-	  if (key === "i") {
-		event.preventDefault();
-		imageInputRef.current?.click();
-	  }
+      if (key === "i") {
+        event.preventDefault();
+        imageInputRef.current?.click();
+      }
     };
 
     window.addEventListener("keydown", onKeyDown);
