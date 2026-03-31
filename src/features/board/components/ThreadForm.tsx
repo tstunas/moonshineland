@@ -78,6 +78,7 @@ export function ThreadForm({
   const searchParams = useSearchParams();
   const router = useRouter();
   const isMobileKeyboardOpen = useMobileKeyboardOpen();
+  const formRef = useRef<HTMLFormElement | null>(null);
   const contentRef = useRef<HTMLTextAreaElement | null>(null);
   const imageInputRef = useRef<HTMLInputElement | null>(null);
   const textareaRows = useResponsiveTextareaRows();
@@ -225,18 +226,20 @@ export function ThreadForm({
     syncSelectedImages([]);
   }, [syncSelectedImages]);
 
-  const appendToContent = useCallback((text: string) => {
-    setContent((current) => {
-      if (!current) {
-        return text;
-      }
-      if (current.endsWith("\n")) {
-        return `${current}${text}`;
-      }
-      return `${current}\n${text}`;
-    });
-    contentRef.current?.focus();
+  const buildAppendedContent = useCallback((base: string, text: string) => {
+    if (!base) {
+      return text;
+    }
+    if (base.endsWith("\n")) {
+      return `${base}${text}`;
+    }
+    return `${base}\n${text}`;
   }, []);
+
+  const appendToContent = useCallback((text: string) => {
+    setContent((current) => buildAppendedContent(current, text));
+    contentRef.current?.focus();
+  }, [buildAppendedContent]);
 
   const handleRefresh = useCallback(() => {
     router.refresh();
@@ -415,6 +418,7 @@ export function ThreadForm({
   return (
     <>
       <form
+        ref={formRef}
         action={submitCreateThread}
         className="rounded-lg border border-sky-200 bg-slate-100 p-2.5 sm:p-4"
       >
@@ -664,6 +668,22 @@ export function ThreadForm({
           onInsert={(text) => {
             appendToContent(text);
             toast.success("내용에 주사위 텍스트를 추가했습니다.");
+          }}
+          onRoll={async (text) => {
+            const form = formRef.current;
+            if (!form) {
+              toast.error("작성 폼을 찾을 수 없습니다.");
+              return;
+            }
+
+            const nextContent = buildAppendedContent(content, text);
+            setContent(nextContent);
+
+            const formData = new FormData(form);
+            formData.set("content", nextContent);
+
+            await submitCreateThread(formData);
+            setIsDiceOpen(false);
           }}
         />
       ) : null}

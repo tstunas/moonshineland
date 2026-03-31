@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 
 import { toast } from "sonner";
 
@@ -13,12 +13,55 @@ const QUICK_RANGES: ReadonlyArray<{ min: number; max: number }> = [
   { min: 1, max: 10 },
 ];
 
+const DICE_STORAGE_LAST_MODE = "moonshineland:dice:last-mode";
+const DICE_STORAGE_RANGE = "moonshineland:dice:range-generated";
+const DICE_STORAGE_NDN = "moonshineland:dice:ndn-generated";
+const GENERATE_DEBOUNCE_MS = 220;
+
+function parseRangeDice(value: string): { min: number; max: number } | null {
+  const matched = /^\.dice\s+(-?\d+)\s+(-?\d+)\.$/.exec(value.trim());
+  if (!matched) {
+    return null;
+  }
+
+  const min = Number(matched[1]);
+  const max = Number(matched[2]);
+  if (!Number.isFinite(min) || !Number.isFinite(max)) {
+    return null;
+  }
+
+  return { min, max };
+}
+
+function parseNdnDice(
+  value: string,
+): { count: number; faces: number; modifier: number } | null {
+  const matched = /^\[(\d+)d(\d+)([+-]\d+)?\]$/i.exec(value.trim());
+  if (!matched) {
+    return null;
+  }
+
+  const count = Math.max(1, Number(matched[1]));
+  const faces = Math.max(2, Number(matched[2]));
+  const modifier = matched[3] ? Number(matched[3]) : 0;
+  if (
+    !Number.isFinite(count) ||
+    !Number.isFinite(faces) ||
+    !Number.isFinite(modifier)
+  ) {
+    return null;
+  }
+
+  return { count, faces, modifier };
+}
+
 interface DiceModalProps {
   onClose: () => void;
   onInsert: (text: string) => void;
+  onRoll?: (text: string) => Promise<void> | void;
 }
 
-export function DiceModal({ onClose, onInsert }: DiceModalProps) {
+export function DiceModal({ onClose, onInsert, onRoll }: DiceModalProps) {
   const [mode, setMode] = useState<"range" | "ndn">("range");
   const [rangeMin, setRangeMin] = useState(0);
   const [rangeMax, setRangeMax] = useState(9);
@@ -26,20 +69,64 @@ export function DiceModal({ onClose, onInsert }: DiceModalProps) {
   const [diceFaces, setDiceFaces] = useState(6);
   const [diceModifier, setDiceModifier] = useState(0);
   const [generated, setGenerated] = useState("");
+  const [isRolling, setIsRolling] = useState(false);
 
-  function handleGenerate() {
-    if (mode === "range") {
-      setGenerated(`.dice ${rangeMin} ${rangeMax}.`);
+  useEffect(() => {
+    if (typeof window === "undefined") {
+      return;
+    }
+
+    const storedMode = window.sessionStorage.getItem(DICE_STORAGE_LAST_MODE);
+    const storedRange = window.sessionStorage.getItem(DICE_STORAGE_RANGE) ?? "";
+    const storedNdn = window.sessionStorage.getItem(DICE_STORAGE_NDN) ?? "";
+
+    if (storedMode === "ndn" || storedMode === "range") {
+      setMode(storedMode);
+      setGenerated(storedMode === "range" ? storedRange : storedNdn);
     } else {
+      setGenerated(storedRange);
+    }
+
+    const parsedRange = parseRangeDice(storedRange);
+    if (parsedRange) {
+      setRangeMin(parsedRange.min);
+      setRangeMax(parsedRange.max);
+    }
+
+    const parsedNdn = parseNdnDice(storedNdn);
+    if (parsedNdn) {
+      setDiceCount(parsedNdn.count);
+      setDiceFaces(parsedNdn.faces);
+      setDiceModifier(parsedNdn.modifier);
+    }
+  }, []);
+
+  useEffect(() => {
+    const timeoutId = window.setTimeout(() => {
+      if (mode === "range") {
+        const nextGenerated = `.dice ${rangeMin} ${rangeMax}.`;
+        setGenerated(nextGenerated);
+        window.sessionStorage.setItem(DICE_STORAGE_RANGE, nextGenerated);
+        window.sessionStorage.setItem(DICE_STORAGE_LAST_MODE, "range");
+        return;
+      }
+
       const modPart =
         diceModifier > 0
           ? `+${diceModifier}`
           : diceModifier < 0
             ? `${diceModifier}`
             : "";
-      setGenerated(`[${diceCount}d${diceFaces}${modPart}]`);
-    }
-  }
+      const nextGenerated = `[${diceCount}d${diceFaces}${modPart}]`;
+      setGenerated(nextGenerated);
+      window.sessionStorage.setItem(DICE_STORAGE_NDN, nextGenerated);
+      window.sessionStorage.setItem(DICE_STORAGE_LAST_MODE, "ndn");
+    }, GENERATE_DEBOUNCE_MS);
+
+    return () => {
+      window.clearTimeout(timeoutId);
+    };
+  }, [mode, rangeMin, rangeMax, diceCount, diceFaces, diceModifier]);
 
   async function handleCopy() {
     if (!generated) return;
@@ -48,6 +135,18 @@ export function DiceModal({ onClose, onInsert }: DiceModalProps) {
       toast.success("복사되었습니다.");
     } catch {
       toast.error("복사에 실패했습니다.");
+    }
+  }
+
+  async function handleRoll() {
+    if (!generated || !onRoll || isRolling) return;
+    try {
+      setIsRolling(true);
+      await onRoll(generated);
+    } catch {
+      toast.error("굴리기에 실패했습니다.");
+    } finally {
+      setIsRolling(false);
     }
   }
 
@@ -158,14 +257,6 @@ export function DiceModal({ onClose, onInsert }: DiceModalProps) {
           </div>
         )}
 
-        <button
-          type="button"
-          onClick={handleGenerate}
-          className="mb-3 w-full rounded bg-sky-500 py-2 text-sm font-semibold text-white hover:bg-sky-600"
-        >
-          생성
-        </button>
-
         {generated && (
           <div className="flex items-center gap-2 rounded-lg border border-emerald-200 bg-emerald-50 px-3 py-2">
             <code className="flex-1 break-all font-mono text-sm text-emerald-800">
@@ -190,6 +281,19 @@ export function DiceModal({ onClose, onInsert }: DiceModalProps) {
             >
               삽입
             </button>
+            {onRoll ? (
+              <button
+                type="button"
+                onClick={() => {
+                  void handleRoll();
+                }}
+                disabled={isRolling}
+                className="shrink-0 rounded border border-amber-300 bg-white px-2.5 py-1 text-xs font-semibold text-amber-700 hover:bg-amber-100 disabled:cursor-not-allowed disabled:opacity-60"
+                title="즉시 레스 작성"
+              >
+                {isRolling ? "굴리는 중..." : "굴리기"}
+              </button>
+            ) : null}
           </div>
         )}
       </div>

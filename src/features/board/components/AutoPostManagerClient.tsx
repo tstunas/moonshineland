@@ -114,6 +114,7 @@ export function AutoPostManagerClient({
 }: AutoPostManagerClientProps) {
   const textareaRows = useResponsiveTextareaRows();
   const rootContainerRef = useRef<HTMLDivElement | null>(null);
+  const formRef = useRef<HTMLFormElement | null>(null);
   const contentRef = useRef<HTMLTextAreaElement | null>(null);
   const imageInputRef = useRef<HTMLInputElement | null>(null);
   const authorStorageKey = `moonshineland:auto-form:${boardKey}:author`;
@@ -334,18 +335,20 @@ export function AutoPostManagerClient({
     setCommand((current) => toggleCommandToken(current, token));
   }, []);
 
-  const appendToContent = useCallback((text: string) => {
-    setContent((current) => {
-      if (!current) {
-        return text;
-      }
-      if (current.endsWith("\n")) {
-        return `${current}${text}`;
-      }
-      return `${current}\n${text}`;
-    });
-    contentRef.current?.focus();
+  const buildAppendedContent = useCallback((base: string, text: string) => {
+    if (!base) {
+      return text;
+    }
+    if (base.endsWith("\n")) {
+      return `${base}${text}`;
+    }
+    return `${base}\n${text}`;
   }, []);
+
+  const appendToContent = useCallback((text: string) => {
+    setContent((current) => buildAppendedContent(current, text));
+    contentRef.current?.focus();
+  }, [buildAppendedContent]);
 
   const scrollToBottom = useCallback(() => {
     window.requestAnimationFrame(() => {
@@ -414,9 +417,8 @@ export function AutoPostManagerClient({
     await fetchAutoPosts();
   }, [fetchAutoPosts]);
 
-  const handleSubmit = useCallback(
-    async (event: FormEvent<HTMLFormElement>) => {
-      event.preventDefault();
+  const submitAutoPost = useCallback(
+    async (formData: FormData) => {
       if (isSubmitting) {
         return;
       }
@@ -431,7 +433,6 @@ export function AutoPostManagerClient({
 
       setIsSubmitting(true);
       try {
-        const formData = new FormData(event.currentTarget);
         const result = await createAutoPostAction(formData);
         if (!result.success) {
           toast.error(result.message);
@@ -480,6 +481,14 @@ export function AutoPostManagerClient({
       isSubmitting,
       scrollToBottom,
     ],
+  );
+
+  const handleSubmit = useCallback(
+    async (event: FormEvent<HTMLFormElement>) => {
+      event.preventDefault();
+      await submitAutoPost(new FormData(event.currentTarget));
+    },
+    [submitAutoPost],
   );
 
   const openEditModal = useCallback((autoPost: AutoPostPayload) => {
@@ -1025,7 +1034,7 @@ export function AutoPostManagerClient({
           </div>
         </div>
 
-        <form onSubmit={handleSubmit} className="space-y-2 sm:space-y-3">
+        <form ref={formRef} onSubmit={handleSubmit} className="space-y-2 sm:space-y-3">
           <input type="hidden" name="boardKey" value={boardKey} />
           <input type="hidden" name="threadIndex" value={threadIndex} />
 
@@ -1118,6 +1127,22 @@ export function AutoPostManagerClient({
           onInsert={(text) => {
             appendToContent(text);
             toast.success("내용에 주사위 텍스트를 추가했습니다.");
+          }}
+          onRoll={async (text) => {
+            const form = formRef.current;
+            if (!form) {
+              toast.error("작성 폼을 찾을 수 없습니다.");
+              return;
+            }
+
+            const nextContent = buildAppendedContent(content, text);
+            setContent(nextContent);
+
+            const formData = new FormData(form);
+            formData.set("content", nextContent);
+
+            await submitAutoPost(formData);
+            setIsDiceOpen(false);
           }}
         />
       ) : null}
