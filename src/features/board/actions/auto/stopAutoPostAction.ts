@@ -1,6 +1,7 @@
 "use server";
 
 import prisma from "@/lib/prisma";
+import { checkRateLimit } from "@/lib/rateLimit";
 
 import {
   getAutoPostScheduleByThreadId,
@@ -27,6 +28,14 @@ export async function stopAutoPostAction(
       return {
         success: false,
         message: context.error ?? "자동투하 권한 확인에 실패했습니다.",
+      };
+    }
+
+    // Rate Limit 검증: 1초 이내 중복 제출 방지
+    if (!checkRateLimit(context.userId, "stop-auto-post")) {
+      return {
+        success: false,
+        message: "너무 빠른 요청입니다. 1초 이상 기다린 후 다시 시도해주세요.",
       };
     }
 

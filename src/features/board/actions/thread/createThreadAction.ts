@@ -2,6 +2,7 @@
 
 import { getCurrentUser } from "@/features/auth/queries";
 import prisma from "@/lib/prisma";
+import { checkRateLimit } from "@/lib/rateLimit";
 
 import {
   applyInlineImagePlaceholders,
@@ -78,6 +79,14 @@ export async function createThreadAction(
   const userId = Number(currentUser.id);
   if (!Number.isInteger(userId) || userId <= 0) {
     return { success: false, message: "유효하지 않은 사용자 정보입니다." };
+  }
+
+  // Rate Limit 검증: 1초 이내 중복 제출 방지
+  if (!checkRateLimit(userId, "create-thread")) {
+    return {
+      success: false,
+      message: "너무 빠른 요청입니다. 1초 이상 기다린 후 다시 시도해주세요.",
+    };
   }
 
   const [board, user] = await Promise.all([
