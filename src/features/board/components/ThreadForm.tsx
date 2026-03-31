@@ -3,6 +3,8 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 
 import { createThreadAction } from "@/features/board/actions/thread/createThreadAction";
+import { useMobileKeyboardOpen } from "@/hooks/useMobileKeyboardOpen";
+import { useResponsiveTextareaRows } from "@/hooks/useResponsiveTextareaRows";
 import { cn } from "@/lib/cn";
 import { useRouter, useSearchParams } from "next/navigation";
 import { toast } from "sonner";
@@ -75,8 +77,10 @@ export function ThreadForm({
 }) {
   const searchParams = useSearchParams();
   const router = useRouter();
+  const isMobileKeyboardOpen = useMobileKeyboardOpen();
   const contentRef = useRef<HTMLTextAreaElement | null>(null);
   const imageInputRef = useRef<HTMLInputElement | null>(null);
+  const textareaRows = useResponsiveTextareaRows();
   const imageInputId = `thread-image-${boardKey}-${threadIndex}`;
   const authorStorageKey = `moonshineland:form:${boardKey}:author`;
   const commandStorageKey = `moonshineland:form:${boardKey}:command`;
@@ -119,6 +123,29 @@ export function ThreadForm({
   useEffect(() => {
     resizeTextarea();
   }, [content, resizeTextarea]);
+
+  useEffect(() => {
+    if (!isAutosizeEnabled) {
+      return;
+    }
+
+    resizeTextarea();
+  }, [isAutosizeEnabled, resizeTextarea, textareaRows]);
+
+  useEffect(() => {
+    const handleResize = () => {
+      if (!isAutosizeEnabled) {
+        return;
+      }
+
+      resizeTextarea();
+    };
+
+    window.addEventListener("resize", handleResize);
+    return () => {
+      window.removeEventListener("resize", handleResize);
+    };
+  }, [isAutosizeEnabled, resizeTextarea]);
 
   useEffect(() => {
     window.localStorage.setItem(
@@ -389,7 +416,7 @@ export function ThreadForm({
     <>
       <form
         action={submitCreateThread}
-        className="rounded-lg border border-sky-200 bg-slate-100 p-4"
+        className="rounded-lg border border-sky-200 bg-slate-100 p-2.5 sm:p-4"
       >
         {!isSignedIn ? (
           <p className="my-3 rounded border border-amber-200 bg-amber-50 px-3 py-2 text-xs font-medium text-amber-700">
@@ -415,11 +442,11 @@ export function ThreadForm({
             }}
           />
 
-          <div className="flex flex-col gap-3">
-            <div className="grid gap-2 rounded-2xl border border-sky-200 bg-[linear-gradient(180deg,_rgba(240,249,255,1),_rgba(248,250,252,1))] p-3 text-[15px] text-slate-700 sm:grid-cols-2">
+          <div className="flex flex-col gap-2 sm:gap-3">
+            <div className="grid gap-1.5 rounded-2xl border border-sky-200 bg-[linear-gradient(180deg,_rgba(240,249,255,1),_rgba(248,250,252,1))] p-2 text-[13px] text-slate-700 sm:grid-cols-2 sm:gap-2 sm:p-3 sm:text-[15px]">
               <label
                 className={cn(
-                  "cursor-pointer rounded-xl border px-4 py-3 transition",
+                  "cursor-pointer rounded-xl border px-3 py-2.5 transition sm:px-4 sm:py-3",
                   isChat
                     ? "border-amber-300 bg-amber-50 text-amber-700 shadow-sm"
                     : "border-slate-200 bg-white text-slate-600 hover:border-amber-200 hover:bg-amber-50/50",
@@ -438,7 +465,7 @@ export function ThreadForm({
                 <span className="flex items-center justify-between gap-3">
                   <span>
                     <span className="block text-sm font-semibold">잡담판</span>
-                    <span className="mt-0.5 block text-xs opacity-80">
+                    <span className="mt-0.5 hidden text-xs opacity-80 sm:block">
                       연재판 대신 자유 대화 스레드로 등록합니다.
                     </span>
                   </span>
@@ -460,7 +487,7 @@ export function ThreadForm({
 
               <label
                 className={cn(
-                  "cursor-pointer rounded-xl border px-4 py-3 transition",
+                  "cursor-pointer rounded-xl border px-3 py-2.5 transition sm:px-4 sm:py-3",
                   isAdultOnly
                     ? "border-rose-300 bg-rose-50 text-rose-700 shadow-sm"
                     : "border-slate-200 bg-white text-slate-600 hover:border-rose-200 hover:bg-rose-50/50",
@@ -485,7 +512,7 @@ export function ThreadForm({
                 <span className="flex items-center justify-between gap-3">
                   <span>
                     <span className="block text-sm font-semibold">성인만</span>
-                    <span className="mt-0.5 block text-xs opacity-80">
+                    <span className="mt-0.5 hidden text-xs opacity-80 sm:block">
                       성인 전용 스레드로 등록합니다.
                     </span>
                   </span>
@@ -513,7 +540,7 @@ export function ThreadForm({
               onChange={(event) => {
                 setTitle(event.target.value);
               }}
-              className="h-11 rounded border border-sky-200 bg-slate-50 px-3 text-[16px] text-slate-900 placeholder:text-slate-500 focus:border-sky-400 focus:outline-none"
+              className="h-9 rounded border border-sky-200 bg-slate-50 px-2.5 text-[13px] text-slate-900 placeholder:text-slate-500 focus:border-sky-400 focus:outline-none sm:h-11 sm:px-3 sm:text-[16px]"
             />
             <input
               name="author"
@@ -523,7 +550,7 @@ export function ThreadForm({
               onChange={(event) => {
                 setAuthor(event.target.value);
               }}
-              className="h-11 rounded border border-sky-200 bg-slate-50 px-3 text-[16px] text-slate-900 placeholder:text-slate-500 focus:border-sky-400 focus:outline-none"
+              className="h-9 rounded border border-sky-200 bg-slate-50 px-2.5 text-[13px] text-slate-900 placeholder:text-slate-500 focus:border-sky-400 focus:outline-none sm:h-11 sm:px-3 sm:text-[16px]"
             />
             <input
               name="command"
@@ -533,7 +560,7 @@ export function ThreadForm({
               onChange={(event) => {
                 setCommand(event.target.value);
               }}
-              className="h-11 rounded border border-sky-200 bg-slate-50 px-3 text-[16px] text-slate-900 placeholder:text-slate-500 focus:border-sky-400 focus:outline-none"
+              className="h-9 rounded border border-sky-200 bg-slate-50 px-2.5 text-[13px] text-slate-900 placeholder:text-slate-500 focus:border-sky-400 focus:outline-none sm:h-11 sm:px-3 sm:text-[16px]"
             />
           </div>
 
@@ -542,13 +569,13 @@ export function ThreadForm({
             onInput={resizeTextarea}
             name="content"
             placeholder="내용(4만자 이내)"
-            rows={6}
+            rows={textareaRows}
             value={content}
             onChange={(event) => {
               setContent(event.target.value);
             }}
             className={cn(
-              "contentInput mt-3 w-full resize-y rounded border border-sky-200 bg-slate-50 px-3 py-3 text-[16px] leading-relaxed text-slate-900 placeholder:text-slate-500 focus:border-sky-400 focus:outline-none",
+              "contentInput mt-2 w-full resize-y rounded border border-sky-200 bg-slate-50 px-2.5 py-2 text-[13px] leading-relaxed text-slate-900 placeholder:text-slate-500 focus:border-sky-400 focus:outline-none sm:mt-3 sm:px-3 sm:py-3 sm:text-[16px]",
               contentTypeClassName,
             )}
           />
@@ -563,12 +590,51 @@ export function ThreadForm({
             onMoveSelectedImage={moveSelectedImage}
           />
 
-          <button
-            type="submit"
-            className="mt-4 h-11 w-full rounded bg-sky-500 text-[20px] font-semibold text-white transition-colors hover:bg-sky-600"
+          <div
+            className={cn(
+              "-mx-2.5 mt-2.5 px-2.5 pt-2.5 sm:static sm:mx-0 sm:mt-4 sm:border-0 sm:bg-transparent sm:px-0 sm:pt-0 sm:pb-0",
+              isMobileKeyboardOpen
+                ? "static border-t border-sky-200 bg-white"
+                : "sticky bottom-0 z-20 border-t border-sky-200 bg-white/95 pb-[calc(0.35rem+env(safe-area-inset-bottom))] backdrop-blur",
+            )}
           >
-            작성
-          </button>
+            {!isMobileKeyboardOpen ? (
+              <div className="mb-1.5 grid grid-cols-3 gap-1.5 sm:hidden">
+                <button
+                  type="button"
+                  onClick={handleOpenPreview}
+                  className="min-h-9 rounded border border-slate-300 bg-white px-1.5 text-[10px] font-semibold text-slate-700"
+                >
+                  미리보기
+                </button>
+                <button
+                  type="button"
+                  onClick={() => {
+                    imageInputRef.current?.click();
+                  }}
+                  className="min-h-9 rounded border border-slate-300 bg-white px-1.5 text-[10px] font-semibold text-slate-700"
+                >
+                  이미지 추가
+                </button>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setIsDiceOpen(true);
+                  }}
+                  className="min-h-9 rounded border border-slate-300 bg-white px-1.5 text-[10px] font-semibold text-slate-700"
+                >
+                  주사위
+                </button>
+              </div>
+            ) : null}
+
+            <button
+              type="submit"
+              className="h-9 w-full rounded bg-sky-500 text-[14px] font-semibold text-white transition-colors hover:bg-sky-600 sm:h-11 sm:text-[20px]"
+            >
+              {isMobileKeyboardOpen ? "작성" : "스레드 작성"}
+            </button>
+          </div>
         </fieldset>
       </form>
 

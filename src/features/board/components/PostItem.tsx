@@ -5,6 +5,7 @@ import { editPostAction } from "@/features/board/actions/post/editPostAction";
 import { getPostEditHistoryAction } from "@/features/board/actions/post/getPostEditHistoryAction";
 import { hidePostAction } from "@/features/board/actions/post/hidePostAction";
 import { unbanThreadUserByPostAction } from "@/features/board/actions/post/unbanThreadUserByPostAction";
+import { useResponsiveTextareaRows } from "@/hooks/useResponsiveTextareaRows";
 import { cn } from "@/lib/cn";
 import { AnonymousAuthor } from "@/lib/constants";
 import type { PostWithImages } from "@/types/post";
@@ -30,6 +31,7 @@ export function PostItem({
   const router = useRouter();
   const author = post.author || AnonymousAuthor;
   const contentTypeLabel = post.contentType !== "text" ? "</>" : null;
+  const textareaRows = useResponsiveTextareaRows();
   const [isEditOpen, setIsEditOpen] = useState(false);
   const [editCommand, setEditCommand] = useState(
     post.contentType === "text" ? "" : post.contentType,
@@ -231,15 +233,15 @@ export function PostItem({
           : "",
       )}
     >
-      <header className="border-b border-sky-200 bg-slate-200 px-6 py-4">
-        <p className="text-[18px] leading-tight text-sky-900">
+      <header className="border-b border-sky-200 bg-slate-200 px-4 py-3 sm:px-6 sm:py-4">
+        <p className="text-[16px] leading-tight text-sky-900 sm:text-[18px]">
           <span className="font-medium">#{post.postOrder}</span>{" "}
           <span
             dangerouslySetInnerHTML={{
               __html: author,
             }}
           ></span>{" "}
-          <span className="text-[14px] leading-tight text-slate-500">
+          <span className="text-[12px] leading-tight text-slate-500 sm:text-[14px]">
             ({post.idcode})
           </span>{" "}
           {contentTypeLabel ? (
@@ -349,7 +351,7 @@ export function PostItem({
         ) : null}
       </header>
 
-      <div className="px-3 py-4">
+      <div className="px-2.5 py-3 sm:px-3 sm:py-4">
         {!post.isInlineImage ? (
           <ImageGallery
             images={post.postImages}
@@ -358,7 +360,7 @@ export function PostItem({
         ) : null}
         <div
           className={cn(
-            "content whitespace-pre-wrap break-words text-[15px] leading-relaxed text-slate-900",
+            "content whitespace-pre-wrap break-words text-[14px] leading-relaxed text-slate-900 sm:text-[15px]",
             post.contentType,
           )}
           onClick={openInlineImageFullscreen}
@@ -376,22 +378,22 @@ export function PostItem({
       ) : null}
 
       {isEditOpen ? (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/55 p-4">
-          <div className="w-full max-w-2xl overflow-hidden rounded-2xl border border-sky-200 bg-gradient-to-b from-white to-sky-50 shadow-2xl">
-            <div className="flex items-center justify-between border-b border-sky-100 bg-white/90 px-5 py-4">
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/55 p-0 sm:p-4">
+          <div className="h-full w-full overflow-hidden border-0 bg-gradient-to-b from-white to-sky-50 shadow-2xl sm:h-auto sm:max-w-2xl sm:rounded-2xl sm:border sm:border-sky-200">
+            <div className="flex items-center justify-between border-b border-sky-100 bg-white/90 px-4 py-3 sm:px-5 sm:py-4">
               <h3 className="text-lg font-bold text-slate-900">레스 수정</h3>
               <button
                 type="button"
                 onClick={() => {
                   setIsEditOpen(false);
                 }}
-                className="rounded-lg border border-slate-300 bg-slate-50 px-3 py-1.5 text-xs font-medium text-slate-700 transition-colors hover:bg-slate-100"
+                className="min-h-11 rounded-lg border border-slate-300 bg-slate-50 px-3 py-1.5 text-xs font-medium text-slate-700 transition-colors hover:bg-slate-100"
               >
                 닫기
               </button>
             </div>
 
-            <div className="space-y-3 p-5">
+            <div className="space-y-3 overflow-y-auto p-4 pb-[calc(1rem+env(safe-area-inset-bottom))] sm:p-5">
               <input
                 type="text"
                 value={editCommand}
@@ -406,7 +408,7 @@ export function PostItem({
                 onChange={(event) => {
                   setEditContent(event.target.value);
                 }}
-                rows={10}
+                rows={textareaRows}
                 placeholder="내용"
                 className="w-full resize-y rounded border border-sky-200 bg-slate-50 px-3 py-3 text-[15px] leading-relaxed text-slate-900 placeholder:text-slate-500 focus:border-sky-400 focus:outline-none"
               />
@@ -417,7 +419,7 @@ export function PostItem({
                   onClick={() => {
                     setIsEditOpen(false);
                   }}
-                  className="h-11 flex-1 rounded-lg border border-slate-300 bg-white text-sm font-medium text-slate-700 transition-colors hover:bg-slate-50"
+                  className="min-h-11 flex-1 rounded-lg border border-slate-300 bg-white text-sm font-medium text-slate-700 transition-colors hover:bg-slate-50"
                 >
                   취소
                 </button>
@@ -427,7 +429,7 @@ export function PostItem({
                     void submitEdit();
                   }}
                   disabled={isSavingEdit}
-                  className="h-11 flex-1 rounded-lg bg-sky-500 text-sm font-medium text-white transition-colors hover:bg-sky-600 disabled:cursor-not-allowed disabled:bg-slate-400"
+                  className="min-h-11 flex-1 rounded-lg bg-sky-500 text-sm font-medium text-white transition-colors hover:bg-sky-600 disabled:cursor-not-allowed disabled:bg-slate-400"
                 >
                   {isSavingEdit ? "저장 중..." : "수정 저장"}
                 </button>
@@ -438,22 +440,22 @@ export function PostItem({
       ) : null}
 
       {isHistoryOpen ? (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/55 p-4">
-          <div className="w-full max-w-3xl overflow-hidden rounded-2xl border border-sky-200 bg-gradient-to-b from-white to-sky-50 shadow-2xl">
-            <div className="flex items-center justify-between border-b border-sky-100 bg-white/90 px-5 py-4">
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/55 p-0 sm:p-4">
+          <div className="h-full w-full overflow-hidden border-0 bg-gradient-to-b from-white to-sky-50 shadow-2xl sm:h-auto sm:max-w-3xl sm:rounded-2xl sm:border sm:border-sky-200">
+            <div className="flex items-center justify-between border-b border-sky-100 bg-white/90 px-4 py-3 sm:px-5 sm:py-4">
               <h3 className="text-lg font-bold text-slate-900">수정 이력</h3>
               <button
                 type="button"
                 onClick={() => {
                   setIsHistoryOpen(false);
                 }}
-                className="rounded-lg border border-slate-300 bg-slate-50 px-3 py-1.5 text-xs font-medium text-slate-700 transition-colors hover:bg-slate-100"
+                className="min-h-11 rounded-lg border border-slate-300 bg-slate-50 px-3 py-1.5 text-xs font-medium text-slate-700 transition-colors hover:bg-slate-100"
               >
                 닫기
               </button>
             </div>
 
-            <div className="max-h-[70vh] space-y-3 overflow-auto p-5">
+            <div className="max-h-[calc(100vh-4.25rem-env(safe-area-inset-bottom))] space-y-3 overflow-auto p-4 pb-[calc(1rem+env(safe-area-inset-bottom))] sm:max-h-[70vh] sm:p-5">
               {isHistoryLoading ? (
                 <p className="text-sm text-slate-600">
                   이력을 불러오는 중입니다...

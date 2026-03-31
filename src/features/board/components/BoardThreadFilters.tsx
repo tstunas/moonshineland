@@ -188,7 +188,7 @@ export function BoardThreadFilters({
     const nextPath = nextQuery ? `${pathname}?${nextQuery}` : pathname;
     const params = new URLSearchParams({ next: nextPath });
 
-    router.push(`/adult-required?${params.toString()}`);
+    router.push(`/adult-required?${params.toString()}`, { scroll: false });
   }, [buildFilterQuery, pathname, router]);
 
   function syncFilterState(nextValues: {
@@ -306,18 +306,18 @@ export function BoardThreadFilters({
   ];
 
   return (
-    <section className="relative overflow-hidden rounded-[24px] border border-sky-200/80 bg-[radial-gradient(circle_at_top_left,_rgba(186,230,253,0.78),_rgba(255,255,255,0.97)_38%,_rgba(236,254,255,0.88)_100%)] p-4 shadow-[0_16px_34px_-30px_rgba(14,116,144,0.4)]">
+    <section className="relative overflow-hidden rounded-[24px] border border-sky-200/80 bg-[radial-gradient(circle_at_top_left,_rgba(186,230,253,0.78),_rgba(255,255,255,0.97)_38%,_rgba(236,254,255,0.88)_100%)] p-4 shadow-[0_16px_34px_-30px_rgba(14,116,144,0.4)] lg:py-3">
       <div className="absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-sky-300 to-transparent" />
 
-      <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
+      <div className="flex flex-col gap-2 lg:flex-row lg:items-center lg:justify-between">
         <div>
           <p className="text-[10px] font-semibold uppercase tracking-[0.28em] text-sky-600">
             Thread Finder
           </p>
-          <h2 className="mt-1.5 text-xl font-semibold tracking-tight text-slate-900">
+          <h2 className="mt-1 text-xl font-semibold tracking-tight text-slate-900 lg:text-lg">
             스레드 목록 필터
           </h2>
-          <p className="mt-1 text-xs text-slate-600">
+          <p className="mt-0.5 text-xs text-slate-600">
             현재 조건으로 {totalThreads}개의 스레드를 보고 있습니다.
           </p>
         </div>
@@ -333,7 +333,7 @@ export function BoardThreadFilters({
             onClick={() => {
               setIsCollapsed((current) => !current);
             }}
-            className="inline-flex items-center gap-2 rounded-full border border-slate-300 bg-white/85 px-3 py-1.5 text-xs font-semibold text-slate-700 shadow-sm transition hover:border-slate-400 hover:bg-white"
+            className="inline-flex min-h-11 items-center gap-2 rounded-full border border-slate-300 bg-white/85 px-3 py-1.5 text-xs font-semibold text-slate-700 shadow-sm transition hover:border-slate-400 hover:bg-white lg:min-h-9"
           >
             <span>{isCollapsed ? "필터 펼치기" : "필터 접기"}</span>
             <span
@@ -348,12 +348,12 @@ export function BoardThreadFilters({
         </div>
       </div>
 
-      <div className="mt-3 flex flex-wrap gap-1.5">
+      <div className="mt-2 flex flex-wrap gap-1.5">
         {activeFilters.map((filter) => (
           <span
             key={filter.key}
             className={cn(
-              "inline-flex items-center gap-1 rounded-full border px-2.5 py-1 text-[11px] font-semibold tracking-[0.08em]",
+              "inline-flex min-h-9 items-center gap-1 rounded-full border px-2.5 py-1 text-[11px] font-semibold tracking-[0.08em]",
               filter.tone,
             )}
           >
@@ -363,7 +363,7 @@ export function BoardThreadFilters({
                 type="button"
                 aria-label={`${filter.label} 필터 해제`}
                 onClick={filter.onRemove}
-                className="inline-flex h-4 w-4 items-center justify-center rounded-full bg-black/5 text-[10px] leading-none transition hover:bg-black/10"
+                className="inline-flex h-6 w-6 items-center justify-center rounded-full bg-black/5 text-[10px] leading-none transition hover:bg-black/10 sm:h-4 sm:w-4"
               >
                 ×
               </button>
@@ -376,10 +376,10 @@ export function BoardThreadFilters({
         <form
           action={`/board/${boardKey}`}
           method="get"
-          className="mt-3 space-y-3"
+          className="mt-2 space-y-2"
         >
         <div className="grid gap-2 md:grid-cols-2">
-          <label className="block rounded-xl border border-white/80 bg-white/90 px-3 py-2.5 shadow-sm backdrop-blur">
+          <label className="block rounded-xl border border-white/80 bg-white/90 px-3 py-2 shadow-sm backdrop-blur lg:py-1.5">
             <span className="text-[10px] font-semibold uppercase tracking-[0.18em] text-slate-500">
               제목 검색
             </span>
@@ -391,11 +391,11 @@ export function BoardThreadFilters({
                 setTitleValue(event.target.value);
               }}
               placeholder="스레드 제목으로 찾기"
-              className="mt-1.5 w-full border-0 bg-transparent p-0 text-[15px] text-slate-900 placeholder:text-slate-400 focus:outline-none"
+              className="mt-1 w-full border-0 bg-transparent p-0 text-[15px] text-slate-900 placeholder:text-slate-400 focus:outline-none"
             />
           </label>
 
-          <label className="block rounded-xl border border-white/80 bg-white/90 px-3 py-2.5 shadow-sm backdrop-blur">
+          <label className="block rounded-xl border border-white/80 bg-white/90 px-3 py-2 shadow-sm backdrop-blur lg:py-1.5">
             <span className="text-[10px] font-semibold uppercase tracking-[0.18em] text-slate-500">
               작성자 검색
             </span>
@@ -407,15 +407,15 @@ export function BoardThreadFilters({
                 setAuthorValue(event.target.value);
               }}
               placeholder="작성자 이름으로 찾기"
-              className="mt-1.5 w-full border-0 bg-transparent p-0 text-[15px] text-slate-900 placeholder:text-slate-400 focus:outline-none"
+              className="mt-1 w-full border-0 bg-transparent p-0 text-[15px] text-slate-900 placeholder:text-slate-400 focus:outline-none"
             />
           </label>
         </div>
 
         <div className="grid gap-2 lg:grid-cols-[minmax(0,1fr)_auto] lg:items-center">
           <div className="grid gap-2 md:grid-cols-[minmax(0,1fr)_auto] md:items-center">
-            <div className="rounded-xl border border-white/80 bg-white/90 p-1.5 shadow-sm backdrop-blur">
-              <div className="grid grid-cols-3 gap-1.5">
+            <div className="rounded-xl border border-white/80 bg-white/90 p-1 shadow-sm backdrop-blur">
+              <div className="grid grid-cols-3 gap-1">
                 <label className="cursor-pointer">
                   <input
                     name="threadType"
@@ -427,7 +427,7 @@ export function BoardThreadFilters({
                     }}
                     className="peer sr-only"
                   />
-                  <span className="flex items-center justify-center rounded-lg border border-slate-200 px-3 py-2 text-xs font-semibold text-slate-600 transition peer-checked:border-indigo-500 peer-checked:bg-indigo-500 peer-checked:text-white peer-checked:shadow-sm">
+                  <span className="flex min-h-11 items-center justify-center rounded-lg border border-slate-200 px-3 py-2 text-xs font-semibold text-slate-600 transition peer-checked:border-indigo-500 peer-checked:bg-indigo-500 peer-checked:text-white peer-checked:shadow-sm lg:min-h-9">
                     전체
                   </span>
                 </label>
@@ -443,7 +443,7 @@ export function BoardThreadFilters({
                     }}
                     className="peer sr-only"
                   />
-                  <span className="flex items-center justify-center rounded-lg border border-slate-200 px-3 py-2 text-xs font-semibold text-slate-600 transition peer-checked:border-sky-500 peer-checked:bg-sky-500 peer-checked:text-white peer-checked:shadow-sm">
+                  <span className="flex min-h-11 items-center justify-center rounded-lg border border-slate-200 px-3 py-2 text-xs font-semibold text-slate-600 transition peer-checked:border-sky-500 peer-checked:bg-sky-500 peer-checked:text-white peer-checked:shadow-sm lg:min-h-9">
                     연재판
                   </span>
                 </label>
@@ -459,14 +459,14 @@ export function BoardThreadFilters({
                     }}
                     className="peer sr-only"
                   />
-                  <span className="flex items-center justify-center rounded-lg border border-slate-200 px-3 py-2 text-xs font-semibold text-slate-600 transition peer-checked:border-amber-500 peer-checked:bg-amber-500 peer-checked:text-white peer-checked:shadow-sm">
+                  <span className="flex min-h-11 items-center justify-center rounded-lg border border-slate-200 px-3 py-2 text-xs font-semibold text-slate-600 transition peer-checked:border-amber-500 peer-checked:bg-amber-500 peer-checked:text-white peer-checked:shadow-sm lg:min-h-9">
                     잡담판
                   </span>
                 </label>
               </div>
             </div>
 
-            <label className="flex cursor-pointer items-center justify-between gap-3 rounded-xl border border-white/80 bg-white/90 px-3 py-2.5 shadow-sm backdrop-blur md:min-w-64">
+            <label className="flex cursor-pointer items-center justify-between gap-3 rounded-xl border border-white/80 bg-white/90 px-3 py-2 shadow-sm backdrop-blur md:min-w-56 lg:py-1.5">
               <div>
                 <p className="text-xs font-semibold text-slate-800">
                   성인 전용 스레드 포함
@@ -517,12 +517,12 @@ export function BoardThreadFilters({
           </div>
 
           <div className="flex flex-wrap items-center gap-2">
-            <p className="text-[11px] text-slate-500">
+            <p className="hidden text-[11px] text-slate-500 sm:block">
               입력 후 약 {FILTER_APPLY_DELAY_MS}ms 내 자동 반영됩니다.
             </p>
             <Link
               href={`/board/${boardKey}`}
-              className="inline-flex h-9 items-center justify-center rounded-full border border-slate-300 bg-white px-4 text-xs font-semibold text-slate-700 transition hover:border-slate-400 hover:bg-slate-50"
+              className="inline-flex min-h-11 w-full items-center justify-center rounded-full border border-slate-300 bg-white px-4 text-xs font-semibold text-slate-700 transition hover:border-slate-400 hover:bg-slate-50 sm:w-auto lg:min-h-9"
             >
               초기화
             </Link>

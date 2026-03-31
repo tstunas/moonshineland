@@ -14,6 +14,8 @@ import {
   copyExternalHtmlToClipboard,
   copyExternalImage as copyExternalImageAsset,
 } from "@/features/board/lib/postExternalExport";
+import { useMobileKeyboardOpen } from "@/hooks/useMobileKeyboardOpen";
+import { useResponsiveTextareaRows } from "@/hooks/useResponsiveTextareaRows";
 import { cn } from "@/lib/cn";
 import type { Post } from "@/types/post";
 import type { Thread } from "@/types/thread";
@@ -121,8 +123,10 @@ export function PostForm({
   onThreadChanged,
   onAdminModeChange,
 }: PostFormProps) {
+  const isMobileKeyboardOpen = useMobileKeyboardOpen();
   const contentRef = useRef<HTMLTextAreaElement | null>(null);
   const imageInputRef = useRef<HTMLInputElement | null>(null);
+  const textareaRows = useResponsiveTextareaRows();
   const onToggleReplyAlertRef = useRef(onToggleReplyAlert);
   const authorStorageKey = `moonshineland:form:${boardKey}:author`;
   const commandStorageKey = `moonshineland:form:${boardKey}:command`;
@@ -171,6 +175,29 @@ export function PostForm({
   useEffect(() => {
     resizeTextarea();
   }, [content, resizeTextarea]);
+
+  useEffect(() => {
+    if (!isAutosizeEnabled) {
+      return;
+    }
+
+    resizeTextarea();
+  }, [isAutosizeEnabled, resizeTextarea, textareaRows]);
+
+  useEffect(() => {
+    const handleResize = () => {
+      if (!isAutosizeEnabled) {
+        return;
+      }
+
+      resizeTextarea();
+    };
+
+    window.addEventListener("resize", handleResize);
+    return () => {
+      window.removeEventListener("resize", handleResize);
+    };
+  }, [isAutosizeEnabled, resizeTextarea]);
 
   useEffect(() => {
     onToggleReplyAlertRef.current = onToggleReplyAlert;
@@ -633,7 +660,7 @@ export function PostForm({
     <>
       <form
         action={submitCreatePost}
-        className="rounded-lg border border-sky-200 bg-slate-100 p-4"
+        className="rounded-lg border border-sky-200 bg-slate-100 p-2.5 sm:p-4"
       >
         {!isSignedIn ? (
           <p className="my-3 rounded border border-amber-200 bg-amber-50 px-3 py-2 text-xs font-medium text-amber-700">
@@ -682,7 +709,7 @@ export function PostForm({
             onOpenAutoManagePage={openAutoManagePage}
           />
 
-          <div className="flex flex-col gap-3">
+          <div className="flex flex-col gap-2 sm:gap-3">
             <input
               name="author"
               type="text"
@@ -691,7 +718,7 @@ export function PostForm({
               onChange={(event) => {
                 setAuthor(event.target.value);
               }}
-              className="h-11 rounded border border-sky-200 bg-slate-50 px-3 text-[16px] text-slate-900 placeholder:text-slate-500 focus:border-sky-400 focus:outline-none"
+              className="h-9 rounded border border-sky-200 bg-slate-50 px-2.5 text-[13px] text-slate-900 placeholder:text-slate-500 focus:border-sky-400 focus:outline-none sm:h-11 sm:px-3 sm:text-[16px]"
             />
             <input
               name="command"
@@ -701,7 +728,7 @@ export function PostForm({
               onChange={(event) => {
                 setCommand(event.target.value);
               }}
-              className="h-11 rounded border border-sky-200 bg-slate-50 px-3 text-[16px] text-slate-900 placeholder:text-slate-500 focus:border-sky-400 focus:outline-none"
+              className="h-9 rounded border border-sky-200 bg-slate-50 px-2.5 text-[13px] text-slate-900 placeholder:text-slate-500 focus:border-sky-400 focus:outline-none sm:h-11 sm:px-3 sm:text-[16px]"
             />
           </div>
 
@@ -710,13 +737,13 @@ export function PostForm({
             onInput={resizeTextarea}
             name="content"
             placeholder="내용(4만자 이내)"
-            rows={6}
+            rows={textareaRows}
             value={content}
             onChange={(event) => {
               setContent(event.target.value);
             }}
             className={cn(
-              "contentInput mt-3 w-full resize-y rounded border border-sky-200 bg-slate-50 px-3 py-3 text-[16px] leading-relaxed text-slate-900 placeholder:text-slate-500 focus:border-sky-400 focus:outline-none",
+              "contentInput mt-2 w-full resize-y rounded border border-sky-200 bg-slate-50 px-2.5 py-2 text-[13px] leading-relaxed text-slate-900 placeholder:text-slate-500 focus:border-sky-400 focus:outline-none sm:mt-3 sm:px-3 sm:py-3 sm:text-[16px]",
               contentTypeClassName,
             )}
           />
@@ -731,12 +758,51 @@ export function PostForm({
             onMoveSelectedImage={moveSelectedImage}
           />
 
-          <button
-            type="submit"
-            className="mt-4 h-11 w-full rounded bg-sky-500 text-[20px] font-semibold text-white transition-colors hover:bg-sky-600"
+          <div
+            className={cn(
+              "-mx-2.5 mt-2.5 px-2.5 pt-2.5 sm:static sm:mx-0 sm:mt-4 sm:border-0 sm:bg-transparent sm:px-0 sm:pt-0 sm:pb-0",
+              isMobileKeyboardOpen
+                ? "static border-t border-sky-200 bg-white"
+                : "sticky bottom-0 z-20 border-t border-sky-200 bg-white/95 pb-[calc(0.35rem+env(safe-area-inset-bottom))] backdrop-blur",
+            )}
           >
-            작성
-          </button>
+            {!isMobileKeyboardOpen ? (
+              <div className="mb-1.5 grid grid-cols-3 gap-1.5 sm:hidden">
+                <button
+                  type="button"
+                  onClick={handleOpenPreview}
+                  className="min-h-9 rounded border border-slate-300 bg-white px-1.5 text-[10px] font-semibold text-slate-700"
+                >
+                  미리보기
+                </button>
+                <button
+                  type="button"
+                  onClick={() => {
+                    imageInputRef.current?.click();
+                  }}
+                  className="min-h-9 rounded border border-slate-300 bg-white px-1.5 text-[10px] font-semibold text-slate-700"
+                >
+                  이미지 추가
+                </button>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setIsDiceOpen(true);
+                  }}
+                  className="min-h-9 rounded border border-slate-300 bg-white px-1.5 text-[10px] font-semibold text-slate-700"
+                >
+                  주사위
+                </button>
+              </div>
+            ) : null}
+
+            <button
+              type="submit"
+              className="h-9 w-full rounded bg-sky-500 text-[14px] font-semibold text-white transition-colors hover:bg-sky-600 sm:h-11 sm:text-[20px]"
+            >
+              {isMobileKeyboardOpen ? "작성" : "레스 작성"}
+            </button>
+          </div>
         </fieldset>
       </form>
 

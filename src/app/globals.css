@@ -49,6 +49,7 @@
 :root {
   --background: #ffffff;
   --foreground: #171717;
+  --mobile-safe-bottom: env(safe-area-inset-bottom, 0px);
 }
 
 @theme inline {
@@ -70,6 +71,17 @@ body {
   color: var(--foreground);
   font-family: Arial, Helvetica, sans-serif;
 }
+
+html {
+  scroll-padding-bottom: calc(72px + var(--mobile-safe-bottom));
+}
+
+@media (max-width: 640px) {
+  html {
+    font-size: 14px;
+  }
+}
+
 .content .vib-1 {
   animation: vib-anim-1 0.8s infinite alternate;
   display: inline-block;
