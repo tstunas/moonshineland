@@ -51,7 +51,10 @@ const DEFAULT_SECTIONS: SidebarSection[] = [
   },
   {
     title: "환경설정",
-    items: [{ label: "개인선호설정", href: "/preferences" }],
+    items: [
+      { label: "개인선호설정", href: "/preferences" },
+      { label: "계정 관리", href: "/account" },
+    ],
   },
   {
     title: "관리자 페이지",
