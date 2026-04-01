@@ -4,6 +4,7 @@ import { ThreadForm } from "@/features/board/components/ThreadForm";
 import { ThreadItem } from "@/features/board/components/ThreadItem";
 import { ThreadPagination } from "@/features/board/components/ThreadPagination";
 import { BoardPresenceClient } from "@/features/board/components/BoardPresenceClient";
+import { LatestBoardAnnouncement } from "@/features/announcement/components/LatestBoardAnnouncement";
 import { getNextThreadIndex } from "@/features/board/lib/getNextThreadIndex";
 import { getThreads } from "@/features/board/lib/getThreads";
 import { getTotalThreads } from "@/features/board/lib/getTotalThreads";
@@ -113,6 +114,11 @@ export default async function BoardPage({
         <BoardPresenceClient boardKey={boardKey} />
       </div>
       <div className="mt-6">
+        <LatestBoardAnnouncement
+          isAdultVerified={Boolean(currentUser?.isAdultVerified)}
+        />
+      </div>
+      <div className="mt-4">
         <BoardThreadFilters
           boardKey={boardKey}
           totalThreads={totalThreads}

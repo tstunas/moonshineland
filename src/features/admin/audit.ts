@@ -3,7 +3,7 @@ import prisma from "@/lib/prisma";
 interface RecordAdminAuditInput {
   adminUserId: number;
   action: string;
-  targetType: "user" | "board" | "thread" | "post";
+  targetType: "user" | "board" | "thread" | "post" | "announcement";
   targetIds: number[];
   summary: string;
   details?: Record<string, unknown>;

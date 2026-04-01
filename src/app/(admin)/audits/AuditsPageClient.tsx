@@ -15,7 +15,7 @@ import {
   AUDIT_PAGE_SIZE_OPTIONS,
   type AuditFilters,
   type AuditsPageData,
-} from "@/features/admin/auditPageData";
+} from "@/features/admin/auditTypes";
 import { apiGet } from "@/lib/fetch";
 
 const PATHNAME = "/audits";

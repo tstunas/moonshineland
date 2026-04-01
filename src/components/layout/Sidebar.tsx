@@ -33,6 +33,7 @@ const DEFAULT_SECTIONS: SidebarSection[] = [
   {
     title: "게시판",
     items: [
+      { label: "공지사항", href: "/announcements" },
       { label: "앵커판", href: "/board/anchor" },
       { label: "OR판", href: "/board/orpg" },
       { label: "테스트판", href: "/board/test" },
@@ -43,9 +44,7 @@ const DEFAULT_SECTIONS: SidebarSection[] = [
   },
   {
     title: "보관",
-    items: [
-      { label: "아카이브", href: "/archive" },
-    ],
+    items: [{ label: "아카이브", href: "/archive" }],
   },
   {
     title: "환경설정",
@@ -56,6 +55,7 @@ const DEFAULT_SECTIONS: SidebarSection[] = [
     requiresAdmin: true,
     items: [
       { label: "대시보드", href: "/dashboard" },
+      { label: "└ 공지 관리", href: "/dashboard/announcements" },
       { label: "감사 로그", href: "/audits" },
     ],
   },
@@ -69,7 +69,9 @@ export function Sidebar({
   onItemClick,
 }: SidebarProps) {
   const pathname = usePathname();
-  const visibleSections = sections.filter((section) => !section.requiresAdmin || isAdmin);
+  const visibleSections = sections.filter(
+    (section) => !section.requiresAdmin || isAdmin,
+  );
 
   const isItemActive = (item: SidebarItem) => {
     if (item.href === "/") {
