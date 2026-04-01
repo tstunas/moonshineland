@@ -9,19 +9,13 @@ export async function POST(req: NextRequest) {
     const currentUser = await getCurrentUser();
 
     if (!currentUser?.isAdmin) {
-      return NextResponse.json(
-        { error: "Unauthorized" },
-        { status: 403 }
-      );
+      return NextResponse.json({ error: "Unauthorized" }, { status: 403 });
     }
 
     const { postId } = await req.json();
 
     if (!postId || typeof postId !== "number" || postId <= 0) {
-      return NextResponse.json(
-        { error: "Invalid postId" },
-        { status: 400 }
-      );
+      return NextResponse.json({ error: "Invalid postId" }, { status: 400 });
     }
 
     const target = await prisma.post.findUnique({
@@ -30,10 +24,7 @@ export async function POST(req: NextRequest) {
     });
 
     if (!target) {
-      return NextResponse.json(
-        { error: "Post not found" },
-        { status: 404 }
-      );
+      return NextResponse.json({ error: "Post not found" }, { status: 404 });
     }
 
     const updated = await prisma.post.update({
@@ -46,7 +37,7 @@ export async function POST(req: NextRequest) {
     });
 
     await recordAdminAudit({
-      adminUserId: currentUser.id,
+      adminUserId: Number(currentUser.id),
       action: "posts-hidden",
       targetType: "post",
       targetIds: [postId],
@@ -59,7 +50,7 @@ export async function POST(req: NextRequest) {
     console.error("togglePostHidden error:", error);
     return NextResponse.json(
       { error: "Internal server error" },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }

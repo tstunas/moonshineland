@@ -31,9 +31,12 @@ const DEFAULT_SECTIONS: SidebarSection[] = [
     items: [{ label: "가이드", href: "/guide" }],
   },
   {
+    title: "알림",
+    items: [{ label: "공지사항", href: "/announcements" }],
+  },
+  {
     title: "게시판",
     items: [
-      { label: "공지사항", href: "/announcements" },
       { label: "앵커판", href: "/board/anchor" },
       { label: "OR판", href: "/board/orpg" },
       { label: "테스트판", href: "/board/test" },

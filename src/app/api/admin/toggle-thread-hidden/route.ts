@@ -46,7 +46,7 @@ export async function POST(req: NextRequest) {
     });
 
     await recordAdminAudit({
-      adminUserId: currentUser.id,
+      adminUserId: Number(currentUser.id),
       action: "threads-hidden",
       targetType: "thread",
       targetIds: [threadId],
