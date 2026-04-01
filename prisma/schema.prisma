@@ -55,7 +55,7 @@ model User {
   threadCollaborators ThreadCollaborator[]
   threadMemberships   ThreadMember[]
   threadBans          ThreadBan[]
-  posts               Post[]
+  posts               Post[]               @relation("PostOwner")
   autoPosts           AutoPost[]
   autoPostSchedules   AutoPostSchedule[]
   adminAuditLogs      AdminAuditLog[]
@@ -254,10 +254,10 @@ model Post {
   updatedAt        DateTime    @updatedAt @db.DateTime(3)
   contentUpdatedAt DateTime?   @db.DateTime(3)
   threadId         Int
-  userId           Int
+  userId           Int?
 
   thread Thread @relation(fields: [threadId], references: [id], onDelete: Cascade)
-  user   User   @relation(fields: [userId], references: [id], onDelete: Restrict)
+  owner  User?  @relation("PostOwner", fields: [userId], references: [id], onDelete: SetNull)
   contentHistories PostContentHistory[]
   postImages      PostImage[]
 
