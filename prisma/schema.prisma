@@ -73,6 +73,8 @@ model Announcement {
   user             User?                        @relation(fields: [userId], references: [id], onDelete: SetNull)
   contentHistories AnnouncementContentHistory[]
   announcementImages AnnouncementImage[]
+
+  @@index([isHidden, isAdultOnly, createdAt])
 }
 
 model AnnouncementImage {
@@ -191,7 +193,8 @@ model Thread {
   bannedUsers   ThreadBan[]
 
   @@unique([boardId, threadIndex])
-  @@index([boardId, postUpdatedAt, isChat, isAdultOnly, threadIndex])
+  @@index([boardId, isChat, isAdultOnly, updatedAt, threadIndex])
+  @@index([isHidden, isChat, isAdultOnly, updatedAt])
   @@index([boardId, title])
   @@index([boardId, author])
 }
@@ -253,6 +256,8 @@ model Post {
   postImages      PostImage[]
 
   @@unique([threadId, postOrder])
+  @@index([threadId, isHidden, postOrder])
+  @@index([isHidden, isAutoPost, contentType, createdAt])
   @@index([threadId, createdAt])
   @@index([threadId, updatedAt])
 }
@@ -349,7 +354,6 @@ model AutoPostSchedule {
   user   User   @relation(fields: [userId], references: [id], onDelete: Restrict)
 
   @@index([isEnabled, nextRunAt, lockUntil])
-  @@index([nextRunAt])
   @@index([userId])
 }
 
