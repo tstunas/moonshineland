@@ -1,8 +1,7 @@
 import type { Metadata } from "next";
-import Link from "next/link";
-import type { ReactNode } from "react";
 
 import "./archive-viewer.css";
+import { ArchiveListSidebar } from "./ArchiveListSidebar";
 
 import {
   getArchiveListAction,
@@ -21,23 +20,6 @@ interface ArchivePageProps {
   }>;
 }
 
-function formatSavedAt(value: string) {
-  const date = new Date(value);
-
-  if (Number.isNaN(date.getTime())) {
-    return value;
-  }
-
-  return new Intl.DateTimeFormat("ko-KR", {
-    year: "numeric",
-    month: "2-digit",
-    day: "2-digit",
-    hour: "2-digit",
-    minute: "2-digit",
-    timeZone: "Asia/Seoul",
-  }).format(date);
-}
-
 function toPositiveInt(value: string | undefined, fallbackValue = 1): number {
   const parsed = Number(value);
   if (!Number.isInteger(parsed) || parsed <= 0) {
@@ -45,41 +27,6 @@ function toPositiveInt(value: string | undefined, fallbackValue = 1): number {
   }
 
   return parsed;
-}
-
-function escapeRegExp(value: string) {
-  return value.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
-}
-
-function renderHighlightedText(text: string, query: string): ReactNode {
-  const normalizedQuery = query.trim();
-
-  if (!normalizedQuery) {
-    return text;
-  }
-
-  const escaped = escapeRegExp(normalizedQuery);
-  const regex = new RegExp(`(${escaped})`, "ig");
-  const parts = text.split(regex);
-
-  if (parts.length <= 1) {
-    return text;
-  }
-
-  return parts.map((part, index) => {
-    if (part.toLowerCase() === normalizedQuery.toLowerCase()) {
-      return (
-        <mark
-          key={`${part}-${String(index)}`}
-          className="rounded bg-amber-200/80 px-0.5 text-slate-900"
-        >
-          {part}
-        </mark>
-      );
-    }
-
-    return <span key={`${part}-${String(index)}`}>{part}</span>;
-  });
 }
 
 type PaginationToken = number | "ellipsis";
@@ -209,163 +156,71 @@ export default async function ArchivePage({ searchParams }: ArchivePageProps) {
     page: archiveList.page + 1,
   });
 
+  const sidebarItems = archiveList.items.map((archive) => ({
+    key: archive.key,
+    title: archive.title,
+    description: archive.description,
+    savedAt: archive.savedAt,
+    tags: archive.tags,
+    href: buildArchiveHref({
+      key: archive.key,
+      query,
+      page: archiveList.page,
+    }),
+    isActive: selectedArchiveKey === archive.key,
+  }));
+
+  const paginationItems = pageNumbers.map((token, index) => {
+    if (token === "ellipsis") {
+      return {
+        type: "ellipsis" as const,
+        key: `ellipsis-${String(index)}`,
+      };
+    }
+
+    return {
+      type: "page" as const,
+      key: `page-${String(token)}`,
+      page: token,
+      href: buildArchiveHref({
+        key: selectedArchiveKey ?? undefined,
+        query,
+        page: token,
+      }),
+      isCurrent: token === archiveList.page,
+    };
+  });
+
   return (
     <div className="mx-auto flex h-full w-full max-w-7xl flex-col gap-4 px-2 py-2 md:flex-row md:gap-6">
-      <aside className="md:sticky md:top-3 md:h-fit md:w-80">
-        <div className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
-          <p className="text-xs font-semibold tracking-[0.22em] text-slate-500 uppercase">
-            Archive List
-          </p>
-          <h1 className="mt-2 text-2xl font-black text-slate-900">아카이브</h1>
-          <p className="mt-2 text-sm leading-6 text-slate-600">
-            아카이브는 실시간 CRUD 대상이 아니라, HTML 파일로 고정 저장된 결과를 읽어 옵니다.
-          </p>
-
-          <form action="/archive" method="get" className="mt-4 flex gap-2">
-            <input
-              type="text"
-              name="q"
-              defaultValue={archiveList.query}
-              placeholder="제목/태그/설명 검색"
-              className="h-10 flex-1 rounded-lg border border-slate-300 bg-white px-3 text-sm text-slate-900 placeholder:text-slate-500 focus:border-sky-400 focus:outline-none"
-            />
-            <button
-              type="submit"
-              className="h-10 rounded-lg border border-slate-300 bg-slate-50 px-3 text-sm font-semibold text-slate-700 hover:bg-slate-100"
-            >
-              검색
-            </button>
-          </form>
-
-          <div className="mt-2 flex items-center justify-between text-[11px] text-slate-500">
-            <span>
-              결과 {archiveList.totalCount}건 / 페이지 {archiveList.page}/{archiveList.totalPages}
-            </span>
-            <span className="rounded-full border border-slate-300 bg-slate-50 px-2 py-0.5 text-slate-600">
-              provider: {archiveList.storageProvider}
-            </span>
-          </div>
-
-          {archiveList.items.length === 0 ? (
-            <p className="mt-4 rounded-xl border border-slate-200 bg-slate-50 px-3 py-3 text-sm text-slate-600">
-              표시할 아카이브가 없습니다.
-            </p>
-          ) : (
-            <ul className="mt-4 space-y-2">
-              {archiveList.items.map((archive) => {
-                const isActive = selectedArchiveKey === archive.key;
-
-                return (
-                  <li key={archive.key}>
-                    <Link
-                      href={buildArchiveHref({
-                        key: archive.key,
-                        query,
-                        page: archiveList.page,
-                      })}
-                      aria-current={isActive ? "page" : undefined}
-                      className={[
-                        "block rounded-xl border px-3 py-3 transition",
-                        isActive
-                          ? "border-sky-300 bg-sky-50"
-                          : "border-slate-200 bg-slate-50 hover:border-slate-300 hover:bg-white",
-                      ].join(" ")}
-                    >
-                      <p className="text-sm font-semibold text-slate-900">
-                        {renderHighlightedText(archive.title, archiveList.query)}
-                      </p>
-                      <p className="mt-1 text-xs leading-5 text-slate-600">
-                        {renderHighlightedText(archive.description, archiveList.query)}
-                      </p>
-                      <p className="mt-2 text-[11px] text-slate-500">
-                        저장 시각: {formatSavedAt(archive.savedAt)}
-                      </p>
-                      <div className="mt-2 flex flex-wrap gap-1.5">
-                        {archive.tags.map((tag) => (
-                          <span
-                            key={tag}
-                            className="rounded-full border border-slate-300 bg-white px-2 py-0.5 text-[11px] text-slate-600"
-                          >
-                            {renderHighlightedText(tag, archiveList.query)}
-                          </span>
-                        ))}
-                      </div>
-                    </Link>
-                  </li>
-                );
-              })}
-            </ul>
-          )}
-
-          <div className="mt-4 flex items-center justify-between gap-2">
-            {hasPrevPage ? (
-              <Link
-                href={prevPageHref}
-                className="inline-flex h-9 items-center rounded-lg border border-slate-300 bg-white px-3 text-xs font-semibold text-slate-700 hover:bg-slate-50"
-              >
-                이전
-              </Link>
-            ) : (
-              <span className="inline-flex h-9 items-center rounded-lg border border-slate-200 bg-slate-100 px-3 text-xs font-semibold text-slate-400">
-                이전
-              </span>
-            )}
-
-            <div className="flex items-center gap-1">
-              {pageNumbers.map((token, index) => {
-                if (token === "ellipsis") {
-                  return (
-                    <span
-                      key={`ellipsis-${String(index)}`}
-                      className="inline-flex h-8 min-w-8 items-center justify-center px-1 text-xs font-semibold text-slate-400"
-                    >
-                      ...
-                    </span>
-                  );
-                }
-
-                const isCurrentPage = token === archiveList.page;
-
-                return (
-                  <Link
-                    key={token}
-                    href={buildArchiveHref({
-                      key: selectedArchiveKey ?? undefined,
-                      query,
-                      page: token,
-                    })}
-                    aria-current={isCurrentPage ? "page" : undefined}
-                    className={[
-                      "inline-flex h-8 min-w-8 items-center justify-center rounded-md border px-2 text-xs font-semibold transition",
-                      isCurrentPage
-                        ? "border-sky-300 bg-sky-50 text-sky-800"
-                        : "border-slate-300 bg-white text-slate-700 hover:bg-slate-50",
-                    ].join(" ")}
-                  >
-                    {token}
-                  </Link>
-                );
-              })}
-            </div>
-
-            {hasNextPage ? (
-              <Link
-                href={nextPageHref}
-                className="inline-flex h-9 items-center rounded-lg border border-slate-300 bg-white px-3 text-xs font-semibold text-slate-700 hover:bg-slate-50"
-              >
-                다음
-              </Link>
-            ) : (
-              <span className="inline-flex h-9 items-center rounded-lg border border-slate-200 bg-slate-100 px-3 text-xs font-semibold text-slate-400">
-                다음
-              </span>
-            )}
-          </div>
-        </div>
-      </aside>
+      <ArchiveListSidebar
+        query={archiveList.query}
+        totalCount={archiveList.totalCount}
+        page={archiveList.page}
+        totalPages={archiveList.totalPages}
+        storageProvider={archiveList.storageProvider}
+        items={sidebarItems}
+        hasPrevPage={hasPrevPage}
+        hasNextPage={hasNextPage}
+        prevPageHref={prevPageHref}
+        nextPageHref={nextPageHref}
+        paginationItems={paginationItems}
+      />
 
       <main className="min-w-0 flex-1">
         <article className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm sm:p-6">
+          <div className="mb-5 rounded-2xl border border-amber-300 bg-[linear-gradient(135deg,rgba(254,243,199,0.92),rgba(255,251,235,0.98))] px-4 py-3 text-amber-950 shadow-sm">
+            <p className="text-xs font-semibold uppercase tracking-[0.22em] text-amber-800">
+              Preview Only
+            </p>
+            <h1 className="mt-1 text-lg font-black text-amber-950 sm:text-xl">
+              아직 정식 지원하지 않는 기능이며, 현재 화면은 모의 페이지입니다.
+            </h1>
+            <p className="mt-1.5 text-sm leading-6 text-amber-900/90">
+              실제 아카이브 운영 흐름을 확정하기 전의 탐색용 UI입니다. 검색, 목차 이동, HTML 뷰어 구성이 바뀔 수 있습니다.
+            </p>
+          </div>
+
           <header className="border-b border-slate-200 pb-4">
             <p className="text-xs font-semibold tracking-[0.22em] text-sky-700 uppercase">
               Html Snapshot Viewer
