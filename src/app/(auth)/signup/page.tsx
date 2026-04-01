@@ -12,6 +12,7 @@ export const metadata: Metadata = {
 interface SignupPageProps {
   searchParams: Promise<{
     error?: string;
+    sent?: string;
   }>;
 }
 
@@ -22,7 +23,7 @@ export default async function SignupPage({ searchParams }: SignupPageProps) {
     redirect("/");
   }
 
-  const { error } = await searchParams;
+  const { error, sent } = await searchParams;
 
   async function submitSignup(formData: FormData) {
     "use server";
@@ -30,7 +31,7 @@ export default async function SignupPage({ searchParams }: SignupPageProps) {
     const result = await signupAction(formData);
 
     if (result.success) {
-      redirect("/");
+      redirect("/signup?sent=1");
     }
 
     redirect(`/signup?error=${encodeURIComponent(result.message)}`);
@@ -54,6 +55,15 @@ export default async function SignupPage({ searchParams }: SignupPageProps) {
                 className="mb-4 rounded-lg border border-rose-300 bg-rose-50 px-3 py-2 text-sm text-rose-700"
               >
                 {error}
+              </p>
+            ) : null}
+
+            {sent === "1" ? (
+              <p
+                role="status"
+                className="mb-4 rounded-lg border border-emerald-300 bg-emerald-50 px-3 py-2 text-sm text-emerald-700"
+              >
+                인증 이메일을 전송했습니다. 메일의 인증 링크를 눌러 계정을 활성화한 뒤 로그인해주세요.
               </p>
             ) : null}
 

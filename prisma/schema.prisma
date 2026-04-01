@@ -39,6 +39,9 @@ model User {
   preferences     Json      @default("{}") @db.Json
   createdAt       DateTime  @default(now()) @db.DateTime(3)
   updatedAt       DateTime  @updatedAt @db.DateTime(3)
+  emailVerifiedAt                DateTime? @db.DateTime(3)
+  emailVerificationTokenHash     String?   @db.VarChar(64)
+  emailVerificationExpiresAt     DateTime? @db.DateTime(3)
 
   announcements       Announcement[]
   boardsOwned         Board[]              @relation("BoardOwner")

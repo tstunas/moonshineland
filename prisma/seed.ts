@@ -73,12 +73,14 @@ async function main() {
       passwordHash,
       isAdmin: true,
       isActive: true,
+      emailVerifiedAt: new Date(),
     },
     update: {
       username: ADMIN_USERNAME,
       passwordHash,
       isAdmin: true,
       isActive: true,
+      emailVerifiedAt: new Date(),
     },
   });
 
