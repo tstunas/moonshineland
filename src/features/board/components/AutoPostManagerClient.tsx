@@ -36,6 +36,19 @@ import { InlineImageLightbox } from "./InlineImageLightbox";
 import { PostImagePicker } from "./PostImagePicker";
 import { PreviewModal } from "./PreviewModal";
 
+function formatAuthorLabelAllowBoldOnly(rawLabel: string): string {
+  const escaped = rawLabel
+    .replaceAll("&", "&amp;")
+    .replaceAll("<", "&lt;")
+    .replaceAll(">", "&gt;")
+    .replaceAll('"', "&quot;")
+    .replaceAll("'", "&#39;");
+
+  return escaped
+    .replaceAll(/&lt;b&gt;/gi, "<b>")
+    .replaceAll(/&lt;\/b&gt;/gi, "</b>");
+}
+
 const MAX_IMAGE_COUNT = 10;
 const CONTENT_TYPE_DEBOUNCE_MS = 300;
 const AUTO_POST_DISMISS_ANIMATION_MS = 460;
@@ -935,7 +948,7 @@ export function AutoPostManagerClient({
                       </span>{" "}
                       <span
                         dangerouslySetInnerHTML={{
-                          __html: autoPost.author || AnonymousAuthor,
+                          __html: formatAuthorLabelAllowBoldOnly(autoPost.author || AnonymousAuthor),
                         }}
                       ></span>{" "}
                       <span className="text-[12px] text-slate-500 sm:text-[13px]">

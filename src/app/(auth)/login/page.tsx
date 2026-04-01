@@ -104,12 +104,20 @@ export default async function LoginPage({ searchParams }: LoginPageProps) {
               </div>
 
               <div>
-                <label
-                  htmlFor="password"
-                  className="mb-1.5 block text-sm font-medium text-slate-700"
-                >
-                  비밀번호
-                </label>
+                <div className="mb-1.5 flex items-center justify-between">
+                  <label
+                    htmlFor="password"
+                    className="block text-sm font-medium text-slate-700"
+                  >
+                    비밀번호
+                  </label>
+                  <Link
+                    href="/reset-password"
+                    className="text-xs font-medium text-slate-500 transition-colors hover:text-slate-700"
+                  >
+                    비밀번호 재설정
+                  </Link>
+                </div>
                 <input
                   id="password"
                   name="password"
@@ -143,12 +151,6 @@ export default async function LoginPage({ searchParams }: LoginPageProps) {
                 홈으로
               </Link>
               <div className="text-right text-slate-600">
-                <Link
-                  href="/reset-password"
-                  className="block text-xs font-medium text-slate-500 transition-colors hover:text-slate-700"
-                >
-                  비밀번호를 잊으셨나요?
-                </Link>
                 <p>
                   계정이 없나요?{" "}
                   <Link

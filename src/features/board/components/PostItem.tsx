@@ -15,6 +15,19 @@ import { toast } from "sonner";
 import { ImageGallery } from "./ImageGallery";
 import { InlineImageLightbox } from "./InlineImageLightbox";
 
+function formatAuthorLabelAllowBoldOnly(rawLabel: string): string {
+  const escaped = rawLabel
+    .replaceAll("&", "&amp;")
+    .replaceAll("<", "&lt;")
+    .replaceAll(">", "&gt;")
+    .replaceAll('"', "&quot;")
+    .replaceAll("'", "&#39;");
+
+  return escaped
+    .replaceAll(/&lt;b&gt;/gi, "<b>")
+    .replaceAll(/&lt;\/b&gt;/gi, "</b>");
+}
+
 export function PostItem({
   post,
   boardKey,
@@ -30,6 +43,7 @@ export function PostItem({
 }) {
   const router = useRouter();
   const author = post.author || AnonymousAuthor;
+  const authorLabelHtml = formatAuthorLabelAllowBoldOnly(author);
   const contentTypeLabel = post.contentType !== "text" ? "</>" : null;
   const textareaRows = useResponsiveTextareaRows();
   const [isEditOpen, setIsEditOpen] = useState(false);
@@ -238,7 +252,7 @@ export function PostItem({
           <span className="font-medium">#{post.postOrder}</span>{" "}
           <span
             dangerouslySetInnerHTML={{
-              __html: author,
+              __html: authorLabelHtml,
             }}
           ></span>{" "}
           <span className="text-[12px] leading-tight text-slate-500 sm:text-[14px]">

@@ -17,6 +17,25 @@ export interface AuthActionResult {
 
 const PASSWORD_RESET_TOKEN_EXPIRES_MS = 60 * 60 * 1000;
 
+async function issuePasswordResetEmailForUser(
+  userId: number,
+  email: string,
+): Promise<void> {
+  const token = crypto.randomBytes(32).toString("hex");
+  const tokenHash = crypto.createHash("sha256").update(token).digest("hex");
+  const expiresAt = new Date(Date.now() + PASSWORD_RESET_TOKEN_EXPIRES_MS);
+
+  await prisma.user.update({
+    where: { id: userId },
+    data: {
+      passwordResetTokenHash: tokenHash,
+      passwordResetExpiresAt: expiresAt,
+    },
+  });
+
+  await sendPasswordResetEmail(email, token);
+}
+
 const ACCESS_TOKEN_COOKIE = {
   name: "access_token",
   options: {
@@ -51,11 +70,21 @@ export async function loginAction(
     }
 
     if (user.passwordResetRequired) {
-      return {
-        success: false,
-        message:
-          "이 계정은 비밀번호 재설정 후에 로그인할 수 있습니다. 비밀번호 재설정을 진행해주세요.",
-      };
+      try {
+        await issuePasswordResetEmailForUser(user.id, user.email);
+        return {
+          success: false,
+          message:
+            "이 계정은 비밀번호 재설정 후에 로그인할 수 있습니다. 방금 재설정 메일을 보냈습니다. 메일함을 확인해주세요.",
+        };
+      } catch (error) {
+        console.error("Auto password reset email error:", error);
+        return {
+          success: false,
+          message:
+            "이 계정은 비밀번호 재설정 후에 로그인할 수 있습니다. 자동 메일 발송에 실패했습니다. 비밀번호 재설정 링크를 이용해주세요.",
+        };
+      }
     }
 
     const isValid = await bcrypt.compare(password, user.passwordHash);
@@ -237,19 +266,7 @@ export async function requestPasswordResetAction(
       };
     }
 
-    const token = crypto.randomBytes(32).toString("hex");
-    const tokenHash = crypto.createHash("sha256").update(token).digest("hex");
-    const expiresAt = new Date(Date.now() + PASSWORD_RESET_TOKEN_EXPIRES_MS);
-
-    await prisma.user.update({
-      where: { id: user.id },
-      data: {
-        passwordResetTokenHash: tokenHash,
-        passwordResetExpiresAt: expiresAt,
-      },
-    });
-
-    await sendPasswordResetEmail(email, token);
+    await issuePasswordResetEmailForUser(user.id, user.email);
 
     return {
       success: true,

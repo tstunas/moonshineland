@@ -9,9 +9,23 @@ interface ThreadItemProps {
   thread: Thread;
 }
 
+function formatAuthorLabelAllowBoldOnly(rawLabel: string): string {
+  const escaped = rawLabel
+    .replaceAll("&", "&amp;")
+    .replaceAll("<", "&lt;")
+    .replaceAll(">", "&gt;")
+    .replaceAll('"', "&quot;")
+    .replaceAll("'", "&#39;");
+
+  return escaped
+    .replaceAll(/&lt;b&gt;/gi, "<b>")
+    .replaceAll(/&lt;\/b&gt;/gi, "</b>");
+}
+
 export function ThreadItem({ thread, boardKey }: ThreadItemProps) {
   const postCountText = `(${formatNumber(thread.postCount)})`;
   const authorLabel = thread.author || AnonymousAuthor;
+  const authorLabelHtml = formatAuthorLabelAllowBoldOnly(authorLabel);
   const threadBadges = [
     {
       key: thread.isChat ? "chat" : "serial",
@@ -56,7 +70,11 @@ export function ThreadItem({ thread, boardKey }: ThreadItemProps) {
         <Link href={threadHref}>{postCountText}</Link>
       </h3>
       <p className="mt-2 truncate text-[15px] leading-tight text-sky-800">
-        {authorLabel}
+        <span
+          dangerouslySetInnerHTML={{
+            __html: authorLabelHtml,
+          }}
+        ></span>
       </p>
 
       <p className="mt-1 text-[13px] leading-tight text-slate-500">
