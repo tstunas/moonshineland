@@ -56,18 +56,52 @@ model User {
 } 
 
 model Announcement {
-  id          Int         @id @default(autoincrement())
-  title       String      @db.VarChar(80)
-  content     String      @db.LongText
-  rawContent  String      @db.LongText
-  contentType ContentType @default(text)
-  isHidden    Boolean     @default(false)
-  isAdultOnly Boolean     @default(false)
-  createdAt   DateTime    @default(now()) @db.DateTime(3)
-  updatedAt   DateTime    @updatedAt @db.DateTime(3)
-  userId      Int?
+  id               Int         @id @default(autoincrement())
+  title            String      @db.VarChar(80)
+  content          String      @db.LongText
+  rawContent       String      @db.LongText
+  contentType      ContentType @default(text)
+  isHidden         Boolean     @default(false)
+  isEdited         Boolean     @default(false)
+  isInlineImage    Boolean     @default(false)
+  isAdultOnly      Boolean     @default(false)
+  createdAt        DateTime    @default(now()) @db.DateTime(3)
+  updatedAt        DateTime    @updatedAt @db.DateTime(3)
+  contentUpdatedAt DateTime?   @db.DateTime(3)
+  userId           Int?
 
-  user User? @relation(fields: [userId], references: [id], onDelete: SetNull)
+  user             User?                        @relation(fields: [userId], references: [id], onDelete: SetNull)
+  contentHistories AnnouncementContentHistory[]
+  announcementImages AnnouncementImage[]
+}
+
+model AnnouncementImage {
+  id             Int      @id @default(autoincrement())
+  announcementId Int
+  imageUrl       String   @db.VarChar(512)
+  sortOrder      Int      @default(1)
+  createdAt      DateTime @default(now()) @db.DateTime(3)
+
+  announcement Announcement @relation(fields: [announcementId], references: [id], onDelete: Cascade)
+
+  @@unique([announcementId, sortOrder])
+  @@index([announcementId, sortOrder])
+}
+
+model AnnouncementContentHistory {
+  id                       Int         @id @default(autoincrement())
+  announcementId           Int
+  previousTitle            String      @db.VarChar(80)
+  previousContent          String      @db.LongText
+  previousRawContent       String      @db.LongText
+  previousContentType      ContentType @default(text)
+  previousCreatedAt        DateTime    @db.DateTime(3)
+  previousContentUpdatedAt DateTime?   @db.DateTime(3)
+  createdAt                DateTime    @default(now()) @db.DateTime(3)
+
+  announcement Announcement @relation(fields: [announcementId], references: [id], onDelete: Cascade)
+
+  @@index([announcementId, createdAt])
 }
 
 model Board {

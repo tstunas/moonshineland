@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 
+import { recordAdminAudit } from "@/features/admin/audit";
 import { getCurrentUser } from "@/features/auth/queries";
 import prisma from "@/lib/prisma";
 
@@ -42,6 +43,15 @@ export async function POST(req: NextRequest) {
         id: true,
         isHidden: true,
       },
+    });
+
+    await recordAdminAudit({
+      adminUserId: currentUser.id,
+      action: "boards-hidden",
+      targetType: "board",
+      targetIds: [boardId],
+      summary: `게시판 1개의 공개 상태를 ${updated.isHidden ? "숨김" : "공개"}으로 변경했습니다.`,
+      details: { mode: "single", previous: target.isHidden },
     });
 
     return NextResponse.json(updated);
