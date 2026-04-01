@@ -11,6 +11,9 @@ import {
 import { cn } from "@/lib/cn";
 import { BOARDS } from "@/lib/constants";
 import {
+  BOARD_CONTENT_WIDTH_DEFAULT,
+  PREFS_BOARD_CONTENT_WIDTH,
+  PREFS_BOARD_CONTENT_WIDTH_COOKIE,
   CSS_VAR_TOAST_SIZE,
   PREFS_FILTER_COLLAPSED,
   PREFS_FILTER_INCLUDE_ADULT,
@@ -20,6 +23,7 @@ import {
   TOAST_SIZE_DEFAULT,
   TOAST_SIZE_MAX,
   TOAST_SIZE_MIN,
+  normalizeBoardContentWidthPreference,
 } from "@/lib/preferences";
 
 // ============================================================================
@@ -222,6 +226,28 @@ export default function PreferencesPage() {
     document.title = "문샤인랜드: 개인선호설정";
   }, []);
 
+  const readBoardContentWidthPreference = () => {
+    if (typeof window === "undefined") {
+      return BOARD_CONTENT_WIDTH_DEFAULT;
+    }
+
+    const cookiePrefix = `${PREFS_BOARD_CONTENT_WIDTH_COOKIE}=`;
+    const cookieRaw = document.cookie
+      .split(";")
+      .map((item) => item.trim())
+      .find((item) => item.startsWith(cookiePrefix))
+      ?.slice(cookiePrefix.length);
+    const cookieValue = cookieRaw ? decodeURIComponent(cookieRaw) : null;
+
+    if (cookieValue) {
+      return normalizeBoardContentWidthPreference(cookieValue);
+    }
+
+    return normalizeBoardContentWidthPreference(
+      window.localStorage.getItem(PREFS_BOARD_CONTENT_WIDTH),
+    );
+  };
+
   // ── 주 게시판 ──────────────────────────────────────────────────────────────
   const [primaryBoard, setPrimaryBoard] = useState(() =>
     typeof window === "undefined"
@@ -241,6 +267,9 @@ export default function PreferencesPage() {
     () =>
       typeof window !== "undefined" &&
       window.localStorage.getItem(PREFS_FILTER_COLLAPSED) === "1",
+  );
+  const [boardContentWidth, setBoardContentWidth] = useState(
+    readBoardContentWidthPreference,
   );
 
   // ── 알림 ──────────────────────────────────────────────────────────────────
@@ -270,6 +299,12 @@ export default function PreferencesPage() {
   const saveFilterCollapsed = (val: boolean) => {
     setFilterCollapsed(val);
     window.localStorage.setItem(PREFS_FILTER_COLLAPSED, val ? "1" : "0");
+  };
+
+  const saveBoardContentWidth = (val: "narrow" | "wide") => {
+    setBoardContentWidth(val);
+    window.localStorage.setItem(PREFS_BOARD_CONTENT_WIDTH, val);
+    document.cookie = `${PREFS_BOARD_CONTENT_WIDTH_COOKIE}=${encodeURIComponent(val)}; path=/; max-age=31536000; samesite=lax`;
   };
 
   const saveSoundEnabled = (val: boolean) => {
@@ -321,11 +356,14 @@ export default function PreferencesPage() {
     window.localStorage.removeItem(PREFS_PRIMARY_BOARD);
     window.localStorage.removeItem(PREFS_FILTER_INCLUDE_ADULT);
     window.localStorage.removeItem(PREFS_FILTER_COLLAPSED);
+    window.localStorage.removeItem(PREFS_BOARD_CONTENT_WIDTH);
     window.localStorage.removeItem(PREFS_SOUND_ENABLED);
     window.localStorage.removeItem(PREFS_TOAST_SIZE);
+    document.cookie = `${PREFS_BOARD_CONTENT_WIDTH_COOKIE}=; path=/; max-age=0; samesite=lax`;
     setPrimaryBoard("");
     setIncludeAdult(false);
     setFilterCollapsed(false);
+    setBoardContentWidth(BOARD_CONTENT_WIDTH_DEFAULT);
     setSoundEnabled(false);
     saveToastSize(TOAST_SIZE_DEFAULT);
   };
@@ -335,7 +373,7 @@ export default function PreferencesPage() {
       <div className="mb-2">
         <h1 className="text-xl font-bold text-slate-900">개인선호설정</h1>
         <p className="mt-1 text-sm text-slate-500">
-          설정은 이 브라우저의 localStorage에 저장됩니다.
+          설정은 이 브라우저의 localStorage에 저장되며, 일부는 SSR 동기화를 위해 쿠키도 사용합니다.
         </p>
       </div>
 
@@ -386,6 +424,40 @@ export default function PreferencesPage() {
           description="게시판 접속 시 필터 패널이 닫힌 상태로 표시됩니다."
         >
           <Toggle checked={filterCollapsed} onChange={saveFilterCollapsed} />
+        </SettingRow>
+
+        <SettingRow
+          label="게시판 좌우 여백"
+          description="좁게는 공지사항과 같은 폭, 넓게는 전체 폭으로 표시됩니다."
+        >
+          <div className="inline-flex overflow-hidden rounded-lg border border-slate-300">
+            <button
+              type="button"
+              onClick={() => saveBoardContentWidth("narrow")}
+              className={cn(
+                "px-3 py-1.5 text-xs font-semibold transition-colors",
+                boardContentWidth === "narrow"
+                  ? "bg-indigo-600 text-white"
+                  : "bg-white text-slate-700 hover:bg-slate-50",
+              )}
+              aria-pressed={boardContentWidth === "narrow"}
+            >
+              좁게
+            </button>
+            <button
+              type="button"
+              onClick={() => saveBoardContentWidth("wide")}
+              className={cn(
+                "border-l border-slate-300 px-3 py-1.5 text-xs font-semibold transition-colors",
+                boardContentWidth === "wide"
+                  ? "bg-indigo-600 text-white"
+                  : "bg-white text-slate-700 hover:bg-slate-50",
+              )}
+              aria-pressed={boardContentWidth === "wide"}
+            >
+              넓게
+            </button>
+          </div>
         </SettingRow>
       </Section>
 

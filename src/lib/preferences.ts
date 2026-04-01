@@ -8,6 +8,25 @@ export const PREFS_PRIMARY_BOARD = "moonshineland:preferences:primary-board";
 /** 알림 토스트 폰트 크기 (숫자: px 단위) */
 export const PREFS_TOAST_SIZE = "moonshineland:preferences:toast-size";
 
+/** 게시판 콘텐츠 폭 (narrow | wide) */
+export const PREFS_BOARD_CONTENT_WIDTH =
+  "moonshineland:preferences:board-content-width";
+
+/** 게시판 콘텐츠 폭 SSR 동기화를 위한 쿠키 키 */
+export const PREFS_BOARD_CONTENT_WIDTH_COOKIE =
+  "moonshineland_pref_board_content_width";
+
+export type BoardContentWidthPreference = "narrow" | "wide";
+
+export const BOARD_CONTENT_WIDTH_DEFAULT: BoardContentWidthPreference =
+  "narrow";
+
+export function normalizeBoardContentWidthPreference(
+  value: string | null | undefined,
+): BoardContentWidthPreference {
+  return value === "wide" ? "wide" : BOARD_CONTENT_WIDTH_DEFAULT;
+}
+
 // ============================================================================
 // 기존 컴포넌트와 공유하는 키 (재사용 목적)
 // ============================================================================
