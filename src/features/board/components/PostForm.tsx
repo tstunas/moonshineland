@@ -26,6 +26,7 @@ import { AnonymousAuthor } from "@/lib/constants";
 
 const MAX_IMAGE_COUNT = 10;
 const CONTENT_TYPE_DEBOUNCE_MS = 300;
+const DRAFT_SAVE_DEBOUNCE_MS = 400;
 
 type ParsedContentType = "text" | "aa" | "novel" | "line";
 
@@ -131,6 +132,7 @@ export function PostForm({
   const commandStorageKey = `moonshineland:form:${boardKey}:command`;
   const autosizeStorageKey = `moonshineland:form:${boardKey}:post-autosize`;
   const replyAlertStorageKey = `moonshineland:thread-reply-alert:${boardKey}:${threadIndex}`;
+  const draftStorageKey = `moonshineland:form:${boardKey}:${threadIndex}:draft`;
   const imageInputId = `thread-image-${boardKey}-${threadIndex}`;
 
   const [author, setAuthor] = useState("");
@@ -140,6 +142,7 @@ export function PostForm({
   const [content, setContent] = useState("");
   const [isAutosizeEnabled, setIsAutosizeEnabled] = useState(true);
   const [isStorageHydrated, setIsStorageHydrated] = useState(false);
+  const [isDraftHydrated, setIsDraftHydrated] = useState(false);
   const [selectedImages, setSelectedImages] = useState<File[]>([]);
   const [isPreviewOpen, setIsPreviewOpen] = useState(false);
   const [isDiceOpen, setIsDiceOpen] = useState(false);
@@ -282,6 +285,34 @@ export function PostForm({
   }, [autosizeStorageKey, replyAlertStorageKey]);
 
   useEffect(() => {
+    const storedDraft = window.sessionStorage.getItem(draftStorageKey);
+
+    if (storedDraft) {
+      try {
+        const parsed = JSON.parse(storedDraft) as {
+          author?: string;
+          command?: string;
+          content?: string;
+        };
+
+        if (typeof parsed.author === "string") {
+          setAuthor(parsed.author);
+        }
+        if (typeof parsed.command === "string") {
+          setCommand(parsed.command);
+        }
+        if (typeof parsed.content === "string") {
+          setContent(parsed.content);
+        }
+      } catch {
+        window.sessionStorage.removeItem(draftStorageKey);
+      }
+    }
+
+    setIsDraftHydrated(true);
+  }, [draftStorageKey]);
+
+  useEffect(() => {
     if (!isStorageHydrated) {
       return;
     }
@@ -302,6 +333,31 @@ export function PostForm({
       isReplyAlertEnabled ? "1" : "0",
     );
   }, [replyAlertStorageKey, isReplyAlertEnabled, isStorageHydrated]);
+
+  useEffect(() => {
+    if (!isDraftHydrated) {
+      return;
+    }
+
+    const timeoutId = window.setTimeout(() => {
+      const nextDraft = {
+        author,
+        command,
+        content,
+      };
+
+      if (!nextDraft.author && !nextDraft.command && !nextDraft.content) {
+        window.sessionStorage.removeItem(draftStorageKey);
+        return;
+      }
+
+      window.sessionStorage.setItem(draftStorageKey, JSON.stringify(nextDraft));
+    }, DRAFT_SAVE_DEBOUNCE_MS);
+
+    return () => {
+      window.clearTimeout(timeoutId);
+    };
+  }, [author, command, content, draftStorageKey, isDraftHydrated]);
 
   useEffect(() => {
     const timeoutId = window.setTimeout(() => {
@@ -422,12 +478,28 @@ export function PostForm({
   const handleClearIdentity = useCallback(() => {
     setAuthor("");
     setCommand("");
-    if (typeof window !== "undefined") {
-      setAuthor("");
-      setCommand("");
+    window.localStorage.removeItem(authorStorageKey);
+    window.localStorage.removeItem(commandStorageKey);
+    const storedDraft = window.sessionStorage.getItem(draftStorageKey);
+    if (storedDraft) {
+      try {
+        const parsed = JSON.parse(storedDraft) as {
+          content?: string;
+        };
+        if (parsed.content) {
+          window.sessionStorage.setItem(
+            draftStorageKey,
+            JSON.stringify({ content: parsed.content }),
+          );
+        } else {
+          window.sessionStorage.removeItem(draftStorageKey);
+        }
+      } catch {
+        window.sessionStorage.removeItem(draftStorageKey);
+      }
     }
     toast.success("작성자 이름/콘솔 명령어를 지웠습니다.");
-  }, []);
+  }, [authorStorageKey, commandStorageKey, draftStorageKey]);
 
   const handleRepairAa = useCallback(() => {
     const repaired = fixBrokenAa(content);
@@ -548,6 +620,7 @@ export function PostForm({
         imageInputRef.current.value = "";
       }
       setSelectedImages([]);
+      window.sessionStorage.removeItem(draftStorageKey);
       resizeTextarea();
       contentRef.current?.focus();
       onPostCreated();

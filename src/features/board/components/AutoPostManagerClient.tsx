@@ -39,6 +39,7 @@ import { PreviewModal } from "./PreviewModal";
 const MAX_IMAGE_COUNT = 10;
 const CONTENT_TYPE_DEBOUNCE_MS = 300;
 const AUTO_POST_DISMISS_ANIMATION_MS = 460;
+const DRAFT_SAVE_DEBOUNCE_MS = 400;
 
 type ParsedContentType = "text" | "aa" | "novel" | "line";
 
@@ -121,6 +122,7 @@ export function AutoPostManagerClient({
   const commandStorageKey = `moonshineland:auto-form:${boardKey}:command`;
   const autosizeStorageKey = `moonshineland:auto-form:${boardKey}:autosize`;
   const bottomLockStorageKey = `moonshineland:auto-form:${boardKey}:${threadIndex}:bottom-lock`;
+  const draftStorageKey = `moonshineland:auto-form:${boardKey}:${threadIndex}:draft`;
   const imageInputId = `auto-image-${boardKey}-${threadIndex}`;
 
   const [autoPosts, setAutoPosts] = useState(initialAutoPosts);
@@ -133,6 +135,7 @@ export function AutoPostManagerClient({
   const [isAutosizeEnabled, setIsAutosizeEnabled] = useState(true);
   const [isBottomLockEnabled, setIsBottomLockEnabled] = useState(false);
   const [isStorageHydrated, setIsStorageHydrated] = useState(false);
+  const [isDraftHydrated, setIsDraftHydrated] = useState(false);
   const [isPreviewOpen, setIsPreviewOpen] = useState(false);
   const [isDiceOpen, setIsDiceOpen] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -216,6 +219,34 @@ export function AutoPostManagerClient({
   }, [autosizeStorageKey, bottomLockStorageKey]);
 
   useEffect(() => {
+    const storedDraft = window.sessionStorage.getItem(draftStorageKey);
+
+    if (storedDraft) {
+      try {
+        const parsed = JSON.parse(storedDraft) as {
+          author?: string;
+          command?: string;
+          content?: string;
+        };
+
+        if (typeof parsed.author === "string") {
+          setAuthor(parsed.author);
+        }
+        if (typeof parsed.command === "string") {
+          setCommand(parsed.command);
+        }
+        if (typeof parsed.content === "string") {
+          setContent(parsed.content);
+        }
+      } catch {
+        window.sessionStorage.removeItem(draftStorageKey);
+      }
+    }
+
+    setIsDraftHydrated(true);
+  }, [draftStorageKey]);
+
+  useEffect(() => {
     if (!isStorageHydrated) {
       return;
     }
@@ -236,6 +267,31 @@ export function AutoPostManagerClient({
       isBottomLockEnabled ? "1" : "0",
     );
   }, [bottomLockStorageKey, isBottomLockEnabled, isStorageHydrated]);
+
+  useEffect(() => {
+    if (!isDraftHydrated) {
+      return;
+    }
+
+    const timeoutId = window.setTimeout(() => {
+      const nextDraft = {
+        author,
+        command,
+        content,
+      };
+
+      if (!nextDraft.author && !nextDraft.command && !nextDraft.content) {
+        window.sessionStorage.removeItem(draftStorageKey);
+        return;
+      }
+
+      window.sessionStorage.setItem(draftStorageKey, JSON.stringify(nextDraft));
+    }, DRAFT_SAVE_DEBOUNCE_MS);
+
+    return () => {
+      window.clearTimeout(timeoutId);
+    };
+  }, [author, command, content, draftStorageKey, isDraftHydrated]);
 
   useEffect(() => {
     const timeoutId = window.setTimeout(() => {
@@ -318,8 +374,26 @@ export function AutoPostManagerClient({
     setCommand("");
     window.localStorage.removeItem(authorStorageKey);
     window.localStorage.removeItem(commandStorageKey);
+    const storedDraft = window.sessionStorage.getItem(draftStorageKey);
+    if (storedDraft) {
+      try {
+        const parsed = JSON.parse(storedDraft) as {
+          content?: string;
+        };
+        if (parsed.content) {
+          window.sessionStorage.setItem(
+            draftStorageKey,
+            JSON.stringify({ content: parsed.content }),
+          );
+        } else {
+          window.sessionStorage.removeItem(draftStorageKey);
+        }
+      } catch {
+        window.sessionStorage.removeItem(draftStorageKey);
+      }
+    }
     toast.success("작성자 이름/콘솔 명령어를 지웠습니다.");
-  }, [authorStorageKey, commandStorageKey]);
+  }, [authorStorageKey, commandStorageKey, draftStorageKey]);
 
   const handleRepairAa = useCallback(() => {
     const repaired = fixBrokenAa(content);
@@ -453,6 +527,7 @@ export function AutoPostManagerClient({
         window.localStorage.setItem(authorStorageKey, author.trim());
         window.localStorage.setItem(commandStorageKey, command.trim());
         setContent("");
+        window.sessionStorage.removeItem(draftStorageKey);
         clearSelectedImages();
         if (imageInputRef.current) {
           imageInputRef.current.value = "";
@@ -477,6 +552,7 @@ export function AutoPostManagerClient({
       clearSelectedImages,
       command,
       commandStorageKey,
+      draftStorageKey,
       isBottomLockEnabled,
       isSubmitting,
       scrollToBottom,
