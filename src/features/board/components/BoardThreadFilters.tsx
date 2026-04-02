@@ -12,7 +12,7 @@ import {
 
 import { cn } from "@/lib/cn";
 
-const FILTER_APPLY_DELAY_MS = 180;
+const FILTER_APPLY_DELAY_MS = 500;
 const FILTER_PANEL_COLLAPSED_KEY = "moonshineland:board:filters:collapsed";
 const FILTER_INCLUDE_ADULT_ONLY_KEY =
   "moonshineland:board:filters:includeAdultOnly";
