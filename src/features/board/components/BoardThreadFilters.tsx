@@ -12,11 +12,17 @@ import {
 } from "react";
 
 import { cn } from "@/lib/cn";
+import {
+  PREFS_FILTER_INCLUDE_ADULT,
+  PREFS_FILTER_INCLUDE_ADULT_COOKIE,
+} from "@/lib/preferences";
 
 const FILTER_APPLY_DELAY_MS = 500;
 const FILTER_PANEL_COLLAPSED_KEY = "moonshineland:board:filters:collapsed";
-const FILTER_INCLUDE_ADULT_ONLY_KEY =
-  "moonshineland:board:filters:includeAdultOnly";
+
+function setAdultFilterCookie(value: boolean) {
+  document.cookie = `${PREFS_FILTER_INCLUDE_ADULT_COOKIE}=${value ? "1" : "0"}; path=/; max-age=31536000; samesite=lax`;
+}
 
 type BoardThreadFiltersProps = {
   boardKey: string;
@@ -59,7 +65,7 @@ export function BoardThreadFilters({
       return true;
     }
 
-    return window.localStorage.getItem(FILTER_INCLUDE_ADULT_ONLY_KEY) === "1";
+    return window.localStorage.getItem(PREFS_FILTER_INCLUDE_ADULT) === "1";
   });
   const [isCollapsed, setIsCollapsed] = useState(true);
   const deferredTitleValue = useDeferredValue(titleValue);
@@ -100,9 +106,10 @@ export function BoardThreadFilters({
 
   useEffect(() => {
     window.localStorage.setItem(
-      FILTER_INCLUDE_ADULT_ONLY_KEY,
+      PREFS_FILTER_INCLUDE_ADULT,
       includeAdultOnlyValue ? "1" : "0",
     );
+    setAdultFilterCookie(includeAdultOnlyValue);
   }, [includeAdultOnlyValue]);
 
   useEffect(() => {

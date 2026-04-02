@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { toast } from "sonner";
 
 import {
@@ -28,25 +28,21 @@ export default function BoardsPageClient({ initialData }: { initialData: BoardsP
   const [selectedIds, setSelectedIds] = useState<number[]>([]);
   const firstRenderRef = useRef(true);
 
-  const fetchData = useCallback(async () => {
+  const loadData = async (
+    next: Pick<BoardsPageData, "filters" | "page" | "pageSize">,
+  ) => {
     const result = await apiGet<BoardsPageData>("/api/admin/dashboard/boards", {
       params: {
-        query: filters.query,
-        visibility: filters.visibility,
-        category: filters.category,
-        page,
-        pageSize,
+        query: next.filters.query,
+        visibility: next.filters.visibility,
+        category: next.filters.category,
+        page: next.page,
+        pageSize: next.pageSize,
       },
     });
 
-    if (!result.ok || !result.data) {
-      toast.error(result.error ?? "게시판 목록을 불러오지 못했습니다.");
-      return;
-    }
-
-    setData(result.data);
-    setSelectedIds([]);
-  }, [filters, page, pageSize]);
+    return result;
+  };
 
   useEffect(() => {
     if (firstRenderRef.current) {
@@ -54,8 +50,30 @@ export default function BoardsPageClient({ initialData }: { initialData: BoardsP
       return;
     }
 
-    void fetchData();
-  }, [fetchData]);
+    let isCancelled = false;
+
+    const run = async () => {
+      const result = await loadData({ filters, page, pageSize });
+
+      if (isCancelled) {
+        return;
+      }
+
+      if (!result.ok || !result.data) {
+        toast.error(result.error ?? "게시판 목록을 불러오지 못했습니다.");
+        return;
+      }
+
+      setData(result.data);
+      setSelectedIds([]);
+    };
+
+    void run();
+
+    return () => {
+      isCancelled = true;
+    };
+  }, [filters, page, pageSize]);
 
   useEffect(() => {
     syncUrlState("/dashboard/boards", {
@@ -75,7 +93,14 @@ export default function BoardsPageClient({ initialData }: { initialData: BoardsP
     }
 
     toast.success(result.data?.summary ?? "변경했습니다.");
-    await fetchData();
+    const refreshed = await loadData({ filters, page, pageSize });
+    if (!refreshed.ok || !refreshed.data) {
+      toast.error(refreshed.error ?? "게시판 목록을 불러오지 못했습니다.");
+      return;
+    }
+
+    setData(refreshed.data);
+    setSelectedIds([]);
   };
 
   return (

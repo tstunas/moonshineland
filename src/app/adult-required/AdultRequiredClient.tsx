@@ -2,9 +2,10 @@
 
 import Link from "next/link";
 import { useEffect } from "react";
-
-const FILTER_INCLUDE_ADULT_ONLY_KEY =
-  "moonshineland:board:filters:includeAdultOnly";
+import {
+  PREFS_FILTER_INCLUDE_ADULT,
+  PREFS_FILTER_INCLUDE_ADULT_COOKIE,
+} from "@/lib/preferences";
 
 const ERROR_MESSAGES: Record<string, string> = {
   not_adult: "인증 결과 성인이 아닌 것으로 확인되었습니다.",
@@ -30,7 +31,8 @@ export function AdultRequiredClient({
       return;
     }
 
-    window.localStorage.removeItem(FILTER_INCLUDE_ADULT_ONLY_KEY);
+    window.localStorage.removeItem(PREFS_FILTER_INCLUDE_ADULT);
+    document.cookie = `${PREFS_FILTER_INCLUDE_ADULT_COOKIE}=; path=/; max-age=0; samesite=lax`;
   }, [shouldClearAdultFilter]);
 
   const errorMessage = error ? (ERROR_MESSAGES[error] ?? "인증 중 오류가 발생했습니다. 다시 시도해주세요.") : null;

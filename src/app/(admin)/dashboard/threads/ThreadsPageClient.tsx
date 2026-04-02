@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { toast } from "sonner";
 
 import {
@@ -29,26 +29,22 @@ export default function ThreadsPageClient({ initialData }: { initialData: Thread
   const [selectedIds, setSelectedIds] = useState<number[]>([]);
   const firstRenderRef = useRef(true);
 
-  const fetchData = useCallback(async () => {
+  const loadData = async (
+    next: Pick<ThreadsPageData, "filters" | "page" | "pageSize">,
+  ) => {
     const result = await apiGet<ThreadsPageData>("/api/admin/dashboard/threads", {
       params: {
-        query: filters.query,
-        visibility: filters.visibility,
-        threadType: filters.threadType,
-        adult: filters.adult,
-        page,
-        pageSize,
+        query: next.filters.query,
+        visibility: next.filters.visibility,
+        threadType: next.filters.threadType,
+        adult: next.filters.adult,
+        page: next.page,
+        pageSize: next.pageSize,
       },
     });
 
-    if (!result.ok || !result.data) {
-      toast.error(result.error ?? "스레드 목록을 불러오지 못했습니다.");
-      return;
-    }
-
-    setData(result.data);
-    setSelectedIds([]);
-  }, [filters, page, pageSize]);
+    return result;
+  };
 
   useEffect(() => {
     if (firstRenderRef.current) {
@@ -56,8 +52,30 @@ export default function ThreadsPageClient({ initialData }: { initialData: Thread
       return;
     }
 
-    void fetchData();
-  }, [fetchData]);
+    let isCancelled = false;
+
+    const run = async () => {
+      const result = await loadData({ filters, page, pageSize });
+
+      if (isCancelled) {
+        return;
+      }
+
+      if (!result.ok || !result.data) {
+        toast.error(result.error ?? "스레드 목록을 불러오지 못했습니다.");
+        return;
+      }
+
+      setData(result.data);
+      setSelectedIds([]);
+    };
+
+    void run();
+
+    return () => {
+      isCancelled = true;
+    };
+  }, [filters, page, pageSize]);
 
   useEffect(() => {
     syncUrlState("/dashboard/threads", {
@@ -78,7 +96,14 @@ export default function ThreadsPageClient({ initialData }: { initialData: Thread
     }
 
     toast.success(result.data?.summary ?? "변경했습니다.");
-    await fetchData();
+    const refreshed = await loadData({ filters, page, pageSize });
+    if (!refreshed.ok || !refreshed.data) {
+      toast.error(refreshed.error ?? "스레드 목록을 불러오지 못했습니다.");
+      return;
+    }
+
+    setData(refreshed.data);
+    setSelectedIds([]);
   };
 
   return (

@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { cookies } from "next/headers";
 import { BoardThreadFilters } from "@/features/board/components/BoardThreadFilters";
 import { ThreadForm } from "@/features/board/components/ThreadForm";
 import { ThreadItem } from "@/features/board/components/ThreadItem";
@@ -10,6 +11,7 @@ import { getThreads } from "@/features/board/lib/getThreads";
 import { getTotalThreads } from "@/features/board/lib/getTotalThreads";
 import { getCurrentUser } from "@/features/auth/queries";
 import { BOARDS } from "@/lib/constants";
+import { PREFS_FILTER_INCLUDE_ADULT_COOKIE } from "@/lib/preferences";
 
 export async function generateMetadata({
   params,
@@ -66,6 +68,9 @@ export default async function BoardPage({
   const currentPage = Math.max(1, Number.parseInt(page ?? "1", 10) || 1);
   const currentUser = await getCurrentUser();
   const isSignedIn = Boolean(currentUser);
+  const includeAdultOnlyPrefFromCookie =
+    (await cookies()).get(PREFS_FILTER_INCLUDE_ADULT_COOKIE)?.value === "1";
+  const canIncludeAdultOnly = Boolean(currentUser?.isAdultVerified);
   const threadTypeFilter =
     threadType === "chat"
       ? "chat"
@@ -78,7 +83,12 @@ export default async function BoardPage({
             : "all";
   const isChatFilter =
     threadTypeFilter === "all" ? undefined : threadTypeFilter === "chat";
-  const includeAdultOnlyThreads = isSignedIn && includeAdultOnly === "true";
+  const includeAdultOnlyThreads =
+    includeAdultOnly === "true"
+      ? canIncludeAdultOnly
+      : includeAdultOnly === "false"
+        ? false
+        : canIncludeAdultOnly && includeAdultOnlyPrefFromCookie;
   const isAdultOnlyFilter = includeAdultOnlyThreads ? undefined : false;
   const titleFilter = title?.trim() ? title.trim() : undefined;
   const authorFilter = author?.trim() ? author.trim() : undefined;

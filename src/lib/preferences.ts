@@ -40,6 +40,10 @@ export function normalizeBoardContentWidthPreference(
 export const PREFS_FILTER_INCLUDE_ADULT =
   "moonshineland:board:filters:includeAdultOnly";
 
+/** 게시판 필터: 성인 콘텐츠 포함 여부 SSR 동기화를 위한 쿠키 키 */
+export const PREFS_FILTER_INCLUDE_ADULT_COOKIE =
+  "moonshineland_pref_filter_include_adult";
+
 /** 게시판 필터: 필터 패널 접힘 상태 */
 export const PREFS_FILTER_COLLAPSED = "moonshineland:board:filters:collapsed";
 

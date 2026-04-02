@@ -17,6 +17,7 @@ import {
   CSS_VAR_TOAST_SIZE,
   PREFS_FILTER_COLLAPSED,
   PREFS_FILTER_INCLUDE_ADULT,
+  PREFS_FILTER_INCLUDE_ADULT_COOKIE,
   PREFS_PRIMARY_BOARD,
   PREFS_SOUND_ENABLED,
   PREFS_TOAST_SIZE,
@@ -249,6 +250,25 @@ export default function PreferencesPage() {
     );
   };
 
+  const readIncludeAdultPreference = () => {
+    if (typeof window === "undefined") {
+      return false;
+    }
+
+    const cookiePrefix = `${PREFS_FILTER_INCLUDE_ADULT_COOKIE}=`;
+    const cookieRaw = document.cookie
+      .split(";")
+      .map((item) => item.trim())
+      .find((item) => item.startsWith(cookiePrefix))
+      ?.slice(cookiePrefix.length);
+
+    if (cookieRaw !== undefined) {
+      return decodeURIComponent(cookieRaw) === "1";
+    }
+
+    return window.localStorage.getItem(PREFS_FILTER_INCLUDE_ADULT) === "1";
+  };
+
   // ── 주 게시판 ──────────────────────────────────────────────────────────────
   const [primaryBoard, setPrimaryBoard] = useState(() =>
     typeof window === "undefined"
@@ -260,9 +280,7 @@ export default function PreferencesPage() {
 
   // ── 게시판 필터 ────────────────────────────────────────────────────────────
   const [includeAdult, setIncludeAdult] = useState(
-    () =>
-      typeof window !== "undefined" &&
-      window.localStorage.getItem(PREFS_FILTER_INCLUDE_ADULT) === "1",
+    readIncludeAdultPreference,
   );
   const [filterCollapsed, setFilterCollapsed] = useState(
     () =>
@@ -296,6 +314,7 @@ export default function PreferencesPage() {
   const saveIncludeAdult = (val: boolean) => {
     setIncludeAdult(val);
     window.localStorage.setItem(PREFS_FILTER_INCLUDE_ADULT, val ? "1" : "0");
+    document.cookie = `${PREFS_FILTER_INCLUDE_ADULT_COOKIE}=${val ? "1" : "0"}; path=/; max-age=31536000; samesite=lax`;
   };
 
   const saveFilterCollapsed = (val: boolean) => {
@@ -366,6 +385,7 @@ export default function PreferencesPage() {
     window.localStorage.removeItem(PREFS_SOUND_ENABLED);
     window.localStorage.removeItem(PREFS_TOAST_SIZE);
     document.cookie = `${PREFS_BOARD_CONTENT_WIDTH_COOKIE}=; path=/; max-age=0; samesite=lax`;
+    document.cookie = `${PREFS_FILTER_INCLUDE_ADULT_COOKIE}=; path=/; max-age=0; samesite=lax`;
     setPrimaryBoard("");
     setIncludeAdult(false);
     setFilterCollapsed(false);
