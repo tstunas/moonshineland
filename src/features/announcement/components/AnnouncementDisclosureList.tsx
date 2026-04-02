@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo } from "react";
+import { useMemo, useState } from "react";
 
 import { formatDateTime, formatRelativeTime } from "@/lib/format";
 import { cn } from "@/lib/cn";
@@ -53,7 +53,8 @@ function AnnouncementContentBody({
 }: {
   announcement: AnnouncementWithRelations;
 }) {
-  const { hideImages, toggleHideImages } = useHideImagesPreference();
+  const { hideImages: initialHideImages } = useHideImagesPreference();
+  const [hideImages, setHideImages] = useState(initialHideImages);
   const galleryImageCount = announcement.isInlineImage
     ? 0
     : announcement.announcementImages.length;
@@ -77,7 +78,9 @@ function AnnouncementContentBody({
         show={hasAnyImage}
         hideImages={hideImages}
         hiddenImageCount={hiddenImageCount}
-        onToggle={toggleHideImages}
+        onToggle={() => {
+          setHideImages((current) => !current);
+        }}
       />
 
       {!announcement.isInlineImage ? (

@@ -64,7 +64,8 @@ export function PostItem({
   const [isHistoryOpen, setIsHistoryOpen] = useState(false);
   const [isHistoryLoading, setIsHistoryLoading] = useState(false);
   const [fullscreenInlineImageUrl, setFullscreenInlineImageUrl] = useState<string | null>(null);
-  const { hideImages, toggleHideImages } = useHideImagesPreference();
+  const { hideImages: initialHideImages } = useHideImagesPreference();
+  const [hideImages, setHideImages] = useState(initialHideImages);
   const [editHistories, setEditHistories] = useState<
     Array<{
       id: number;
@@ -266,7 +267,7 @@ export function PostItem({
   };
 
   const toggleImageVisibility = () => {
-    toggleHideImages();
+    setHideImages((current) => !current);
   };
 
   return (

@@ -135,7 +135,7 @@ export function AutoPostManagerClient({
   threadIndex,
   initialAutoPosts,
 }: AutoPostManagerClientProps) {
-  const { hideImages, toggleHideImages } = useHideImagesPreference();
+  const { hideImages: initialHideImages } = useHideImagesPreference();
   const textareaRows = useResponsiveTextareaRows();
   const rootContainerRef = useRef<HTMLDivElement | null>(null);
   const formRef = useRef<HTMLFormElement | null>(null);
@@ -178,6 +178,9 @@ export function AutoPostManagerClient({
   const [dismissedAutoPostIds, setDismissedAutoPostIds] = useState<number[]>(
     [],
   );
+  const [imageVisibilityByAutoPostId, setImageVisibilityByAutoPostId] = useState<
+    Record<number, boolean>
+  >({});
 
   const [editingAutoPost, setEditingAutoPost] =
     useState<AutoPostPayload | null>(null);
@@ -900,12 +903,44 @@ export function AutoPostManagerClient({
     [autoPosts, dismissedAutoPostIds],
   );
 
-  const openInlineImageFullscreen = useCallback(
-    (event: MouseEvent<HTMLDivElement>) => {
-      if (hideImages) {
-        return;
+  const isAutoPostImagesHidden = useCallback(
+    (autoPostId: number) => {
+      return imageVisibilityByAutoPostId[autoPostId] ?? initialHideImages;
+    },
+    [imageVisibilityByAutoPostId, initialHideImages],
+  );
+
+  const toggleAutoPostImageVisibility = useCallback(
+    (autoPostId: number) => {
+      setImageVisibilityByAutoPostId((current) => {
+        const nextValue = !(current[autoPostId] ?? initialHideImages);
+        return {
+          ...current,
+          [autoPostId]: nextValue,
+        };
+      });
+    },
+    [initialHideImages],
+  );
+
+  useEffect(() => {
+    setImageVisibilityByAutoPostId((current) => {
+      const knownIds = new Set(autoPosts.map((autoPost) => autoPost.id));
+      const next: Record<number, boolean> = {};
+
+      for (const [id, hidden] of Object.entries(current)) {
+        const numericId = Number(id);
+        if (knownIds.has(numericId)) {
+          next[numericId] = hidden;
+        }
       }
 
+      return next;
+    });
+  }, [autoPosts]);
+
+  const openInlineImageFullscreen = useCallback(
+    (event: MouseEvent<HTMLDivElement>) => {
       const target = event.target as HTMLElement | null;
       if (!target) {
         return;
@@ -921,7 +956,7 @@ export function AutoPostManagerClient({
       event.preventDefault();
       setFullscreenInlineImageUrl(image.currentSrc || image.src);
     },
-    [hideImages],
+    [],
   );
 
   return (
@@ -946,6 +981,7 @@ export function AutoPostManagerClient({
         <ul className="space-y-3">
           {visibleAutoPosts.length > 0 ? (
             visibleAutoPosts.map((autoPost) => {
+              const hideImages = isAutoPostImagesHidden(autoPost.id);
               const galleryImageCount = autoPost.isInlineImage
                 ? 0
                 : autoPost.autoPostImages.length;
@@ -1011,7 +1047,9 @@ export function AutoPostManagerClient({
                         show={hasAnyImage}
                         hideImages={hideImages}
                         hiddenImageCount={hiddenImageCount}
-                        onToggle={toggleHideImages}
+                        onToggle={() => {
+                          toggleAutoPostImageVisibility(autoPost.id);
+                        }}
                       />
 
                       {!autoPost.isInlineImage ? (
@@ -1031,7 +1069,7 @@ export function AutoPostManagerClient({
                           "content whitespace-pre-wrap break-words text-[14px] leading-relaxed text-slate-900 sm:text-[15px]",
                           autoPost.contentType,
                         )}
-                        onClick={openInlineImageFullscreen}
+                        onClick={hideImages ? undefined : openInlineImageFullscreen}
                         dangerouslySetInnerHTML={{ __html: renderedContent }}
                       />
                     </div>
