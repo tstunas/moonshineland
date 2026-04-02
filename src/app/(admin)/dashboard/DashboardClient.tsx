@@ -845,7 +845,7 @@ export default function DashboardClient({
                         {formatNumber(thread.postCount)}
                       </td>
                       <td className="px-4 py-3 text-xs text-slate-500">
-                        {formatDateTime(thread.updatedAt)}
+                        {formatDateTime(thread.postUpdatedAt)}
                       </td>
                       <td className="px-4 py-3">
                         <div className="flex justify-end gap-2">

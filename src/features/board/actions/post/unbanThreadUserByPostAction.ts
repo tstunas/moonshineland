@@ -44,6 +44,10 @@ export async function unbanThreadUserByPostAction(
     return { success: false, message: "대상 레스를 찾지 못했습니다." };
   }
 
+  if (post.userId === null) {
+    return { success: false, message: "탈퇴한 유저는 밴을 해제할 수 없습니다." };
+  }
+
   await prisma.threadBan.deleteMany({
     where: {
       threadId: context.thread.id,

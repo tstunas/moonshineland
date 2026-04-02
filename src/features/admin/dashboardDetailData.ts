@@ -136,7 +136,8 @@ export interface PostsPageData {
     isHidden: boolean;
     isAutoPost: boolean;
     createdAt: Date | string;
-    postUpdatedAt: Date | string;
+    updatedAt: Date | string;
+    contentUpdatedAt: Date | null;
     thread: {
       id: number;
       threadIndex: number;
@@ -499,6 +500,7 @@ export async function getPostsPageData(
       isAutoPost: true,
       createdAt: true,
       updatedAt: true,
+      contentUpdatedAt: true,
       thread: {
         select: {
           id: true,

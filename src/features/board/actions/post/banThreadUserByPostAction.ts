@@ -48,6 +48,10 @@ export async function banThreadUserByPostAction(
     return { success: false, message: "대상 레스를 찾지 못했습니다." };
   }
 
+  if (post.userId === null) {
+    return { success: false, message: "탈퇴한 유저는 밴할 수 없습니다." };
+  }
+
   const existing = await prisma.threadBan.findUnique({
     where: {
       threadId_userId: {
