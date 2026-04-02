@@ -7,6 +7,7 @@ import {
   useCallback,
   useDeferredValue,
   useEffect,
+  useRef,
   useState,
 } from "react";
 
@@ -63,6 +64,7 @@ export function BoardThreadFilters({
   const [isCollapsed, setIsCollapsed] = useState(true);
   const deferredTitleValue = useDeferredValue(titleValue);
   const deferredAuthorValue = useDeferredValue(authorValue);
+  const hasHydratedRef = useRef(false);
 
   useEffect(() => {
     setTitleValue(title ?? "");
@@ -110,86 +112,81 @@ export function BoardThreadFilters({
     );
   }, [isCollapsed]);
 
-  const replaceFilters = useCallback((nextValues: {
-    title: string;
-    author: string;
-    threadType: "all" | "serial" | "chat";
-    includeAdultOnly: boolean;
-  }) => {
-    const params = new URLSearchParams();
-    const normalizedTitle = nextValues.title.trim();
-    const normalizedAuthor = nextValues.author.trim();
+  const buildFilterQuery = useCallback(
+    (nextValues: {
+      title: string;
+      author: string;
+      threadType: "all" | "serial" | "chat";
+      includeAdultOnly: boolean;
+    }) => {
+      const params = new URLSearchParams();
+      const normalizedTitle = nextValues.title.trim();
+      const normalizedAuthor = nextValues.author.trim();
 
-    if (nextValues.threadType !== "all") {
-      params.set("threadType", nextValues.threadType);
-    }
+      if (nextValues.threadType !== "all") {
+        params.set("threadType", nextValues.threadType);
+      }
 
-    if (isSignedIn && nextValues.includeAdultOnly) {
-      params.set("includeAdultOnly", "true");
-    }
+      if (isSignedIn && nextValues.includeAdultOnly) {
+        params.set("includeAdultOnly", "true");
+      }
 
-    if (normalizedTitle) {
-      params.set("title", normalizedTitle);
-    }
+      if (normalizedTitle) {
+        params.set("title", normalizedTitle);
+      }
 
-    if (normalizedAuthor) {
-      params.set("author", normalizedAuthor);
-    }
+      if (normalizedAuthor) {
+        params.set("author", normalizedAuthor);
+      }
 
-    const nextQuery = params.toString();
-    const currentQuery = searchParams.toString();
+      return params.toString();
+    },
+    [isSignedIn],
+  );
 
-    if (nextQuery === currentQuery) {
-      return;
-    }
+  const appliedFilterQuery = buildFilterQuery({
+    title: title ?? "",
+    author: author ?? "",
+    threadType,
+    includeAdultOnly,
+  });
 
-    const nextUrl = nextQuery ? `${pathname}?${nextQuery}` : pathname;
-    startTransition(() => {
-      router.replace(nextUrl, { scroll: false });
-    });
-  }, [isSignedIn, pathname, router, searchParams]);
+  const replaceFilters = useCallback(
+    (nextValues: {
+      title: string;
+      author: string;
+      threadType: "all" | "serial" | "chat";
+      includeAdultOnly: boolean;
+    }) => {
+      const nextQuery = buildFilterQuery(nextValues);
 
-  const buildFilterQuery = useCallback((nextValues: {
-    title: string;
-    author: string;
-    threadType: "all" | "serial" | "chat";
-    includeAdultOnly: boolean;
-  }) => {
-    const params = new URLSearchParams();
-    const normalizedTitle = nextValues.title.trim();
-    const normalizedAuthor = nextValues.author.trim();
+      if (nextQuery === appliedFilterQuery) {
+        return;
+      }
 
-    if (nextValues.threadType !== "all") {
-      params.set("threadType", nextValues.threadType);
-    }
+      const nextUrl = nextQuery ? `${pathname}?${nextQuery}` : pathname;
+      startTransition(() => {
+        router.replace(nextUrl, { scroll: false });
+      });
+    },
+    [appliedFilterQuery, buildFilterQuery, pathname, router],
+  );
 
-    if (isSignedIn && nextValues.includeAdultOnly) {
-      params.set("includeAdultOnly", "true");
-    }
+  const moveToAdultRequired = useCallback(
+    (nextValues: {
+      title: string;
+      author: string;
+      threadType: "all" | "serial" | "chat";
+      includeAdultOnly: boolean;
+    }) => {
+      const nextQuery = buildFilterQuery(nextValues);
+      const nextPath = nextQuery ? `${pathname}?${nextQuery}` : pathname;
+      const params = new URLSearchParams({ next: nextPath });
 
-    if (normalizedTitle) {
-      params.set("title", normalizedTitle);
-    }
-
-    if (normalizedAuthor) {
-      params.set("author", normalizedAuthor);
-    }
-
-    return params.toString();
-  }, [isSignedIn]);
-
-  const moveToAdultRequired = useCallback((nextValues: {
-    title: string;
-    author: string;
-    threadType: "all" | "serial" | "chat";
-    includeAdultOnly: boolean;
-  }) => {
-    const nextQuery = buildFilterQuery(nextValues);
-    const nextPath = nextQuery ? `${pathname}?${nextQuery}` : pathname;
-    const params = new URLSearchParams({ next: nextPath });
-
-    router.push(`/adult-required?${params.toString()}`, { scroll: false });
-  }, [buildFilterQuery, pathname, router]);
+      router.push(`/adult-required?${params.toString()}`, { scroll: false });
+    },
+    [buildFilterQuery, pathname, router],
+  );
 
   function syncFilterState(nextValues: {
     title: string;
@@ -205,6 +202,11 @@ export function BoardThreadFilters({
   }
 
   useEffect(() => {
+    if (!hasHydratedRef.current) {
+      hasHydratedRef.current = true;
+      return;
+    }
+
     const timeoutId = window.setTimeout(() => {
       replaceFilters({
         title: deferredTitleValue,
@@ -378,156 +380,156 @@ export function BoardThreadFilters({
           method="get"
           className="mt-2 space-y-2"
         >
-        <div className="grid gap-2 md:grid-cols-2">
-          <label className="block rounded-xl border border-white/80 bg-white/90 px-3 py-2 shadow-sm backdrop-blur lg:py-1.5">
-            <span className="text-[10px] font-semibold uppercase tracking-[0.18em] text-slate-500">
-              제목 검색
-            </span>
-            <input
-              name="title"
-              type="search"
-              value={titleValue}
-              onChange={(event) => {
-                setTitleValue(event.target.value);
-              }}
-              placeholder="스레드 제목으로 찾기"
-              className="mt-1 w-full border-0 bg-transparent p-0 text-[15px] text-slate-900 placeholder:text-slate-400 focus:outline-none"
-            />
-          </label>
-
-          <label className="block rounded-xl border border-white/80 bg-white/90 px-3 py-2 shadow-sm backdrop-blur lg:py-1.5">
-            <span className="text-[10px] font-semibold uppercase tracking-[0.18em] text-slate-500">
-              작성자 검색
-            </span>
-            <input
-              name="author"
-              type="search"
-              value={authorValue}
-              onChange={(event) => {
-                setAuthorValue(event.target.value);
-              }}
-              placeholder="작성자 이름으로 찾기"
-              className="mt-1 w-full border-0 bg-transparent p-0 text-[15px] text-slate-900 placeholder:text-slate-400 focus:outline-none"
-            />
-          </label>
-        </div>
-
-        <div className="grid gap-2 lg:grid-cols-[minmax(0,1fr)_auto] lg:items-center">
-          <div className="grid gap-2 md:grid-cols-[minmax(0,1fr)_auto] md:items-center">
-            <div className="rounded-xl border border-white/80 bg-white/90 p-1 shadow-sm backdrop-blur">
-              <div className="grid grid-cols-3 gap-1">
-                <label className="cursor-pointer">
-                  <input
-                    name="threadType"
-                    type="radio"
-                    value="all"
-                    checked={threadTypeValue === "all"}
-                    onChange={() => {
-                      setThreadTypeValue("all");
-                    }}
-                    className="peer sr-only"
-                  />
-                  <span className="flex min-h-11 items-center justify-center rounded-lg border border-slate-200 px-3 py-2 text-xs font-semibold text-slate-600 transition peer-checked:border-indigo-500 peer-checked:bg-indigo-500 peer-checked:text-white peer-checked:shadow-sm lg:min-h-9">
-                    전체
-                  </span>
-                </label>
-
-                <label className="cursor-pointer">
-                  <input
-                    name="threadType"
-                    type="radio"
-                    value="serial"
-                    checked={threadTypeValue === "serial"}
-                    onChange={() => {
-                      setThreadTypeValue("serial");
-                    }}
-                    className="peer sr-only"
-                  />
-                  <span className="flex min-h-11 items-center justify-center rounded-lg border border-slate-200 px-3 py-2 text-xs font-semibold text-slate-600 transition peer-checked:border-sky-500 peer-checked:bg-sky-500 peer-checked:text-white peer-checked:shadow-sm lg:min-h-9">
-                    연재판
-                  </span>
-                </label>
-
-                <label className="cursor-pointer">
-                  <input
-                    name="threadType"
-                    type="radio"
-                    value="chat"
-                    checked={threadTypeValue === "chat"}
-                    onChange={() => {
-                      setThreadTypeValue("chat");
-                    }}
-                    className="peer sr-only"
-                  />
-                  <span className="flex min-h-11 items-center justify-center rounded-lg border border-slate-200 px-3 py-2 text-xs font-semibold text-slate-600 transition peer-checked:border-amber-500 peer-checked:bg-amber-500 peer-checked:text-white peer-checked:shadow-sm lg:min-h-9">
-                    잡담판
-                  </span>
-                </label>
-              </div>
-            </div>
-
-            <label className="flex cursor-pointer items-center justify-between gap-3 rounded-xl border border-white/80 bg-white/90 px-3 py-2 shadow-sm backdrop-blur md:min-w-56 lg:py-1.5">
-              <div>
-                <p className="text-xs font-semibold text-slate-800">
-                  성인 전용 스레드 포함
-                </p>
-                {isSignedIn ? (
-                  <p className="mt-0.5 text-[11px] text-slate-500">
-                    꺼져 있으면 목록에서 제외됩니다.
-                  </p>
-                ) : (
-                  <p className="mt-0.5 text-[11px] text-amber-700">
-                    로그인 후 사용할 수 있습니다.
-                  </p>
-                )}
-              </div>
-              <span className="relative inline-flex shrink-0 items-center">
-                <input
-                  name="includeAdultOnly"
-                  type="checkbox"
-                  value="true"
-                  checked={includeAdultOnlyValue}
-                  onChange={(event) => {
-                    const nextChecked = event.target.checked;
-
-                    if (nextChecked && !isSignedIn) {
-                      setIncludeAdultOnlyValue(false);
-                      return;
-                    }
-
-                    if (nextChecked && !isAdultVerified) {
-                      moveToAdultRequired({
-                        title: titleValue,
-                        author: authorValue,
-                        threadType: threadTypeValue,
-                        includeAdultOnly: true,
-                      });
-                      return;
-                    }
-
-                    setIncludeAdultOnlyValue(nextChecked);
-                  }}
-                  disabled={!isSignedIn}
-                  className="peer sr-only"
-                />
-                <span className="h-6 w-11 rounded-full bg-slate-300 transition peer-checked:bg-rose-400 peer-disabled:opacity-50" />
-                <span className="absolute left-1 h-[18px] w-[18px] rounded-full bg-white shadow-sm transition peer-checked:translate-x-5" />
+          <div className="grid gap-2 md:grid-cols-2">
+            <label className="block rounded-xl border border-white/80 bg-white/90 px-3 py-2 shadow-sm backdrop-blur lg:py-1.5">
+              <span className="text-[10px] font-semibold uppercase tracking-[0.18em] text-slate-500">
+                제목 검색
               </span>
+              <input
+                name="title"
+                type="search"
+                value={titleValue}
+                onChange={(event) => {
+                  setTitleValue(event.target.value);
+                }}
+                placeholder="스레드 제목으로 찾기"
+                className="mt-1 w-full border-0 bg-transparent p-0 text-[15px] text-slate-900 placeholder:text-slate-400 focus:outline-none"
+              />
+            </label>
+
+            <label className="block rounded-xl border border-white/80 bg-white/90 px-3 py-2 shadow-sm backdrop-blur lg:py-1.5">
+              <span className="text-[10px] font-semibold uppercase tracking-[0.18em] text-slate-500">
+                작성자 검색
+              </span>
+              <input
+                name="author"
+                type="search"
+                value={authorValue}
+                onChange={(event) => {
+                  setAuthorValue(event.target.value);
+                }}
+                placeholder="작성자 이름으로 찾기"
+                className="mt-1 w-full border-0 bg-transparent p-0 text-[15px] text-slate-900 placeholder:text-slate-400 focus:outline-none"
+              />
             </label>
           </div>
 
-          <div className="flex flex-wrap items-center gap-2">
-            <p className="hidden text-[11px] text-slate-500 sm:block">
-              입력 후 약 {FILTER_APPLY_DELAY_MS}ms 내 자동 반영됩니다.
-            </p>
-            <Link
-              href={`/board/${boardKey}`}
-              className="inline-flex min-h-11 w-full items-center justify-center rounded-full border border-slate-300 bg-white px-4 text-xs font-semibold text-slate-700 transition hover:border-slate-400 hover:bg-slate-50 sm:w-auto lg:min-h-9"
-            >
-              초기화
-            </Link>
+          <div className="grid gap-2 lg:grid-cols-[minmax(0,1fr)_auto] lg:items-center">
+            <div className="grid gap-2 md:grid-cols-[minmax(0,1fr)_auto] md:items-center">
+              <div className="rounded-xl border border-white/80 bg-white/90 p-1 shadow-sm backdrop-blur">
+                <div className="grid grid-cols-3 gap-1">
+                  <label className="cursor-pointer">
+                    <input
+                      name="threadType"
+                      type="radio"
+                      value="all"
+                      checked={threadTypeValue === "all"}
+                      onChange={() => {
+                        setThreadTypeValue("all");
+                      }}
+                      className="peer sr-only"
+                    />
+                    <span className="flex min-h-11 items-center justify-center rounded-lg border border-slate-200 px-3 py-2 text-xs font-semibold text-slate-600 transition peer-checked:border-indigo-500 peer-checked:bg-indigo-500 peer-checked:text-white peer-checked:shadow-sm lg:min-h-9">
+                      전체
+                    </span>
+                  </label>
+
+                  <label className="cursor-pointer">
+                    <input
+                      name="threadType"
+                      type="radio"
+                      value="serial"
+                      checked={threadTypeValue === "serial"}
+                      onChange={() => {
+                        setThreadTypeValue("serial");
+                      }}
+                      className="peer sr-only"
+                    />
+                    <span className="flex min-h-11 items-center justify-center rounded-lg border border-slate-200 px-3 py-2 text-xs font-semibold text-slate-600 transition peer-checked:border-sky-500 peer-checked:bg-sky-500 peer-checked:text-white peer-checked:shadow-sm lg:min-h-9">
+                      연재판
+                    </span>
+                  </label>
+
+                  <label className="cursor-pointer">
+                    <input
+                      name="threadType"
+                      type="radio"
+                      value="chat"
+                      checked={threadTypeValue === "chat"}
+                      onChange={() => {
+                        setThreadTypeValue("chat");
+                      }}
+                      className="peer sr-only"
+                    />
+                    <span className="flex min-h-11 items-center justify-center rounded-lg border border-slate-200 px-3 py-2 text-xs font-semibold text-slate-600 transition peer-checked:border-amber-500 peer-checked:bg-amber-500 peer-checked:text-white peer-checked:shadow-sm lg:min-h-9">
+                      잡담판
+                    </span>
+                  </label>
+                </div>
+              </div>
+
+              <label className="flex cursor-pointer items-center justify-between gap-3 rounded-xl border border-white/80 bg-white/90 px-3 py-2 shadow-sm backdrop-blur md:min-w-56 lg:py-1.5">
+                <div>
+                  <p className="text-xs font-semibold text-slate-800">
+                    성인 전용 스레드 포함
+                  </p>
+                  {isSignedIn ? (
+                    <p className="mt-0.5 text-[11px] text-slate-500">
+                      꺼져 있으면 목록에서 제외됩니다.
+                    </p>
+                  ) : (
+                    <p className="mt-0.5 text-[11px] text-amber-700">
+                      로그인 후 사용할 수 있습니다.
+                    </p>
+                  )}
+                </div>
+                <span className="relative inline-flex shrink-0 items-center">
+                  <input
+                    name="includeAdultOnly"
+                    type="checkbox"
+                    value="true"
+                    checked={includeAdultOnlyValue}
+                    onChange={(event) => {
+                      const nextChecked = event.target.checked;
+
+                      if (nextChecked && !isSignedIn) {
+                        setIncludeAdultOnlyValue(false);
+                        return;
+                      }
+
+                      if (nextChecked && !isAdultVerified) {
+                        moveToAdultRequired({
+                          title: titleValue,
+                          author: authorValue,
+                          threadType: threadTypeValue,
+                          includeAdultOnly: true,
+                        });
+                        return;
+                      }
+
+                      setIncludeAdultOnlyValue(nextChecked);
+                    }}
+                    disabled={!isSignedIn}
+                    className="peer sr-only"
+                  />
+                  <span className="h-6 w-11 rounded-full bg-slate-300 transition peer-checked:bg-rose-400 peer-disabled:opacity-50" />
+                  <span className="absolute left-1 h-[18px] w-[18px] rounded-full bg-white shadow-sm transition peer-checked:translate-x-5" />
+                </span>
+              </label>
+            </div>
+
+            <div className="flex flex-wrap items-center gap-2">
+              <p className="hidden text-[11px] text-slate-500 sm:block">
+                입력 후 약 {FILTER_APPLY_DELAY_MS}ms 내 자동 반영됩니다.
+              </p>
+              <Link
+                href={`/board/${boardKey}`}
+                className="inline-flex min-h-11 w-full items-center justify-center rounded-full border border-slate-300 bg-white px-4 text-xs font-semibold text-slate-700 transition hover:border-slate-400 hover:bg-slate-50 sm:w-auto lg:min-h-9"
+              >
+                초기화
+              </Link>
+            </div>
           </div>
-        </div>
         </form>
       ) : null}
     </section>
