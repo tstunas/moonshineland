@@ -22,10 +22,24 @@ interface ActionResponse {
   summary?: string;
 }
 
+function parseMaybeDate(value: Date | string | null): Date | null {
+  if (!value) {
+    return null;
+  }
+
+  const date = value instanceof Date ? value : new Date(value);
+  return Number.isNaN(date.getTime()) ? null : date;
+}
+
+function isPermanentSuspension(until: Date): boolean {
+  return until.getUTCFullYear() >= 9999;
+}
+
 const DEFAULT_FILTERS: UsersFilters = {
   query: "",
   status: "all",
   role: "all",
+  suspension: "all",
 };
 
 export default function UsersPageClient({ initialData, currentAdminId }: UsersPageClientProps) {
@@ -35,6 +49,9 @@ export default function UsersPageClient({ initialData, currentAdminId }: UsersPa
   const [page, setPage] = useState(initialData.page);
   const [pageSize, setPageSize] = useState(initialData.pageSize);
   const [selectedIds, setSelectedIds] = useState<number[]>([]);
+  const [suspendDate, setSuspendDate] = useState<string>(
+    () => new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString().slice(0, 10),
+  );
   const [isLoading, setIsLoading] = useState(false);
   const firstRenderRef = useRef(true);
 
@@ -45,6 +62,7 @@ export default function UsersPageClient({ initialData, currentAdminId }: UsersPa
         query: filters.query,
         status: filters.status,
         role: filters.role,
+        suspension: filters.suspension,
         page,
         pageSize,
       },
@@ -80,6 +98,7 @@ export default function UsersPageClient({ initialData, currentAdminId }: UsersPa
       query: filters.query || undefined,
       status: filters.status !== "all" ? filters.status : undefined,
       role: filters.role !== "all" ? filters.role : undefined,
+      suspension: filters.suspension !== "all" ? filters.suspension : undefined,
       page: page > 1 ? page : undefined,
       pageSize: pageSize !== 20 ? pageSize : undefined,
     });
@@ -93,7 +112,12 @@ export default function UsersPageClient({ initialData, currentAdminId }: UsersPa
     );
   };
 
-  const runAction = async (payload: { action: "active" | "admin"; ids: number[]; value?: string }) => {
+  const runAction = async (payload: {
+    action: "active" | "admin" | "suspend";
+    ids: number[];
+    value?: string;
+    suspendedUntil?: string;
+  }) => {
     const result = await apiPost<ActionResponse>("/api/admin/dashboard/users", payload);
     if (!result.ok) {
       toast.error(result.error ?? "작업에 실패했습니다.");
@@ -125,6 +149,7 @@ export default function UsersPageClient({ initialData, currentAdminId }: UsersPa
           <p>조건 일치: {formatNumber(data.filteredTotal)}</p>
           <p>활성: {formatNumber(data.activeCount)}</p>
           <p>관리자: {formatNumber(data.adminCount)}</p>
+          <p>정지 중: {formatNumber(data.suspendedCount)}</p>
         </div>
 
         <form
@@ -133,7 +158,7 @@ export default function UsersPageClient({ initialData, currentAdminId }: UsersPa
             setPage(1);
             setFilters(draftFilters);
           }}
-          className="mt-4 grid gap-3 sm:grid-cols-2 lg:grid-cols-5"
+          className="mt-4 grid gap-3 sm:grid-cols-2 lg:grid-cols-6"
         >
           <input
             type="text"
@@ -159,6 +184,22 @@ export default function UsersPageClient({ initialData, currentAdminId }: UsersPa
             <option value="all">권한: 전체</option>
             <option value="admin">권한: 관리자</option>
             <option value="user">권한: 일반</option>
+          </select>
+          <select
+            value={draftFilters.suspension}
+            onChange={(event) =>
+              setDraftFilters((current) => ({
+                ...current,
+                suspension: event.target.value,
+              }))
+            }
+            className="rounded-md border border-slate-300 px-3 py-2 text-sm"
+          >
+            <option value="all">정지: 전체</option>
+            <option value="normal">정지: 정상</option>
+            <option value="suspended">정지: 정지중</option>
+            <option value="temporary">정지: 기간</option>
+            <option value="permanent">정지: 영구</option>
           </select>
           <select
             value={String(pageSize)}
@@ -193,11 +234,38 @@ export default function UsersPageClient({ initialData, currentAdminId }: UsersPa
       <section className="overflow-hidden rounded-2xl border border-slate-300 bg-white shadow-sm">
         <div className="flex flex-wrap items-center justify-between gap-2 border-b border-slate-200 bg-slate-50 px-4 py-3">
           <p className="text-sm font-semibold text-slate-700">선택된 유저 일괄 상태 변경</p>
-          <div className="flex gap-2">
+          <div className="flex flex-wrap items-center gap-2">
             <button type="button" onClick={() => void runAction({ action: "active", ids: selectedIds, value: "active" })} disabled={selectedIds.length === 0 || isLoading} className="rounded-md border border-emerald-300 bg-emerald-50 px-2.5 py-1.5 text-xs font-semibold text-emerald-700 hover:bg-emerald-100 disabled:opacity-50">일괄 활성화</button>
             <button type="button" onClick={() => void runAction({ action: "active", ids: selectedIds, value: "inactive" })} disabled={selectedIds.length === 0 || isLoading} className="rounded-md border border-amber-300 bg-amber-50 px-2.5 py-1.5 text-xs font-semibold text-amber-700 hover:bg-amber-100 disabled:opacity-50">일괄 비활성화</button>
             <button type="button" onClick={() => void runAction({ action: "admin", ids: selectedIds, value: "admin" })} disabled={selectedIds.length === 0 || isLoading} className="rounded-md border border-sky-300 bg-sky-50 px-2.5 py-1.5 text-xs font-semibold text-sky-700 hover:bg-sky-100 disabled:opacity-50">일괄 관리자 지정</button>
             <button type="button" onClick={() => void runAction({ action: "admin", ids: selectedIds, value: "user" })} disabled={selectedIds.length === 0 || isLoading} className="rounded-md border border-rose-300 bg-rose-50 px-2.5 py-1.5 text-xs font-semibold text-rose-700 hover:bg-rose-100 disabled:opacity-50">일괄 관리자 해제</button>
+            <button type="button" onClick={() => void runAction({ action: "suspend", ids: selectedIds, value: "permanent" })} disabled={selectedIds.length === 0 || isLoading} className="rounded-md border border-red-300 bg-red-50 px-2.5 py-1.5 text-xs font-semibold text-red-700 hover:bg-red-100 disabled:opacity-50">일괄 영구 정지</button>
+            <input
+              type="date"
+              value={suspendDate}
+              onChange={(event) => setSuspendDate(event.target.value)}
+              className="rounded-md border border-slate-300 bg-white px-2.5 py-1.5 text-xs text-slate-700"
+            />
+            <button
+              type="button"
+              onClick={() => {
+                if (!suspendDate) {
+                  toast.error("기간 정지 날짜를 선택해주세요.");
+                  return;
+                }
+                void runAction({
+                  action: "suspend",
+                  ids: selectedIds,
+                  value: "until",
+                  suspendedUntil: suspendDate,
+                });
+              }}
+              disabled={selectedIds.length === 0 || isLoading}
+              className="rounded-md border border-orange-300 bg-orange-50 px-2.5 py-1.5 text-xs font-semibold text-orange-700 hover:bg-orange-100 disabled:opacity-50"
+            >
+              일괄 기간 정지
+            </button>
+            <button type="button" onClick={() => void runAction({ action: "suspend", ids: selectedIds, value: "clear" })} disabled={selectedIds.length === 0 || isLoading} className="rounded-md border border-teal-300 bg-teal-50 px-2.5 py-1.5 text-xs font-semibold text-teal-700 hover:bg-teal-100 disabled:opacity-50">일괄 정지 해제</button>
           </div>
         </div>
 
@@ -225,11 +293,25 @@ export default function UsersPageClient({ initialData, currentAdminId }: UsersPa
                     <p className="text-xs text-slate-500">{user.email}</p>
                   </td>
                   <td className="px-4 py-3">
+                    {(() => {
+                      const suspendedUntil = parseMaybeDate(user.suspendedUntil);
+                      const isSuspended = Boolean(suspendedUntil && suspendedUntil.getTime() > Date.now());
+
+                      return (
                     <div className="flex flex-wrap gap-1.5">
                       <span className={`rounded-full px-2 py-0.5 text-xs ${user.isActive ? "bg-emerald-100 text-emerald-800" : "bg-slate-200 text-slate-700"}`}>{user.isActive ? "활성" : "비활성"}</span>
                       <span className={`rounded-full px-2 py-0.5 text-xs ${user.isAdmin ? "bg-sky-100 text-sky-800" : "bg-slate-200 text-slate-700"}`}>{user.isAdmin ? "관리자" : "일반"}</span>
                       <span className={`rounded-full px-2 py-0.5 text-xs ${user.isAdultVerified ? "bg-amber-100 text-amber-800" : "bg-slate-200 text-slate-700"}`}>{user.isAdultVerified ? "성인인증" : "미인증"}</span>
+                      <span className={`rounded-full px-2 py-0.5 text-xs ${isSuspended ? "bg-red-100 text-red-800" : "bg-slate-200 text-slate-700"}`}>
+                        {isSuspended
+                          ? isPermanentSuspension(suspendedUntil as Date)
+                            ? "영구 정지"
+                            : `기간 정지 ~ ${formatDateTime(suspendedUntil as Date)}`
+                          : "정상"}
+                      </span>
                     </div>
+                      );
+                    })()}
                   </td>
                   <td className="px-4 py-3 text-xs text-slate-500">게시글 {formatNumber(user._count.posts)} / 스레드 {formatNumber(user._count.threadsOwned)}</td>
                   <td className="px-4 py-3 text-xs text-slate-500">{formatDateTime(user.createdAt)}</td>

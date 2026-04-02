@@ -1,6 +1,7 @@
 "use server";
 
 import { getCurrentUser } from "@/features/auth/queries";
+import { getSuspensionMessage, isSuspended } from "@/features/auth/suspension";
 import prisma from "@/lib/prisma";
 import { checkRateLimit } from "@/lib/rateLimit";
 
@@ -103,7 +104,9 @@ export async function createThreadAction(
         id: userId,
       },
       select: {
+        isActive: true,
         isAdultVerified: true,
+        suspendedUntil: true,
       },
     }),
   ]);
@@ -114,6 +117,14 @@ export async function createThreadAction(
 
   if (!user) {
     return { success: false, message: "유효하지 않은 사용자 정보입니다." };
+  }
+
+  if (!user.isActive) {
+    return { success: false, message: "비활성 계정은 작성할 수 없습니다." };
+  }
+
+  if (isSuspended(user.suspendedUntil)) {
+    return { success: false, message: getSuspensionMessage(user.suspendedUntil) };
   }
 
   if (isAdultOnly && !user.isAdultVerified) {

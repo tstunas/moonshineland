@@ -1,6 +1,7 @@
 "use server";
 
 import { getCurrentUser } from "@/features/auth/queries";
+import { getSuspensionMessage, isSuspended } from "@/features/auth/suspension";
 import { broadcastNewPost } from "@/lib/sse-store";
 import prisma from "@/lib/prisma";
 import { checkRateLimit } from "@/lib/rateLimit";
@@ -82,6 +83,22 @@ export async function createPostAction(
   const userId = Number(currentUser.id);
   if (!Number.isInteger(userId) || userId <= 0) {
     return { success: false, message: "유효하지 않은 사용자 정보입니다." };
+  }
+
+  const user = await prisma.user.findUnique({
+    where: { id: userId },
+    select: {
+      isActive: true,
+      suspendedUntil: true,
+    },
+  });
+
+  if (!user || !user.isActive) {
+    return { success: false, message: "비활성 계정은 작성할 수 없습니다." };
+  }
+
+  if (isSuspended(user.suspendedUntil)) {
+    return { success: false, message: getSuspensionMessage(user.suspendedUntil) };
   }
 
   // Rate Limit 검증: 1초 이내 중복 제출 방지

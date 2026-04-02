@@ -5,6 +5,8 @@ import { getAdminUserId } from "@/features/admin/access";
 import { getUsersPageData, parseUsersQuery } from "@/features/admin/dashboardDetailData";
 import prisma from "@/lib/prisma";
 
+const PERMANENT_SUSPENDED_UNTIL = new Date("9999-12-31T23:59:59.999Z");
+
 function parseIds(value: unknown): number[] {
   if (!Array.isArray(value)) {
     return [];
@@ -37,6 +39,7 @@ export async function POST(request: NextRequest) {
     action?: string;
     ids?: unknown;
     value?: string;
+    suspendedUntil?: string;
   };
 
   const ids = parseIds(body.ids);
@@ -158,6 +161,83 @@ export async function POST(request: NextRequest) {
       targetIds: ids,
       summary,
       details: { mode: "single", previous: target.isAdmin },
+    });
+
+    return NextResponse.json({ summary });
+  }
+
+  if (body.action === "suspend") {
+    const safeIds = ids.filter((id) => id !== adminUserId);
+    if (safeIds.length === 0) {
+      return NextResponse.json(
+        { error: "자기 자신의 계정은 정지할 수 없습니다." },
+        { status: 400 },
+      );
+    }
+
+    if (body.value === "clear") {
+      const result = await prisma.user.updateMany({
+        where: { id: { in: safeIds } },
+        data: { suspendedUntil: null },
+      });
+
+      const summary = `${result.count}명 유저의 정지를 해제했습니다.`;
+      await recordAdminAudit({
+        adminUserId,
+        action: "users-suspend",
+        targetType: "user",
+        targetIds: safeIds,
+        summary,
+        details: { mode: "bulk", suspendMode: "clear" },
+      });
+
+      return NextResponse.json({ summary });
+    }
+
+    let suspendedUntil: Date;
+    if (body.value === "permanent") {
+      suspendedUntil = PERMANENT_SUSPENDED_UNTIL;
+    } else if (body.value === "until") {
+      const rawDate = body.suspendedUntil?.trim() ?? "";
+      if (!/^\d{4}-\d{2}-\d{2}$/.test(rawDate)) {
+        return NextResponse.json({ error: "정지 종료 날짜 형식이 올바르지 않습니다." }, { status: 400 });
+      }
+
+      const parsed = new Date(`${rawDate}T23:59:59.999Z`);
+      if (Number.isNaN(parsed.getTime())) {
+        return NextResponse.json({ error: "정지 종료 날짜를 확인해주세요." }, { status: 400 });
+      }
+
+      if (parsed.getTime() <= Date.now()) {
+        return NextResponse.json({ error: "정지 종료 날짜는 현재 시각 이후여야 합니다." }, { status: 400 });
+      }
+
+      suspendedUntil = parsed;
+    } else {
+      return NextResponse.json({ error: "지원하지 않는 정지 모드입니다." }, { status: 400 });
+    }
+
+    const result = await prisma.user.updateMany({
+      where: { id: { in: safeIds } },
+      data: { suspendedUntil },
+    });
+
+    const summary =
+      body.value === "permanent"
+        ? `${result.count}명 유저를 영구 정지했습니다.`
+        : `${result.count}명 유저를 기간 정지했습니다.`;
+
+    await recordAdminAudit({
+      adminUserId,
+      action: "users-suspend",
+      targetType: "user",
+      targetIds: safeIds,
+      summary,
+      details: {
+        mode: "bulk",
+        suspendMode: body.value,
+        suspendedUntil: suspendedUntil.toISOString(),
+      },
     });
 
     return NextResponse.json({ summary });

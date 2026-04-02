@@ -12,6 +12,7 @@ export interface UsersFilters {
   query: string;
   status: string;
   role: string;
+  suspension: string;
 }
 
 export interface BoardsFilters {
@@ -43,6 +44,7 @@ export interface UsersPageData {
   filteredTotal: number;
   activeCount: number;
   adminCount: number;
+  suspendedCount: number;
   users: Array<{
     id: number;
     username: string;
@@ -50,6 +52,7 @@ export interface UsersPageData {
     isActive: boolean;
     isAdmin: boolean;
     isAdultVerified: boolean;
+    suspendedUntil: Date | string | null;
     createdAt: Date | string;
     updatedAt: Date | string;
     _count: {
@@ -186,6 +189,7 @@ export function parseUsersQuery(source: ParamSource) {
     query: getParam(source, "query").trim(),
     status: getParam(source, "status") || "all",
     role: getParam(source, "role") || "all",
+    suspension: getParam(source, "suspension") || "all",
     page: parsePositiveInt(getParam(source, "page"), 1),
     pageSize: getPageSize(getParam(source, "pageSize"), 20),
   };
@@ -226,11 +230,29 @@ export function parsePostsQuery(source: ParamSource) {
 export async function getUsersPageData(
   input: ReturnType<typeof parseUsersQuery>,
 ): Promise<UsersPageData> {
+  const now = new Date();
   const where: Prisma.UserWhereInput = {
     ...(input.status === "active" ? { isActive: true } : {}),
     ...(input.status === "inactive" ? { isActive: false } : {}),
     ...(input.role === "admin" ? { isAdmin: true } : {}),
     ...(input.role === "user" ? { isAdmin: false } : {}),
+    ...(input.suspension === "suspended" ? { suspendedUntil: { gt: now } } : {}),
+    ...(input.suspension === "normal"
+      ? {
+          OR: [{ suspendedUntil: null }, { suspendedUntil: { lte: now } }],
+        }
+      : {}),
+    ...(input.suspension === "permanent"
+      ? { suspendedUntil: { gte: new Date("9999-01-01T00:00:00.000Z") } }
+      : {}),
+    ...(input.suspension === "temporary"
+      ? {
+          AND: [
+            { suspendedUntil: { gt: now } },
+            { suspendedUntil: { lt: new Date("9999-01-01T00:00:00.000Z") } },
+          ],
+        }
+      : {}),
     ...(input.query
       ? {
           OR: [
@@ -241,11 +263,12 @@ export async function getUsersPageData(
       : {}),
   };
 
-  const [total, filteredTotal, activeCount, adminCount] = await Promise.all([
+  const [total, filteredTotal, activeCount, adminCount, suspendedCount] = await Promise.all([
     prisma.user.count(),
     prisma.user.count({ where }),
     prisma.user.count({ where: { ...where, isActive: true } }),
     prisma.user.count({ where: { ...where, isAdmin: true } }),
+    prisma.user.count({ where: { ...where, suspendedUntil: { gt: now } } }),
   ]);
 
   const totalPages = Math.max(1, Math.ceil(filteredTotal / input.pageSize));
@@ -264,6 +287,7 @@ export async function getUsersPageData(
       isActive: true,
       isAdmin: true,
       isAdultVerified: true,
+      suspendedUntil: true,
       createdAt: true,
       updatedAt: true,
       _count: {
@@ -280,6 +304,7 @@ export async function getUsersPageData(
       query: input.query,
       status: input.status,
       role: input.role,
+      suspension: input.suspension,
     },
     page,
     pageSize: input.pageSize,
@@ -288,6 +313,7 @@ export async function getUsersPageData(
     filteredTotal,
     activeCount,
     adminCount,
+    suspendedCount,
     users,
   };
 }

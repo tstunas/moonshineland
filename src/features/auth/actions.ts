@@ -9,6 +9,7 @@ import { redirect } from "next/navigation";
 import crypto from "crypto";
 import { sendPasswordResetEmail, sendVerificationEmail } from "@/lib/email";
 import { getCurrentUser } from "@/features/auth/queries";
+import { getSuspensionMessage, isSuspended } from "@/features/auth/suspension";
 
 export interface AuthActionResult {
   success: boolean;
@@ -73,6 +74,13 @@ export async function loginAction(
       return {
         success: false,
         message: "탈퇴 처리된 계정입니다. 로그인할 수 없습니다.",
+      };
+    }
+
+    if (isSuspended(user.suspendedUntil)) {
+      return {
+        success: false,
+        message: getSuspensionMessage(user.suspendedUntil),
       };
     }
 
