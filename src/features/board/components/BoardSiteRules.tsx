@@ -120,7 +120,7 @@ function RuleSection({
 
 export function BoardSiteRules({ isAdultVerified }: BoardSiteRulesProps) {
   return (
-    <div className="mt-2 space-y-4">
+    <div className="mt-2 mb-2 space-y-4">
       <RuleSection
         title="문샤인랜드 일반 규칙"
         subtitle="모든 이용자가 반드시 지켜야 하는 기본 규칙입니다."
