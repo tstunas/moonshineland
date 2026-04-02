@@ -4,6 +4,7 @@ import { BoardThreadFilters } from "@/features/board/components/BoardThreadFilte
 import { ThreadForm } from "@/features/board/components/ThreadForm";
 import { ThreadItem } from "@/features/board/components/ThreadItem";
 import { ThreadPagination } from "@/features/board/components/ThreadPagination";
+import { BoardSiteRules } from "@/features/board/components/BoardSiteRules";
 import { BoardPresenceClient } from "@/features/board/components/BoardPresenceClient";
 import { LatestBoardAnnouncement } from "@/features/announcement/components/LatestBoardAnnouncement";
 import { getNextThreadIndex } from "@/features/board/lib/getNextThreadIndex";
@@ -161,6 +162,9 @@ export default async function BoardPage({
           extraQuery={extraQuery}
         />
       </div>
+      <BoardSiteRules
+        isAdultVerified={Boolean(currentUser?.isAdultVerified)}
+      />
       <ThreadForm
         boardKey={boardKey}
         threadIndex={nextThreadIndex}
