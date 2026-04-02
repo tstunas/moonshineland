@@ -23,8 +23,17 @@ import {
   type AutoPostSchedulePayload,
 } from "@/features/board/actions/auto/types";
 import { ScrollQuickButtons } from "@/components/ui/ScrollQuickButtons";
+import {
+  HiddenAttachmentImageNotice,
+  ImageVisibilityToggleRow,
+} from "@/components/ui/ImageVisibilityControls";
+import { useHideImagesPreference } from "@/hooks/useHideImagesPreference";
 import { useResponsiveTextareaRows } from "@/hooks/useResponsiveTextareaRows";
 import { cn } from "@/lib/cn";
+import {
+  countInlineImagesInHtml,
+  replaceInlineImagesWithMarker,
+} from "@/lib/contentImages";
 import { AnonymousAuthor } from "@/lib/constants";
 import type { SseAutoPostFiredEvent } from "@/types/sse";
 import { toast } from "sonner";
@@ -126,6 +135,7 @@ export function AutoPostManagerClient({
   threadIndex,
   initialAutoPosts,
 }: AutoPostManagerClientProps) {
+  const { hideImages, toggleHideImages } = useHideImagesPreference();
   const textareaRows = useResponsiveTextareaRows();
   const rootContainerRef = useRef<HTMLDivElement | null>(null);
   const formRef = useRef<HTMLFormElement | null>(null);
@@ -892,6 +902,10 @@ export function AutoPostManagerClient({
 
   const openInlineImageFullscreen = useCallback(
     (event: MouseEvent<HTMLDivElement>) => {
+      if (hideImages) {
+        return;
+      }
+
       const target = event.target as HTMLElement | null;
       if (!target) {
         return;
@@ -907,7 +921,7 @@ export function AutoPostManagerClient({
       event.preventDefault();
       setFullscreenInlineImageUrl(image.currentSrc || image.src);
     },
-    [],
+    [hideImages],
   );
 
   return (
@@ -931,73 +945,100 @@ export function AutoPostManagerClient({
 
         <ul className="space-y-3">
           {visibleAutoPosts.length > 0 ? (
-            visibleAutoPosts.map((autoPost) => (
-              <li key={autoPost.id}>
-                <article
-                  className={cn(
-                    "overflow-hidden rounded-lg border border-sky-200 bg-white transition-all duration-500",
-                    fadingAutoPostIds.includes(autoPost.id)
-                      ? "-translate-y-2 scale-[0.98] opacity-0 blur-[1px]"
-                      : "opacity-100",
-                  )}
-                >
-                  <header className="border-b border-sky-200 bg-slate-200 px-4 py-2.5 sm:px-5 sm:py-3">
-                    <p className="text-[15px] leading-tight text-sky-900 sm:text-[16px]">
-                      <span className="font-medium">
-                        AUTO#{autoPost.autoPostSequence}
-                      </span>{" "}
-                      <span
-                        dangerouslySetInnerHTML={{
-                          __html: formatAuthorLabelAllowBoldOnly(autoPost.author || AnonymousAuthor),
-                        }}
-                      ></span>{" "}
-                      <span className="text-[12px] text-slate-500 sm:text-[13px]">
-                        ({autoPost.idcode})
-                      </span>{" "}
-                      <button
-                        type="button"
-                        onClick={() => {
-                          openEditModal(autoPost);
-                        }}
-                        className="rounded border border-amber-300 bg-amber-50 px-1.5 py-0.5 text-[11px] leading-none font-medium text-amber-700 hover:bg-amber-100"
-                      >
-                        수정
-                      </button>
-                    </p>
-                    <div className="mt-1 text-xs text-slate-700 flex flex-wrap items-baseline gap-2">
-                      <span>{formatPostDate(autoPost.createdAt)}</span>
-                      {autoPost.contentUpdatedAt ? (
-                        <span className="text-xs text-slate-500">
-                          ({formatPostDate(autoPost.contentUpdatedAt)})
+            visibleAutoPosts.map((autoPost) => {
+              const galleryImageCount = autoPost.isInlineImage
+                ? 0
+                : autoPost.autoPostImages.length;
+              const inlineImageCount = countInlineImagesInHtml(autoPost.content);
+              const hasAnyImage = galleryImageCount > 0 || inlineImageCount > 0;
+              const renderedContent = hideImages
+                ? replaceInlineImagesWithMarker(autoPost.content).html
+                : autoPost.content;
+              const hiddenImageCount = hideImages
+                ? galleryImageCount + inlineImageCount
+                : 0;
+
+              return (
+                <li key={autoPost.id}>
+                  <article
+                    className={cn(
+                      "overflow-hidden rounded-lg border border-sky-200 bg-white transition-all duration-500",
+                      fadingAutoPostIds.includes(autoPost.id)
+                        ? "-translate-y-2 scale-[0.98] opacity-0 blur-[1px]"
+                        : "opacity-100",
+                    )}
+                  >
+                    <header className="border-b border-sky-200 bg-slate-200 px-4 py-2.5 sm:px-5 sm:py-3">
+                      <p className="text-[15px] leading-tight text-sky-900 sm:text-[16px]">
+                        <span className="font-medium">
+                          AUTO#{autoPost.autoPostSequence}
+                        </span>{" "}
+                        <span
+                          dangerouslySetInnerHTML={{
+                            __html: formatAuthorLabelAllowBoldOnly(autoPost.author || AnonymousAuthor),
+                          }}
+                        ></span>{" "}
+                        <span className="text-[12px] text-slate-500 sm:text-[13px]">
+                          ({autoPost.idcode})
+                        </span>{" "}
+                        <button
+                          type="button"
+                          onClick={() => {
+                            openEditModal(autoPost);
+                          }}
+                          className="rounded border border-amber-300 bg-amber-50 px-1.5 py-0.5 text-[11px] leading-none font-medium text-amber-700 hover:bg-amber-100"
+                        >
+                          수정
+                        </button>
+                      </p>
+                      <div className="mt-1 text-xs text-slate-700 flex flex-wrap items-baseline gap-2">
+                        <span>{formatPostDate(autoPost.createdAt)}</span>
+                        {autoPost.contentUpdatedAt ? (
+                          <span className="text-xs text-slate-500">
+                            ({formatPostDate(autoPost.contentUpdatedAt)})
+                          </span>
+                        ) : null}
+                      </div>
+                      {autoPost.isEdited ? (
+                        <span className="mt-1 inline-flex items-center rounded-full border border-amber-300 bg-amber-50 px-2 py-0.5 text-[10px] font-medium text-amber-700">
+                          수정됨
                         </span>
                       ) : null}
-                    </div>
-                    {autoPost.isEdited ? (
-                      <span className="mt-1 inline-flex items-center rounded-full border border-amber-300 bg-amber-50 px-2 py-0.5 text-[10px] font-medium text-amber-700">
-                        수정됨
-                      </span>
-                    ) : null}
-                  </header>
+                    </header>
 
-                  <div className="px-2.5 py-3 sm:px-3 sm:py-4">
-                    {!autoPost.isInlineImage ? (
-                      <ImageGallery
-                        images={autoPost.autoPostImages}
-                        altPrefix={`auto-${autoPost.autoPostSequence}`}
+                    <div className="px-2.5 py-3 sm:px-3 sm:py-4">
+                      <ImageVisibilityToggleRow
+                        show={hasAnyImage}
+                        hideImages={hideImages}
+                        hiddenImageCount={hiddenImageCount}
+                        onToggle={toggleHideImages}
                       />
-                    ) : null}
-                    <div
-                      className={cn(
-                        "content whitespace-pre-wrap break-words text-[14px] leading-relaxed text-slate-900 sm:text-[15px]",
-                        autoPost.contentType,
-                      )}
-                      onClick={openInlineImageFullscreen}
-                      dangerouslySetInnerHTML={{ __html: autoPost.content }}
-                    />
-                  </div>
-                </article>
-              </li>
-            ))
+
+                      {!autoPost.isInlineImage ? (
+                        hideImages ? (
+                          <HiddenAttachmentImageNotice
+                            count={autoPost.autoPostImages.length}
+                          />
+                        ) : (
+                          <ImageGallery
+                            images={autoPost.autoPostImages}
+                            altPrefix={`auto-${autoPost.autoPostSequence}`}
+                          />
+                        )
+                      ) : null}
+                      <div
+                        className={cn(
+                          "content whitespace-pre-wrap break-words text-[14px] leading-relaxed text-slate-900 sm:text-[15px]",
+                          autoPost.contentType,
+                        )}
+                        onClick={openInlineImageFullscreen}
+                        dangerouslySetInnerHTML={{ __html: renderedContent }}
+                      />
+                    </div>
+                  </article>
+                </li>
+              );
+            })
           ) : (
             <li className="rounded border border-dashed border-slate-300 bg-slate-50 px-4 py-8 text-center text-sm text-slate-500">
               저장된 자동투하 레스가 없습니다.

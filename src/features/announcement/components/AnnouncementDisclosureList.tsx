@@ -1,7 +1,20 @@
+"use client";
+
+import { useMemo } from "react";
+
 import { formatDateTime, formatRelativeTime } from "@/lib/format";
 import { cn } from "@/lib/cn";
 import type { AnnouncementWithRelations } from "@/features/announcement/queries";
 import { ImageGallery } from "@/features/board/components/ImageGallery";
+import {
+  HiddenAttachmentImageNotice,
+  ImageVisibilityToggleRow,
+} from "@/components/ui/ImageVisibilityControls";
+import { useHideImagesPreference } from "@/hooks/useHideImagesPreference";
+import {
+  countInlineImagesInHtml,
+  replaceInlineImagesWithMarker,
+} from "@/lib/contentImages";
 
 interface AnnouncementDisclosureListProps {
   announcements: AnnouncementWithRelations[];
@@ -32,6 +45,62 @@ function AnnouncementBadges({
         </span>
       ) : null}
     </div>
+  );
+}
+
+function AnnouncementContentBody({
+  announcement,
+}: {
+  announcement: AnnouncementWithRelations;
+}) {
+  const { hideImages, toggleHideImages } = useHideImagesPreference();
+  const galleryImageCount = announcement.isInlineImage
+    ? 0
+    : announcement.announcementImages.length;
+  const inlineImageCount = useMemo(
+    () => countInlineImagesInHtml(announcement.content),
+    [announcement.content],
+  );
+  const hasAnyImage = galleryImageCount > 0 || inlineImageCount > 0;
+  const renderedContent = useMemo(() => {
+    if (!hideImages) {
+      return announcement.content;
+    }
+
+    return replaceInlineImagesWithMarker(announcement.content).html;
+  }, [announcement.content, hideImages]);
+  const hiddenImageCount = hideImages ? galleryImageCount + inlineImageCount : 0;
+
+  return (
+    <>
+      <ImageVisibilityToggleRow
+        show={hasAnyImage}
+        hideImages={hideImages}
+        hiddenImageCount={hiddenImageCount}
+        onToggle={toggleHideImages}
+      />
+
+      {!announcement.isInlineImage ? (
+        hideImages ? (
+          <HiddenAttachmentImageNotice
+            count={announcement.announcementImages.length}
+          />
+        ) : (
+          <ImageGallery
+            images={announcement.announcementImages}
+            altPrefix={`announcement-${announcement.id}`}
+          />
+        )
+      ) : null}
+
+      <div
+        className={cn(
+          "content break-words text-[14px] leading-relaxed text-slate-900 sm:text-[15px]",
+          announcement.contentType,
+        )}
+        dangerouslySetInnerHTML={{ __html: renderedContent }}
+      />
+    </>
   );
 }
 
@@ -70,19 +139,7 @@ export function AnnouncementDisclosureList({
           </summary>
 
           <div className="border-t border-sky-100 bg-gradient-to-b from-sky-50/55 to-white px-4 py-4 sm:px-5 sm:py-5">
-            {!announcement.isInlineImage ? (
-              <ImageGallery
-                images={announcement.announcementImages}
-                altPrefix={`announcement-${announcement.id}`}
-              />
-            ) : null}
-            <div
-              className={cn(
-                "content break-words text-[14px] leading-relaxed text-slate-900 sm:text-[15px]",
-                announcement.contentType,
-              )}
-              dangerouslySetInnerHTML={{ __html: announcement.content }}
-            />
+            <AnnouncementContentBody announcement={announcement} />
           </div>
         </details>
       ))}

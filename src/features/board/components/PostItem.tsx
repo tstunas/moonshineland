@@ -1,12 +1,21 @@
-import { useState, type MouseEvent } from "react";
+import { useMemo, useState, type MouseEvent } from "react";
 
 import { banThreadUserByPostAction } from "@/features/board/actions/post/banThreadUserByPostAction";
 import { editPostAction } from "@/features/board/actions/post/editPostAction";
 import { getPostEditHistoryAction } from "@/features/board/actions/post/getPostEditHistoryAction";
 import { hidePostAction } from "@/features/board/actions/post/hidePostAction";
 import { unbanThreadUserByPostAction } from "@/features/board/actions/post/unbanThreadUserByPostAction";
+import { useHideImagesPreference } from "@/hooks/useHideImagesPreference";
 import { useResponsiveTextareaRows } from "@/hooks/useResponsiveTextareaRows";
+import {
+  HiddenAttachmentImageNotice,
+  ImageVisibilityToggleRow,
+} from "@/components/ui/ImageVisibilityControls";
 import { cn } from "@/lib/cn";
+import {
+  countInlineImagesInHtml,
+  replaceInlineImagesWithMarker,
+} from "@/lib/contentImages";
 import { AnonymousAuthor } from "@/lib/constants";
 import type { PostWithImages } from "@/types/post";
 import { useRouter } from "next/navigation";
@@ -55,6 +64,7 @@ export function PostItem({
   const [isHistoryOpen, setIsHistoryOpen] = useState(false);
   const [isHistoryLoading, setIsHistoryLoading] = useState(false);
   const [fullscreenInlineImageUrl, setFullscreenInlineImageUrl] = useState<string | null>(null);
+  const { hideImages, toggleHideImages } = useHideImagesPreference();
   const [editHistories, setEditHistories] = useState<
     Array<{
       id: number;
@@ -68,6 +78,19 @@ export function PostItem({
 
   const canShowAdminActions = canManageThread && isAdminMode;
   const showHiddenPostStyle = canShowAdminActions && post.isHidden;
+  const galleryImageCount = post.isInlineImage ? 0 : post.postImages.length;
+  const inlineImageCount = useMemo(
+    () => countInlineImagesInHtml(post.content),
+    [post.content],
+  );
+  const hasAnyImage = galleryImageCount > 0 || inlineImageCount > 0;
+  const renderedContent = useMemo(() => {
+    if (!hideImages) {
+      return post.content;
+    }
+    return replaceInlineImagesWithMarker(post.content).html;
+  }, [hideImages, post.content]);
+  const hiddenImageCount = hideImages ? galleryImageCount + inlineImageCount : 0;
 
   const copyAnchor = async () => {
     try {
@@ -224,6 +247,10 @@ export function PostItem({
   };
 
   const openInlineImageFullscreen = (event: MouseEvent<HTMLDivElement>) => {
+    if (hideImages) {
+      return;
+    }
+
     const target = event.target as HTMLElement | null;
     if (!target) {
       return;
@@ -236,6 +263,10 @@ export function PostItem({
 
     event.preventDefault();
     setFullscreenInlineImageUrl(image.currentSrc || image.src);
+  };
+
+  const toggleImageVisibility = () => {
+    toggleHideImages();
   };
 
   return (
@@ -366,11 +397,22 @@ export function PostItem({
       </header>
 
       <div className="px-2.5 py-3 sm:px-3 sm:py-4">
+        <ImageVisibilityToggleRow
+          show={hasAnyImage}
+          hideImages={hideImages}
+          hiddenImageCount={hiddenImageCount}
+          onToggle={toggleImageVisibility}
+        />
+
         {!post.isInlineImage ? (
-          <ImageGallery
-            images={post.postImages}
-            altPrefix={`post-${post.postOrder}`}
-          />
+          hideImages ? (
+            <HiddenAttachmentImageNotice count={post.postImages.length} />
+          ) : (
+            <ImageGallery
+              images={post.postImages}
+              altPrefix={`post-${post.postOrder}`}
+            />
+          )
         ) : null}
         <div
           className={cn(
@@ -378,7 +420,7 @@ export function PostItem({
             post.contentType,
           )}
           onClick={openInlineImageFullscreen}
-          dangerouslySetInnerHTML={{ __html: post.content }}
+          dangerouslySetInnerHTML={{ __html: renderedContent }}
         />
       </div>
 

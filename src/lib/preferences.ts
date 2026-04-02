@@ -12,6 +12,9 @@ export const PREFS_TOAST_SIZE = "moonshineland:preferences:toast-size";
 export const PREFS_BOARD_CONTENT_WIDTH =
   "moonshineland:preferences:board-content-width";
 
+/** 게시글/레스 이미지 기본 숨김 여부 */
+export const PREFS_HIDE_IMAGES = "moonshineland:preferences:hide-images";
+
 /** 게시판 콘텐츠 폭 SSR 동기화를 위한 쿠키 키 */
 export const PREFS_BOARD_CONTENT_WIDTH_COOKIE =
   "moonshineland_pref_board_content_width";
@@ -20,6 +23,8 @@ export type BoardContentWidthPreference = "narrow" | "wide";
 
 export const BOARD_CONTENT_WIDTH_DEFAULT: BoardContentWidthPreference =
   "narrow";
+
+export const HIDE_IMAGES_DEFAULT = true;
 
 export function normalizeBoardContentWidthPreference(
   value: string | null | undefined,

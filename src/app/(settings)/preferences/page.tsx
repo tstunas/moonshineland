@@ -25,6 +25,7 @@ import {
   TOAST_SIZE_MIN,
   normalizeBoardContentWidthPreference,
 } from "@/lib/preferences";
+import { useHideImagesPreference } from "@/hooks/useHideImagesPreference";
 
 // ============================================================================
 // 서브 컴포넌트
@@ -271,6 +272,7 @@ export default function PreferencesPage() {
   const [boardContentWidth, setBoardContentWidth] = useState(
     readBoardContentWidthPreference,
   );
+  const { hideImages, setHideImages } = useHideImagesPreference();
 
   // ── 알림 ──────────────────────────────────────────────────────────────────
   const [soundEnabled, setSoundEnabled] = useState(
@@ -305,6 +307,10 @@ export default function PreferencesPage() {
     setBoardContentWidth(val);
     window.localStorage.setItem(PREFS_BOARD_CONTENT_WIDTH, val);
     document.cookie = `${PREFS_BOARD_CONTENT_WIDTH_COOKIE}=${encodeURIComponent(val)}; path=/; max-age=31536000; samesite=lax`;
+  };
+
+  const saveHideImages = (val: boolean) => {
+    setHideImages(val);
   };
 
   const saveSoundEnabled = (val: boolean) => {
@@ -364,6 +370,7 @@ export default function PreferencesPage() {
     setIncludeAdult(false);
     setFilterCollapsed(false);
     setBoardContentWidth(BOARD_CONTENT_WIDTH_DEFAULT);
+    setHideImages(true);
     setSoundEnabled(false);
     saveToastSize(TOAST_SIZE_DEFAULT);
   };
@@ -458,6 +465,13 @@ export default function PreferencesPage() {
               넓게
             </button>
           </div>
+        </SettingRow>
+
+        <SettingRow
+          label="이미지 기본 숨기기"
+          description="초기값은 켜짐이며, 레스의 첨부/인라인 이미지를 기본으로 가립니다."
+        >
+          <Toggle checked={hideImages} onChange={saveHideImages} />
         </SettingRow>
       </Section>
 
