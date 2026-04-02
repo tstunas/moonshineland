@@ -42,7 +42,6 @@ const DEFAULT_SECTIONS: SidebarSection[] = [
       { label: "테스트판", href: "/board/test" },
       { label: "번역판", href: "/board/trans" },
       { label: "명예의 전당", href: "/board/honor" },
-      { label: "게시판 목록", href: "/boards" },
     ],
   },
   {

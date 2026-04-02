@@ -1,9 +1,13 @@
 "use client";
 
+import { useEffect, useMemo, useRef, useState, useSyncExternalStore } from "react";
+import type { CSSProperties } from "react";
 import Link from "next/link";
+import { usePathname } from "next/navigation";
 
 import { logoutAndRedirectAction } from "@/features/auth/actions";
 import { cn } from "@/lib/cn";
+import { BOARDS } from "@/lib/constants";
 
 export interface HeaderNavItem {
   href: string;
@@ -33,6 +37,43 @@ const DEFAULT_ACTIONS: HeaderAction[] = [
   { href: "/signup", label: "회원가입", variant: "primary" },
 ];
 
+function subscribeDocumentTitle(onStoreChange: () => void) {
+  if (typeof document === "undefined") {
+    return () => {};
+  }
+
+  const titleElement = document.querySelector("title");
+
+  if (!titleElement) {
+    const intervalId = window.setInterval(onStoreChange, 250);
+    return () => {
+      window.clearInterval(intervalId);
+    };
+  }
+
+  const observer = new MutationObserver(() => {
+    onStoreChange();
+  });
+
+  observer.observe(titleElement, {
+    childList: true,
+    characterData: true,
+    subtree: true,
+  });
+
+  return () => {
+    observer.disconnect();
+  };
+}
+
+function getDocumentTitleSnapshot() {
+  if (typeof document === "undefined") {
+    return "";
+  }
+
+  return document.title.trim();
+}
+
 export function Header({
   brandName = "MoonshineLand",
   brandHref = "/",
@@ -43,6 +84,101 @@ export function Header({
   onMenuToggle,
   isSidebarOpen = true,
 }: HeaderProps) {
+  const pathname = usePathname();
+  const documentTitle = useSyncExternalStore(
+    subscribeDocumentTitle,
+    getDocumentTitleSnapshot,
+    () => "",
+  );
+  const marqueeViewportRef = useRef<HTMLSpanElement | null>(null);
+  const marqueeTextRef = useRef<HTMLSpanElement | null>(null);
+  const [marqueeDistance, setMarqueeDistance] = useState(0);
+
+  useEffect(() => {
+    const viewport = marqueeViewportRef.current;
+    const text = marqueeTextRef.current;
+
+    if (!viewport || !text) {
+      return;
+    }
+
+    const measureOverflow = () => {
+      const overflowDistance = Math.max(0, text.scrollWidth - viewport.clientWidth);
+      setMarqueeDistance(overflowDistance);
+    };
+
+    measureOverflow();
+
+    if (typeof ResizeObserver === "undefined") {
+      window.addEventListener("resize", measureOverflow);
+      return () => {
+        window.removeEventListener("resize", measureOverflow);
+      };
+    }
+
+    const observer = new ResizeObserver(() => {
+      measureOverflow();
+    });
+
+    observer.observe(viewport);
+    observer.observe(text);
+
+    return () => {
+      observer.disconnect();
+    };
+  }, [pathname, documentTitle]);
+
+  const routeBrand = useMemo(() => {
+    const boardMatch = pathname.match(/^\/board\/([^/]+)(?:\/|$)/);
+    if (!boardMatch) {
+      return {
+        name: brandName,
+        href: brandHref,
+        showBackToBoard: false,
+        backHref: null as string | null,
+      };
+    }
+
+    const boardKey = decodeURIComponent(boardMatch[1]);
+    const board = BOARDS.find((item) => item.key === boardKey);
+    const boardLabel = board?.label ?? boardKey;
+    const boardHrefResolved = `/board/${encodeURIComponent(boardKey)}`;
+
+    const threadMatch = pathname.match(/^\/board\/([^/]+)\/(\d+)(?:\/|$)/);
+    if (!threadMatch) {
+      return {
+        name: boardLabel,
+        href: boardHrefResolved,
+        showBackToBoard: false,
+        backHref: null as string | null,
+      };
+    }
+
+    const threadIndex = threadMatch[2];
+    const threadHref = `${boardHrefResolved}/${threadIndex}`;
+    const normalizedTitle = documentTitle
+      .replace(/\s*-\s*자동투하 관리\s*$/u, "")
+      .trim();
+    const threadTitle =
+      normalizedTitle && normalizedTitle !== "문샤인랜드"
+        ? normalizedTitle
+        : boardLabel;
+
+    return {
+      name: threadTitle,
+      href: threadHref,
+      showBackToBoard: true,
+      backHref: boardHrefResolved,
+    };
+  }, [pathname, documentTitle, brandName, brandHref]);
+
+  const isMarqueeActive = marqueeDistance > 0;
+  const marqueeDurationSeconds = Math.max(8, marqueeDistance / 24 + 4);
+  const marqueeStyle = {
+    "--header-brand-marquee-distance": `${marqueeDistance}px`,
+    "--header-brand-marquee-duration": `${marqueeDurationSeconds.toFixed(2)}s`,
+  } as CSSProperties;
+
   return (
     <header
       data-is-admin={isAdmin ? "true" : "false"}
@@ -52,7 +188,7 @@ export function Header({
       )}
     >
       <div className="flex h-12 w-full items-center justify-between px-3 sm:px-4">
-        <div className="flex items-center gap-3">
+        <div className="flex min-w-0 items-center gap-3">
           <button
             type="button"
             className="inline-flex h-8 w-8 items-center justify-center rounded-md text-sky-100 transition-colors hover:bg-sky-700/70 hover:text-white"
@@ -75,11 +211,43 @@ export function Header({
             </svg>
           </button>
 
+          {routeBrand.showBackToBoard && routeBrand.backHref ? (
+            <Link
+              href={routeBrand.backHref}
+              className="inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-md text-sky-100 transition-colors hover:bg-sky-700/70 hover:text-white"
+              aria-label="게시판으로 돌아가기"
+            >
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2"
+                className="h-4 w-4"
+                aria-hidden="true"
+              >
+                <path d="M15 18l-6-6 6-6" />
+              </svg>
+            </Link>
+          ) : null}
+
           <Link
-            href={brandHref}
-            className="text-base font-semibold tracking-tight text-white sm:text-lg"
+            href={routeBrand.href}
+            className="block max-w-[min(58vw,34rem)] min-w-0 text-base font-semibold tracking-tight text-white sm:max-w-[min(52vw,42rem)] sm:text-lg"
+            title={routeBrand.name}
           >
-            {brandName}
+            <span className="header-brand-marquee" ref={marqueeViewportRef}>
+              <span
+                className={cn(
+                  "header-brand-marquee__text",
+                  isMarqueeActive && "header-brand-marquee__text--animated",
+                )}
+                ref={marqueeTextRef}
+                style={isMarqueeActive ? marqueeStyle : undefined}
+              >
+                {routeBrand.name}
+              </span>
+            </span>
           </Link>
         </div>
 
