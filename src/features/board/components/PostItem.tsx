@@ -2,6 +2,7 @@ import { useMemo, useState, type MouseEvent } from "react";
 
 import { banThreadUserByPostAction } from "@/features/board/actions/post/banThreadUserByPostAction";
 import { editPostAction } from "@/features/board/actions/post/editPostAction";
+import { getAnchorPostsAction } from "@/features/board/actions/post/getAnchorPostsAction";
 import { getPostEditHistoryAction } from "@/features/board/actions/post/getPostEditHistoryAction";
 import { hidePostAction } from "@/features/board/actions/post/hidePostAction";
 import { unbanThreadUserByPostAction } from "@/features/board/actions/post/unbanThreadUserByPostAction";
@@ -66,6 +67,13 @@ export function PostItem({
   const [fullscreenInlineImageUrl, setFullscreenInlineImageUrl] = useState<string | null>(null);
   const { hideImages: initialHideImages } = useHideImagesPreference();
   const [hideImages, setHideImages] = useState(initialHideImages);
+  const [isAnchorModalOpen, setIsAnchorModalOpen] = useState(false);
+  const [isAnchorLoading, setIsAnchorLoading] = useState(false);
+  const [anchorModalTitle, setAnchorModalTitle] = useState("");
+  const [anchorModalBoardKey, setAnchorModalBoardKey] = useState<string | null>(null);
+  const [anchorModalThreadIndex, setAnchorModalThreadIndex] = useState<number | null>(null);
+  const [anchorModalError, setAnchorModalError] = useState<string | null>(null);
+  const [anchorPosts, setAnchorPosts] = useState<PostWithImages[]>([]);
   const [editHistories, setEditHistories] = useState<
     Array<{
       id: number;
@@ -266,6 +274,106 @@ export function PostItem({
     setFullscreenInlineImageUrl(image.currentSrc || image.src);
   };
 
+  const parseAnchorShiftTarget = (event: MouseEvent<HTMLDivElement>) => {
+    if (!event.shiftKey) {
+      return null;
+    }
+
+    const target = event.target as HTMLElement | null;
+    const anchor = target?.closest("a") as HTMLAnchorElement | null;
+    const href = anchor?.getAttribute("href")?.trim();
+
+    if (!href) {
+      return null;
+    }
+
+    const match = href.match(
+      /^\/board\/([a-z]+)\/(\d+)(?:\/(\d+)(?:\/(\d+))?)?\/?$/,
+    );
+
+    if (!match) {
+      return null;
+    }
+
+    const [, targetBoardKey, targetThreadIndexText, startText, endText] = match;
+    if (!startText) {
+      return null;
+    }
+
+    const targetThreadIndex = Number(targetThreadIndexText);
+    const start = Number(startText);
+    const end = endText ? Number(endText) : undefined;
+
+    if (
+      !Number.isInteger(targetThreadIndex) ||
+      targetThreadIndex <= 0 ||
+      !Number.isInteger(start) ||
+      start <= 0 ||
+      (typeof end === "number" && (!Number.isInteger(end) || end <= 0))
+    ) {
+      return null;
+    }
+
+    return {
+      boardKey: targetBoardKey,
+      threadIndex: targetThreadIndex,
+      start,
+      end,
+    };
+  };
+
+  const openAnchorModal = async (target: {
+    boardKey: string;
+    threadIndex: number;
+    start: number;
+    end?: number;
+  }) => {
+    setAnchorModalBoardKey(target.boardKey);
+    setAnchorModalThreadIndex(target.threadIndex);
+    setIsAnchorModalOpen(true);
+    setIsAnchorLoading(true);
+    setAnchorModalError(null);
+    setAnchorPosts([]);
+
+    const orderLabel =
+      typeof target.end === "number"
+        ? `${String(target.start)}-${String(target.end)}`
+        : String(target.start);
+    setAnchorModalTitle(
+      `${target.boardKey} / ${String(target.threadIndex)} / >>${orderLabel}`,
+    );
+
+    try {
+      const posts = await getAnchorPostsAction(
+        target.boardKey,
+        target.threadIndex,
+        target.start,
+        target.end,
+      );
+
+      setAnchorPosts(posts);
+      if (posts.length === 0) {
+        setAnchorModalError("해당 앵커 범위의 레스를 찾을 수 없습니다.");
+      }
+    } catch {
+      setAnchorModalError("앵커 레스를 불러오지 못했습니다.");
+    } finally {
+      setIsAnchorLoading(false);
+    }
+  };
+
+  const handleContentClick = (event: MouseEvent<HTMLDivElement>) => {
+    const anchorTarget = parseAnchorShiftTarget(event);
+    if (anchorTarget) {
+      event.preventDefault();
+      event.stopPropagation();
+      void openAnchorModal(anchorTarget);
+      return;
+    }
+
+    openInlineImageFullscreen(event);
+  };
+
   const toggleImageVisibility = () => {
     setHideImages((current) => !current);
   };
@@ -420,10 +528,77 @@ export function PostItem({
             "content whitespace-pre-wrap break-words text-[14px] leading-relaxed text-slate-900 sm:text-[15px]",
             post.contentType,
           )}
-          onClick={openInlineImageFullscreen}
+          onClick={handleContentClick}
           dangerouslySetInnerHTML={{ __html: renderedContent }}
         />
       </div>
+
+      {isAnchorModalOpen ? (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/55 p-0 sm:p-4">
+          <div className="h-full w-full overflow-hidden border-0 bg-gradient-to-b from-white to-sky-50 shadow-2xl sm:h-auto sm:max-w-3xl sm:rounded-2xl sm:border sm:border-sky-200">
+            <div className="flex items-center justify-between border-b border-sky-100 bg-white/90 px-4 py-3 sm:px-5 sm:py-4">
+              <h3 className="text-base font-bold text-slate-900 sm:text-lg">
+                앵커 조회: {anchorModalTitle}
+              </h3>
+              <button
+                type="button"
+                onClick={() => {
+                  setIsAnchorModalOpen(false);
+                  setAnchorModalBoardKey(null);
+                  setAnchorModalThreadIndex(null);
+                }}
+                className="min-h-11 rounded-lg border border-slate-300 bg-slate-50 px-3 py-1.5 text-xs font-medium text-slate-700 transition-colors hover:bg-slate-100"
+              >
+                닫기
+              </button>
+            </div>
+
+            <div className="max-h-[calc(100vh-4.25rem-env(safe-area-inset-bottom))] overflow-auto p-4 pb-[calc(1rem+env(safe-area-inset-bottom))] sm:max-h-[70vh] sm:p-5">
+              {isAnchorLoading ? (
+                <p className="text-sm text-slate-600">앵커 레스를 불러오는 중입니다...</p>
+              ) : anchorModalError ? (
+                <p className="text-sm text-rose-700">{anchorModalError}</p>
+              ) : (
+                <ul className="space-y-3">
+                  {anchorPosts.map((anchorPost) => (
+                    <li
+                      key={anchorPost.id}
+                      className="rounded-xl border border-slate-200 bg-white/90 p-3"
+                    >
+                      <div className="flex flex-wrap items-center justify-between gap-2">
+                        <p className="text-xs font-semibold text-sky-800">
+                          #{anchorPost.postOrder} {anchorPost.author || AnonymousAuthor}
+                        </p>
+                        <button
+                          type="button"
+                          onClick={() => {
+                            if (!anchorModalBoardKey || !anchorModalThreadIndex) {
+                              return;
+                            }
+                            const href = `/board/${anchorModalBoardKey}/${String(anchorModalThreadIndex)}/${String(anchorPost.postOrder)}`;
+                            setIsAnchorModalOpen(false);
+                            router.push(href);
+                          }}
+                          className="rounded border border-sky-300 bg-sky-50 px-2 py-0.5 text-[11px] font-medium text-sky-700 hover:bg-sky-100"
+                        >
+                          원본으로 이동
+                        </button>
+                      </div>
+                      <div
+                        className={cn(
+                          "content mt-2 whitespace-pre-wrap break-words text-[13px] leading-relaxed text-slate-900",
+                          anchorPost.contentType,
+                        )}
+                        dangerouslySetInnerHTML={{ __html: anchorPost.content }}
+                      />
+                    </li>
+                  ))}
+                </ul>
+              )}
+            </div>
+          </div>
+        </div>
+      ) : null}
 
       {fullscreenInlineImageUrl ? (
         <InlineImageLightbox

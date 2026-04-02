@@ -41,6 +41,8 @@ const DEFAULT_ACTIONS: HeaderAction[] = [
   { href: "/signup", label: "회원가입", variant: "primary" },
 ];
 
+const SERVER_HEADER_PRESENCE_SNAPSHOT = { scope: null, count: null } as const;
+
 function subscribeDocumentTitle(onStoreChange: () => void) {
   if (typeof document === "undefined") {
     return () => {};
@@ -97,7 +99,7 @@ export function Header({
   const headerPresence = useSyncExternalStore(
     subscribeHeaderPresence,
     getHeaderPresenceSnapshot,
-    () => ({ scope: null, count: null }),
+    () => SERVER_HEADER_PRESENCE_SNAPSHOT,
   );
   const marqueeViewportRef = useRef<HTMLSpanElement | null>(null);
   const marqueeTextRef = useRef<HTMLSpanElement | null>(null);
