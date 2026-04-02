@@ -69,6 +69,13 @@ export async function loginAction(
       };
     }
 
+    if (!user.isActive) {
+      return {
+        success: false,
+        message: "탈퇴 처리된 계정입니다. 로그인할 수 없습니다.",
+      };
+    }
+
     if (user.passwordResetRequired) {
       try {
         await issuePasswordResetEmailForUser(user.id, user.email);
@@ -469,6 +476,99 @@ export async function changeMyPasswordAction(
     return {
       success: false,
       message: "비밀번호 변경에 실패했습니다. 다시 시도해주세요.",
+    };
+  }
+}
+
+export async function withdrawMyAccountAction(
+  formData: FormData,
+): Promise<AuthActionResult> {
+  const currentUser = await getCurrentUser();
+
+  if (!currentUser) {
+    return { success: false, message: "로그인이 필요합니다." };
+  }
+
+  const currentPassword = String(formData.get("currentPassword") ?? "");
+  const confirmText = String(formData.get("confirmText") ?? "").trim();
+
+  if (!currentPassword) {
+    return { success: false, message: "현재 비밀번호를 입력해주세요." };
+  }
+
+  if (confirmText !== "탈퇴합니다") {
+    return {
+      success: false,
+      message: '확인 문구로 "탈퇴합니다"를 정확히 입력해주세요.',
+    };
+  }
+
+  try {
+    const user = await prisma.user.findUnique({
+      where: { id: Number(currentUser.id) },
+      select: {
+        id: true,
+        passwordHash: true,
+        isAdmin: true,
+        isActive: true,
+      },
+    });
+
+    if (!user || !user.isActive) {
+      return {
+        success: false,
+        message: "이미 탈퇴 처리되었거나 사용자 정보를 찾을 수 없습니다.",
+      };
+    }
+
+    if (user.isAdmin) {
+      return {
+        success: false,
+        message: "관리자 계정은 관리자 화면에서 별도 처리해주세요.",
+      };
+    }
+
+    const isValidCurrent = await bcrypt.compare(currentPassword, user.passwordHash);
+
+    if (!isValidCurrent) {
+      return { success: false, message: "현재 비밀번호가 일치하지 않습니다." };
+    }
+
+    const uniqueSuffix = crypto.randomBytes(4).toString("hex");
+    const deletedUsername = `deleted-user-${user.id}-${uniqueSuffix}`;
+    const deletedEmail = `deleted+${user.id}.${Date.now()}.${uniqueSuffix}@withdrawn.local`;
+    const deletedPasswordHash = await bcrypt.hash(crypto.randomUUID(), 10);
+
+    await prisma.user.update({
+      where: { id: user.id },
+      data: {
+        username: deletedUsername,
+        email: deletedEmail,
+        avatarUrl: "",
+        passwordHash: deletedPasswordHash,
+        passwordResetRequired: false,
+        passwordResetTokenHash: null,
+        passwordResetExpiresAt: null,
+        suspendedUntil: null,
+        isForeigner: false,
+        isAdultVerified: false,
+        isActive: false,
+        isAdmin: false,
+        emailVerifiedAt: null,
+        emailVerificationTokenHash: null,
+        emailVerificationExpiresAt: null,
+        preferences: {},
+      },
+    });
+
+    await logoutAction();
+
+    return { success: true, message: "회원 탈퇴가 완료되었습니다." };
+  } catch (error) {
+    console.error("Withdraw my account error:", error);
+    return {
+      success: false,
+      message: "회원 탈퇴 처리에 실패했습니다. 다시 시도해주세요.",
     };
   }
 }

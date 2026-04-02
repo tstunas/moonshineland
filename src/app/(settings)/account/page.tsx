@@ -5,6 +5,7 @@ import {
   changeMyPasswordAction,
   requestPasswordResetAction,
   updateMyProfileAction,
+  withdrawMyAccountAction,
 } from "@/features/auth/actions";
 import { getCurrentUserProfile } from "@/features/auth/queries";
 import { formatDateTime } from "@/lib/format";
@@ -19,6 +20,7 @@ interface AccountPageProps {
     profile?: string;
     password?: string;
     reset?: string;
+    withdrawn?: string;
   }>;
 }
 
@@ -29,7 +31,8 @@ export default async function AccountPage({ searchParams }: AccountPageProps) {
     redirect("/login?next=%2Faccount");
   }
 
-  const { error, profile: profileState, password, reset } = await searchParams;
+  const { error, profile: profileState, password, reset, withdrawn } =
+    await searchParams;
 
   async function submitProfile(formData: FormData) {
     "use server";
@@ -67,6 +70,18 @@ export default async function AccountPage({ searchParams }: AccountPageProps) {
     redirect(`/account?error=${encodeURIComponent(result.message)}`);
   }
 
+  async function submitWithdraw(formData: FormData) {
+    "use server";
+
+    const result = await withdrawMyAccountAction(formData);
+
+    if (result.success) {
+      redirect("/login?withdrawn=done");
+    }
+
+    redirect(`/account?error=${encodeURIComponent(result.message)}`);
+  }
+
   return (
     <div className="mx-auto max-w-3xl space-y-4 px-4 py-6">
       <div>
@@ -97,6 +112,12 @@ export default async function AccountPage({ searchParams }: AccountPageProps) {
       {reset === "sent" ? (
         <p className="rounded-lg border border-emerald-300 bg-emerald-50 px-3 py-2 text-sm text-emerald-700">
           비밀번호 재설정 링크를 발송했습니다.
+        </p>
+      ) : null}
+
+      {withdrawn === "done" ? (
+        <p className="rounded-lg border border-emerald-300 bg-emerald-50 px-3 py-2 text-sm text-emerald-700">
+          회원 탈퇴가 완료되었습니다.
         </p>
       ) : null}
 
@@ -244,6 +265,58 @@ export default async function AccountPage({ searchParams }: AccountPageProps) {
             className="rounded-lg border border-slate-300 bg-white px-4 py-2.5 text-sm font-semibold text-slate-700 transition-colors hover:bg-slate-50"
           >
             내 이메일로 재설정 링크 보내기
+          </button>
+        </form>
+      </section>
+
+      <section className="rounded-xl border border-rose-300 bg-rose-50 p-5 shadow-sm">
+        <h2 className="text-sm font-semibold text-rose-800">위험 구역: 회원 탈퇴</h2>
+        <p className="mt-1 text-xs text-rose-700">
+          탈퇴하면 계정은 즉시 비활성화되며 다시 로그인할 수 없습니다.
+        </p>
+        <form action={submitWithdraw} className="mt-4 space-y-4">
+          <div>
+            <label
+              htmlFor="withdrawCurrentPassword"
+              className="mb-1.5 block text-sm font-medium text-slate-700"
+            >
+              현재 비밀번호
+            </label>
+            <input
+              id="withdrawCurrentPassword"
+              name="currentPassword"
+              type="password"
+              required
+              autoComplete="current-password"
+              className="w-full rounded-lg border border-slate-300 bg-white px-3 py-2.5 text-sm text-slate-900 outline-none transition-shadow focus:border-rose-500 focus:ring-2 focus:ring-rose-200"
+            />
+          </div>
+
+          <div>
+            <label
+              htmlFor="withdrawConfirmText"
+              className="mb-1.5 block text-sm font-medium text-slate-700"
+            >
+              확인 문구 입력
+            </label>
+            <input
+              id="withdrawConfirmText"
+              name="confirmText"
+              type="text"
+              required
+              placeholder="탈퇴합니다"
+              className="w-full rounded-lg border border-slate-300 bg-white px-3 py-2.5 text-sm text-slate-900 outline-none transition-shadow focus:border-rose-500 focus:ring-2 focus:ring-rose-200"
+            />
+            <p className="mt-1 text-xs text-rose-700">
+              회원 탈퇴를 진행하려면 &quot;탈퇴합니다&quot;를 정확히 입력해주세요.
+            </p>
+          </div>
+
+          <button
+            type="submit"
+            className="rounded-lg bg-rose-600 px-4 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-rose-700"
+          >
+            회원 탈퇴
           </button>
         </form>
       </section>

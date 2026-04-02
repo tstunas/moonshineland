@@ -13,6 +13,7 @@ interface LoginPageProps {
   searchParams: Promise<{
     error?: string;
     reset?: string;
+    withdrawn?: string;
   }>;
 }
 
@@ -23,7 +24,7 @@ export default async function LoginPage({ searchParams }: LoginPageProps) {
     redirect("/");
   }
 
-  const { error, reset } = await searchParams;
+  const { error, reset, withdrawn } = await searchParams;
 
   async function submitLogin(formData: FormData) {
     "use server";
@@ -81,6 +82,12 @@ export default async function LoginPage({ searchParams }: LoginPageProps) {
                 className="mb-4 rounded-lg border border-rose-300 bg-rose-50 px-3 py-2 text-sm text-rose-700"
               >
                 {error}
+              </p>
+            ) : null}
+
+            {withdrawn === "done" ? (
+              <p className="mb-4 rounded-lg border border-emerald-300 bg-emerald-50 px-3 py-2 text-sm text-emerald-700">
+                회원 탈퇴가 완료되었습니다.
               </p>
             ) : null}
 
