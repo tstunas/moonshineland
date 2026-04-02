@@ -1,101 +1,76 @@
 import "server-only";
 
-import { PutObjectCommand, S3Client } from "@aws-sdk/client-s3";
+import {
+  PutObjectCommand,
+  S3Client,
+  S3ServiceException,
+} from "@aws-sdk/client-s3";
 
-type AwsErrorWithMetadata = Error & {
-  name?: string;
-  Code?: string;
-  code?: string;
-  $fault?: "client" | "server";
-  $metadata?: {
-    httpStatusCode?: number;
-    requestId?: string;
-    extendedRequestId?: string;
-    attempts?: number;
-    totalRetryDelay?: number;
-  };
+type S3RuntimeConfig = {
+  region: string;
+  bucketName: string;
+  accessKeyId?: string;
+  secretAccessKey?: string;
+  publicUrlBase?: string;
 };
 
-function getS3FailureHint(error: AwsErrorWithMetadata): string {
-  const code = (error.Code ?? error.code ?? error.name ?? "").toLowerCase();
-  const status = error.$metadata?.httpStatusCode;
-
-  if (code.includes("accessdenied") || status === 403) {
-    return "권한 문제 가능성(IAM 정책, 버킷 정책, KMS 권한)을 확인하세요.";
+function readTrimmedEnv(name: string): string | undefined {
+  const value = process.env[name];
+  if (!value) {
+    return undefined;
   }
 
-  if (code.includes("nosuchbucket") || code.includes("notfound") || status === 404) {
-    return "버킷 이름/리전 불일치 또는 버킷 미존재 가능성을 확인하세요.";
-  }
-
-  if (code.includes("invalidaccesskeyid") || code.includes("signaturedoesnotmatch")) {
-    return "AWS 자격증명(AWS_ACCESS_KEY_ID/AWS_SECRET_ACCESS_KEY) 또는 서명 리전 불일치를 확인하세요.";
-  }
-
-  if (code.includes("entitytoolarge") || status === 413) {
-    return "업로드 파일 용량 제한 초과 가능성을 확인하세요.";
-  }
-
-  if (code.includes("slowdown") || status === 429) {
-    return "요청량 제한(Throttle) 가능성이 있습니다. 재시도 정책과 요청 빈도를 확인하세요.";
-  }
-
-  if (status && status >= 500) {
-    return "S3 서버 측 일시 오류 가능성이 있습니다. 재시도 후 AWS 상태를 확인하세요.";
-  }
-
-  return "환경변수, 네트워크, CORS/프록시 설정, 파일 타입/크기를 순서대로 확인하세요.";
+  const trimmed = value.trim();
+  return trimmed.length > 0 ? trimmed : undefined;
 }
 
-function logS3UploadFailure(params: {
-  error: unknown;
-  bucketName: string;
-  destPath: string;
-  file: File;
-  region: string | undefined;
-}) {
-  const errorObj =
-    params.error instanceof Error
-      ? (params.error as AwsErrorWithMetadata)
-      : (new Error(String(params.error)) as AwsErrorWithMetadata);
-
-  const hint = getS3FailureHint(errorObj);
-
-  console.error("[s3-upload] failed", {
-    bucketName: params.bucketName,
-    key: params.destPath,
-    fileSize: params.file.size,
-    fileType: params.file.type || "application/octet-stream",
-    region: params.region,
-    errorName: errorObj.name,
-    errorCode: errorObj.Code ?? errorObj.code,
-    errorMessage: errorObj.message,
-    fault: errorObj.$fault,
-    httpStatusCode: errorObj.$metadata?.httpStatusCode,
-    requestId: errorObj.$metadata?.requestId,
-    extendedRequestId: errorObj.$metadata?.extendedRequestId,
-    attempts: errorObj.$metadata?.attempts,
-    totalRetryDelay: errorObj.$metadata?.totalRetryDelay,
-    hint,
-  });
+function assertValidBucketName(bucketName: string): void {
+  const bucketPattern = /^[a-z0-9][a-z0-9.-]{1,61}[a-z0-9]$/;
+  if (!bucketPattern.test(bucketName)) {
+    throw new Error(
+      "AWS_S3_BUCKET_NAME 형식이 올바르지 않습니다. 공백/따옴표/슬래시 포함 여부를 확인하세요.",
+    );
+  }
 }
 
-function createS3Client(): S3Client {
-  const region = process.env.AWS_REGION;
+function getS3RuntimeConfig(): S3RuntimeConfig {
+  const region = readTrimmedEnv("AWS_REGION");
   if (!region) {
     throw new Error("AWS_REGION 환경변수가 설정되지 않았습니다.");
   }
 
-  const accessKeyId = process.env.AWS_ACCESS_KEY_ID;
-  const secretAccessKey = process.env.AWS_SECRET_ACCESS_KEY;
+  const bucketName = readTrimmedEnv("AWS_S3_BUCKET_NAME");
+  if (!bucketName) {
+    throw new Error("AWS_S3_BUCKET_NAME 환경변수가 설정되지 않았습니다.");
+  }
+  assertValidBucketName(bucketName);
 
-  return new S3Client({
+  const accessKeyId = readTrimmedEnv("AWS_ACCESS_KEY_ID");
+  const secretAccessKey = readTrimmedEnv("AWS_SECRET_ACCESS_KEY");
+
+  if ((accessKeyId && !secretAccessKey) || (!accessKeyId && secretAccessKey)) {
+    throw new Error(
+      "AWS_ACCESS_KEY_ID와 AWS_SECRET_ACCESS_KEY는 함께 설정하거나 함께 비워야 합니다.",
+    );
+  }
+
+  return {
     region,
-    ...(accessKeyId && secretAccessKey
+    bucketName,
+    accessKeyId,
+    secretAccessKey,
+    publicUrlBase: readTrimmedEnv("AWS_S3_PUBLIC_URL_BASE"),
+  };
+}
+
+function createS3Client(config: S3RuntimeConfig): S3Client {
+  return new S3Client({
+    region: config.region,
+    ...(config.accessKeyId && config.secretAccessKey
       ? {
           credentials: {
-            accessKeyId,
-            secretAccessKey,
+            accessKeyId: config.accessKeyId,
+            secretAccessKey: config.secretAccessKey,
           },
         }
       : {}),
@@ -104,62 +79,75 @@ function createS3Client(): S3Client {
 
 const s3Global = globalThis as typeof globalThis & {
   __s3?: S3Client;
+  __s3ConfigKey?: string;
 };
 
-export const s3: S3Client = s3Global.__s3 ?? (s3Global.__s3 = createS3Client());
+function getS3Client(config: S3RuntimeConfig): S3Client {
+  const configKey = [config.region, config.accessKeyId, config.secretAccessKey].join("|");
 
-export function getS3BucketName(): string {
-  const bucketName = process.env.AWS_S3_BUCKET_NAME;
-  if (!bucketName) {
-    throw new Error("AWS_S3_BUCKET_NAME 환경변수가 설정되지 않았습니다.");
+  if (!s3Global.__s3 || s3Global.__s3ConfigKey !== configKey) {
+    s3Global.__s3 = createS3Client(config);
+    s3Global.__s3ConfigKey = configKey;
   }
 
-  return bucketName;
+  return s3Global.__s3;
 }
 
-function toS3PublicUrl(bucketName: string, key: string): string {
-  const customBase = process.env.AWS_S3_PUBLIC_URL_BASE;
-  if (customBase) {
-    return `${customBase.replace(/\/$/, "")}/${key}`;
+export function getS3BucketName(): string {
+  return getS3RuntimeConfig().bucketName;
+}
+
+function toS3PublicUrl(config: S3RuntimeConfig, key: string): string {
+  if (config.publicUrlBase) {
+    return `${config.publicUrlBase.replace(/\/$/, "")}/${key}`;
   }
 
-  const region = process.env.AWS_REGION;
-  if (!region) {
-    throw new Error("AWS_REGION 환경변수가 설정되지 않았습니다.");
-  }
-
-  return `https://${bucketName}.s3.${region}.amazonaws.com/${key}`;
+  return `https://${config.bucketName}.s3.${config.region}.amazonaws.com/${key}`;
 }
 
 export async function uploadImageToS3(
   file: File,
   destPath: string,
 ): Promise<string> {
-  const bucketName = getS3BucketName();
-  const region = process.env.AWS_REGION;
+  const config = getS3RuntimeConfig();
+  const s3 = getS3Client(config);
   const bytes = await file.arrayBuffer();
   const buffer = Buffer.from(bytes);
 
   try {
     await s3.send(
       new PutObjectCommand({
-        Bucket: bucketName,
+        Bucket: config.bucketName,
         Key: destPath,
         Body: buffer,
         ContentType: file.type || "application/octet-stream",
         CacheControl: "public, max-age=31536000",
       }),
     );
-  } catch (error: unknown) {
-    logS3UploadFailure({
-      error,
-      bucketName,
-      destPath,
-      file,
-      region,
-    });
+  } catch (error) {
+    if (error instanceof S3ServiceException) {
+      const serviceError = error as S3ServiceException & {
+        $response?: { headers?: Record<string, string> };
+      };
+      const bucketRegion = serviceError.$response?.headers?.["x-amz-bucket-region"];
+
+      if (error.name === "NoSuchBucket") {
+        throw new Error(
+          `S3 버킷을 찾을 수 없습니다: ${config.bucketName}. AWS_S3_BUCKET_NAME 오탈자, 공백 포함 여부, 계정/리전(${config.region}) 일치 여부를 확인하세요.`,
+        );
+      }
+
+      if (error.name === "PermanentRedirect" || error.name === "AuthorizationHeaderMalformed") {
+        throw new Error(
+          `S3 버킷 리전이 다를 수 있습니다. 현재 AWS_REGION=${config.region}` +
+            (bucketRegion ? `, 실제 버킷 리전=${bucketRegion}` : "") +
+            ".",
+        );
+      }
+    }
+
     throw error;
   }
 
-  return toS3PublicUrl(bucketName, destPath);
+  return toS3PublicUrl(config, destPath);
 }
