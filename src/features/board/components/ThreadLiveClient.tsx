@@ -7,6 +7,10 @@ import { useThreadSse } from "@/hooks/useThreadSse";
 import type { PostWithImages } from "@/types/post";
 import type { Thread } from "@/types/thread";
 import { ScrollQuickButtons } from "@/components/ui/ScrollQuickButtons";
+import {
+  clearHeaderPresence,
+  setHeaderPresence,
+} from "@/components/layout/headerPresenceStore";
 
 import { PostForm } from "./PostForm";
 import { PostItem } from "./PostItem";
@@ -353,6 +357,17 @@ export function ThreadLiveClient({
           ? "border-sky-300 bg-sky-100 text-sky-800"
           : "border-rose-300 bg-rose-100 text-rose-800";
 
+    useEffect(() => {
+      setHeaderPresence({
+        scope: "thread",
+        count: userCount,
+      });
+
+      return () => {
+        clearHeaderPresence("thread");
+      };
+    }, [userCount]);
+
   useEffect(() => {
     if (mode === "range") {
       return;
@@ -443,15 +458,7 @@ export function ThreadLiveClient({
       <div className="mb-4 flex flex-col gap-3 rounded-2xl border border-sky-200/80 bg-white/78 p-4 shadow-[0_14px_30px_-22px_rgba(14,116,144,0.7)] backdrop-blur-md md:flex-row md:items-center md:justify-between">
         <div className="flex items-center gap-2 text-sm text-slate-700">
           <span
-            className="h-2 w-2 rounded-full bg-emerald-500"
-            aria-hidden="true"
-          />
-          <span>실시간 접속회원</span>
-          <strong className="font-semibold text-sky-900">
-            {userCount ?? 0}
-          </strong>
-          <span
-            className={`ml-2 rounded border px-2 py-0.5 text-xs font-semibold ${connectionStatusClassName}`}
+            className={`rounded border px-2 py-0.5 text-xs font-semibold ${connectionStatusClassName}`}
           >
             SSE {connectionStatusLabel}
           </span>

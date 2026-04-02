@@ -8,6 +8,10 @@ import { usePathname } from "next/navigation";
 import { logoutAndRedirectAction } from "@/features/auth/actions";
 import { cn } from "@/lib/cn";
 import { BOARDS } from "@/lib/constants";
+import {
+  getHeaderPresenceSnapshot,
+  subscribeHeaderPresence,
+} from "@/components/layout/headerPresenceStore";
 
 export interface HeaderNavItem {
   href: string;
@@ -89,6 +93,11 @@ export function Header({
     subscribeDocumentTitle,
     getDocumentTitleSnapshot,
     () => "",
+  );
+  const headerPresence = useSyncExternalStore(
+    subscribeHeaderPresence,
+    getHeaderPresenceSnapshot,
+    () => ({ scope: null, count: null }),
   );
   const marqueeViewportRef = useRef<HTMLSpanElement | null>(null);
   const marqueeTextRef = useRef<HTMLSpanElement | null>(null);
@@ -174,6 +183,8 @@ export function Header({
 
   const isMarqueeActive = marqueeDistance > 0;
   const marqueeDurationSeconds = Math.max(8, marqueeDistance / 24 + 4);
+  const shouldShowLiveMemberCount = /^\/board\/[^/]+(?:\/|$)/.test(pathname);
+  const liveMemberCount = headerPresence.count ?? 0;
   const marqueeStyle = {
     "--header-brand-marquee-distance": `${marqueeDistance}px`,
     "--header-brand-marquee-duration": `${marqueeDurationSeconds.toFixed(2)}s`,
@@ -251,7 +262,35 @@ export function Header({
           </Link>
         </div>
 
-        <div className="flex items-center gap-1.5 sm:gap-2">
+        <div className="flex items-center gap-2 sm:gap-2.5">
+          {shouldShowLiveMemberCount ? (
+            <div
+              className="inline-flex shrink-0 items-center gap-1.5 rounded-full border border-emerald-200/60 bg-sky-900/35 px-2.5 py-1 text-[11px] font-semibold text-sky-50 shadow-[inset_0_1px_0_rgba(255,255,255,0.14)] sm:gap-2 sm:px-3 sm:text-xs"
+              aria-label={`실시간 접속회원 ${liveMemberCount}명`}
+              title={`실시간 접속회원 ${liveMemberCount}명`}
+            >
+              <span
+                className="h-1.5 w-1.5 rounded-full bg-emerald-300 shadow-[0_0_0_2px_rgba(16,185,129,0.25)]"
+                aria-hidden="true"
+              />
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2"
+                className="h-3.5 w-3.5 text-sky-100/95"
+                aria-hidden="true"
+              >
+                <path d="M20 21a8 8 0 1 0-16 0" />
+                <circle cx="12" cy="7" r="3" />
+              </svg>
+              <span className="min-w-[1.5ch] text-right tabular-nums">
+                {liveMemberCount}
+              </span>
+            </div>
+          ) : null}
+
           {isAuthenticated ? (
             <form action={logoutAndRedirectAction}>
               <button
