@@ -264,6 +264,8 @@ model Post {
   @@unique([threadId, postOrder])
   @@index([threadId, isHidden, postOrder])
   @@index([isHidden, isAutoPost, contentType, createdAt])
+  @@index([isAutoPost, createdAt])
+  @@index([createdAt])
   @@index([threadId, createdAt])
   @@index([threadId, updatedAt])
 }

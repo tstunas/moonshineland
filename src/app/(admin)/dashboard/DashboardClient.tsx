@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import type { Prisma } from "@/generated/prisma/client";
 
 const MAX_RECENT_USERS = 8;
@@ -55,6 +55,7 @@ interface DashboardClientProps {
       board: { boardKey: string; name: string };
     };
   }>;
+  initialPostsLoaded: boolean;
   stats: {
     usersTotal: number;
     usersActive: number;
@@ -146,6 +147,7 @@ export default function DashboardClient({
   initialBoards,
   initialThreads,
   initialPosts,
+  initialPostsLoaded,
   stats,
   filteredCounts,
 }: DashboardClientProps) {
@@ -188,6 +190,7 @@ export default function DashboardClient({
 
   // Loading state
   const [isLoading, setIsLoading] = useState(false);
+  const isFirstFetchRef = useRef(true);
 
   // Calculate total pages
   const usersTotalPages = Math.max(
@@ -267,8 +270,15 @@ export default function DashboardClient({
 
   // Fetch data when filters or pagination change
   useEffect(() => {
-    fetchData();
-  }, [fetchData]);
+    if (isFirstFetchRef.current) {
+      isFirstFetchRef.current = false;
+      if (initialPostsLoaded) {
+        return;
+      }
+    }
+
+    void fetchData();
+  }, [fetchData, initialPostsLoaded]);
 
   // API call functions
   const callToggleApi = async (

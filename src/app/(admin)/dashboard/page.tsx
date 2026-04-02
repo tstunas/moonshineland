@@ -8,7 +8,31 @@ import DashboardClient from "./DashboardClient";
 const MAX_RECENT_USERS = 8;
 const MAX_RECENT_BOARDS = 8;
 const MAX_RECENT_THREADS = 8;
-const MAX_RECENT_POSTS = 12;
+
+function summarizePostStats(
+  grouped: Array<{ isHidden: boolean; isAutoPost: boolean; _count: { _all: number } }>,
+) {
+  let postsTotal = 0;
+  let postsHidden = 0;
+  let postsAuto = 0;
+
+  for (const row of grouped) {
+    const count = row._count._all;
+    postsTotal += count;
+    if (row.isHidden) {
+      postsHidden += count;
+    }
+    if (row.isAutoPost) {
+      postsAuto += count;
+    }
+  }
+
+  return {
+    postsTotal,
+    postsHidden,
+    postsAuto,
+  };
+}
 
 export const metadata: Metadata = {
   title: "문샤인랜드: 관리자 대시보드",
@@ -46,9 +70,7 @@ export default async function DashboardPage({ searchParams }: DashboardPageProps
     threadsHidden,
     threadsChat,
     threadsAdult,
-    postsTotal,
-    postsHidden,
-    postsAuto,
+    postGroups,
     recentAuditLogs,
   ] = await Promise.all([
     prisma.user.count(),
@@ -60,9 +82,12 @@ export default async function DashboardPage({ searchParams }: DashboardPageProps
     prisma.thread.count({ where: { isHidden: true } }),
     prisma.thread.count({ where: { isChat: true } }),
     prisma.thread.count({ where: { isAdultOnly: true } }),
-    prisma.post.count(),
-    prisma.post.count({ where: { isHidden: true } }),
-    prisma.post.count({ where: { isAutoPost: true } }),
+    prisma.post.groupBy({
+      by: ["isHidden", "isAutoPost"],
+      _count: {
+        _all: true,
+      },
+    }),
     prisma.adminAuditLog.findMany({
       orderBy: { createdAt: "desc" },
       take: 12,
@@ -82,8 +107,10 @@ export default async function DashboardPage({ searchParams }: DashboardPageProps
     }),
   ]);
 
-  // Fetch initial data (page 1, no filters)
-  const [recentUsers, recentBoards, recentThreads, recentPosts] = await Promise.all([
+  const { postsTotal, postsHidden, postsAuto } = summarizePostStats(postGroups);
+
+  // Fetch initial data (page 1, no filters). Posts are loaded after mount to avoid heavy SSR query.
+  const [recentUsers, recentBoards, recentThreads] = await Promise.all([
     prisma.user.findMany({
       orderBy: { createdAt: "desc" },
       skip: 0,
@@ -139,32 +166,6 @@ export default async function DashboardPage({ searchParams }: DashboardPageProps
         },
       },
     }),
-    prisma.post.findMany({
-      orderBy: { createdAt: "desc" },
-      skip: 0,
-      take: MAX_RECENT_POSTS,
-      select: {
-        id: true,
-        postOrder: true,
-        author: true,
-        contentType: true,
-        isHidden: true,
-        isAutoPost: true,
-        createdAt: true,
-        thread: {
-          select: {
-            threadIndex: true,
-            title: true,
-            board: {
-              select: {
-                boardKey: true,
-                name: true,
-              },
-            },
-          },
-        },
-      },
-    }),
   ]);
 
   return (
@@ -172,7 +173,8 @@ export default async function DashboardPage({ searchParams }: DashboardPageProps
       initialUsers={recentUsers}
       initialBoards={recentBoards}
       initialThreads={recentThreads}
-      initialPosts={recentPosts}
+      initialPosts={[]}
+      initialPostsLoaded={false}
       stats={{
         usersTotal,
         usersActive,
