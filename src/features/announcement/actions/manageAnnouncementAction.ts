@@ -11,7 +11,7 @@ import {
   parseContentType,
   parseBooleanFormValue,
 } from "@/features/board/actions/helpers";
-import { uploadImageToGcs } from "@/lib/gcs";
+import { uploadImageToS3 } from "@/lib/s3";
 import prisma from "@/lib/prisma";
 
 const MAX_IMAGE_COUNT = 10;
@@ -40,7 +40,7 @@ async function uploadAnnouncementImages(files: File[]): Promise<string[]> {
     const ext = path.extname(safeName) || ".bin";
     const fileName = `${Date.now()}-${randomUUID()}${ext}`;
     const destPath = `announcements/${fileName}`;
-    const url = await uploadImageToGcs(file, destPath);
+    const url = await uploadImageToS3(file, destPath);
     urls.push(url);
   }
 

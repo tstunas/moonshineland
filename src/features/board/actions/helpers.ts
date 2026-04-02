@@ -2,7 +2,7 @@ import { randomUUID } from "crypto";
 import path from "path";
 
 import { getCurrentUser } from "@/features/auth/queries";
-import { uploadImageToGcs } from "@/lib/gcs";
+import { uploadImageToS3 } from "@/lib/s3";
 import prisma from "@/lib/prisma";
 import type { ContentType } from "@/types/post";
 
@@ -419,7 +419,7 @@ export async function uploadImages(
     const fileName = `${Date.now()}-${randomUUID()}${ext}`;
     const destPath = `boards/${boardKey}/${String(threadIndex)}/${fileName}`;
 
-    const url = await uploadImageToGcs(file, destPath);
+    const url = await uploadImageToS3(file, destPath);
     urls.push(url);
   }
 
