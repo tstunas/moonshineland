@@ -170,7 +170,7 @@ export async function GET(req: NextRequest) {
         }),
         prisma.thread.findMany({
           where: threadWhere,
-          orderBy: { updatedAt: "desc" },
+          orderBy: { postUpdatedAt: "desc" },
           skip: threadsSkip,
           take: MAX_RECENT_THREADS,
           select: {
@@ -182,7 +182,7 @@ export async function GET(req: NextRequest) {
             isChat: true,
             isAdultOnly: true,
             isArchive: true,
-            updatedAt: true,
+            postUpdatedAt: true,
             board: {
               select: {
                 boardKey: true,

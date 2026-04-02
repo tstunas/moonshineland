@@ -118,7 +118,7 @@ export default async function DashboardPage({ searchParams }: DashboardPageProps
       },
     }),
     prisma.thread.findMany({
-      orderBy: { updatedAt: "desc" },
+      orderBy: { postUpdatedAt: "desc" },
       skip: 0,
       take: MAX_RECENT_THREADS,
       select: {
@@ -130,7 +130,7 @@ export default async function DashboardPage({ searchParams }: DashboardPageProps
         isChat: true,
         isAdultOnly: true,
         isArchive: true,
-        updatedAt: true,
+        postUpdatedAt: true,
         board: {
           select: {
             boardKey: true,

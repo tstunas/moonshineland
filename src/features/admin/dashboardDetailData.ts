@@ -2,7 +2,9 @@ import type { Prisma } from "@/generated/prisma/client";
 
 import prisma from "@/lib/prisma";
 
-type ParamSource = URLSearchParams | Record<string, string | string[] | undefined>;
+type ParamSource =
+  | URLSearchParams
+  | Record<string, string | string[] | undefined>;
 
 export const DETAIL_PAGE_SIZE_OPTIONS = [20, 50, 100] as const;
 
@@ -106,7 +108,7 @@ export interface ThreadsPageData {
     isAdultOnly: boolean;
     isArchive: boolean;
     createdAt: Date | string;
-    updatedAt: Date | string;
+    postUpdatedAt: Date | string;
     board: {
       boardKey: string;
       name: string;
@@ -134,7 +136,7 @@ export interface PostsPageData {
     isHidden: boolean;
     isAutoPost: boolean;
     createdAt: Date | string;
-    updatedAt: Date | string;
+    postUpdatedAt: Date | string;
     thread: {
       id: number;
       threadIndex: number;
@@ -171,7 +173,9 @@ function parsePositiveInt(value: string, fallback: number): number {
 
 function getPageSize(value: string, fallback = 20): number {
   const parsed = parsePositiveInt(value, fallback);
-  return DETAIL_PAGE_SIZE_OPTIONS.includes(parsed as (typeof DETAIL_PAGE_SIZE_OPTIONS)[number])
+  return DETAIL_PAGE_SIZE_OPTIONS.includes(
+    parsed as (typeof DETAIL_PAGE_SIZE_OPTIONS)[number],
+  )
     ? parsed
     : fallback;
 }
@@ -218,7 +222,9 @@ export function parsePostsQuery(source: ParamSource) {
   };
 }
 
-export async function getUsersPageData(input: ReturnType<typeof parseUsersQuery>): Promise<UsersPageData> {
+export async function getUsersPageData(
+  input: ReturnType<typeof parseUsersQuery>,
+): Promise<UsersPageData> {
   const where: Prisma.UserWhereInput = {
     ...(input.status === "active" ? { isActive: true } : {}),
     ...(input.status === "inactive" ? { isActive: false } : {}),
@@ -285,7 +291,9 @@ export async function getUsersPageData(input: ReturnType<typeof parseUsersQuery>
   };
 }
 
-export async function getBoardsPageData(input: ReturnType<typeof parseBoardsQuery>): Promise<BoardsPageData> {
+export async function getBoardsPageData(
+  input: ReturnType<typeof parseBoardsQuery>,
+): Promise<BoardsPageData> {
   const where: Prisma.BoardWhereInput = {
     ...(input.visibility === "visible" ? { isHidden: false } : {}),
     ...(input.visibility === "hidden" ? { isHidden: true } : {}),
@@ -356,7 +364,9 @@ export async function getBoardsPageData(input: ReturnType<typeof parseBoardsQuer
   };
 }
 
-export async function getThreadsPageData(input: ReturnType<typeof parseThreadsQuery>): Promise<ThreadsPageData> {
+export async function getThreadsPageData(
+  input: ReturnType<typeof parseThreadsQuery>,
+): Promise<ThreadsPageData> {
   const where: Prisma.ThreadWhereInput = {
     ...(input.visibility === "visible" ? { isHidden: false } : {}),
     ...(input.visibility === "hidden" ? { isHidden: true } : {}),
@@ -388,7 +398,7 @@ export async function getThreadsPageData(input: ReturnType<typeof parseThreadsQu
 
   const threads = await prisma.thread.findMany({
     where,
-    orderBy: { updatedAt: "desc" },
+    orderBy: { postUpdatedAt: "desc" },
     skip,
     take: input.pageSize,
     select: {
@@ -403,7 +413,7 @@ export async function getThreadsPageData(input: ReturnType<typeof parseThreadsQu
       isAdultOnly: true,
       isArchive: true,
       createdAt: true,
-      updatedAt: true,
+      postUpdatedAt: true,
       board: {
         select: {
           boardKey: true,
@@ -436,7 +446,9 @@ export async function getThreadsPageData(input: ReturnType<typeof parseThreadsQu
   };
 }
 
-export async function getPostsPageData(input: ReturnType<typeof parsePostsQuery>): Promise<PostsPageData> {
+export async function getPostsPageData(
+  input: ReturnType<typeof parsePostsQuery>,
+): Promise<PostsPageData> {
   const contentTypeFilter =
     input.contentType === "text" ||
     input.contentType === "aa" ||

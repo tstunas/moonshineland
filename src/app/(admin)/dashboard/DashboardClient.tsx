@@ -38,7 +38,7 @@ interface DashboardClientProps {
     isChat: boolean;
     isAdultOnly: boolean;
     isArchive: boolean;
-    updatedAt: Date;
+    postUpdatedAt: Date;
     board: { boardKey: string; name: string };
   }>;
   initialPosts: Array<{
