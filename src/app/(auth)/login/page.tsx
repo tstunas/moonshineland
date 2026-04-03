@@ -14,17 +14,19 @@ interface LoginPageProps {
     error?: string;
     reset?: string;
     withdrawn?: string;
+    next?: string;
   }>;
 }
 
 export default async function LoginPage({ searchParams }: LoginPageProps) {
+  const { error, reset, withdrawn, next } = await searchParams;
+  const nextPath = typeof next === "string" && next.startsWith("/") ? next : "/";
+
   const user = await getCurrentUser();
 
   if (user) {
-    redirect("/");
+    redirect(nextPath);
   }
-
-  const { error, reset, withdrawn } = await searchParams;
 
   async function submitLogin(formData: FormData) {
     "use server";
@@ -32,10 +34,18 @@ export default async function LoginPage({ searchParams }: LoginPageProps) {
     const result = await loginAction(formData);
 
     if (result.success) {
-      redirect("/");
+      redirect(nextPath);
     }
 
-    redirect(`/login?error=${encodeURIComponent(result.message)}`);
+    const params = new URLSearchParams({
+      error: result.message,
+    });
+
+    if (nextPath !== "/") {
+      params.set("next", nextPath);
+    }
+
+    redirect(`/login?${params.toString()}`);
   }
 
   return (
