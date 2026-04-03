@@ -1,4 +1,11 @@
-import { useMemo, useState, type MouseEvent } from "react";
+import {
+  useCallback,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+  type MouseEvent,
+} from "react";
 
 import { banThreadUserByPostAction } from "@/features/board/actions/post/banThreadUserByPostAction";
 import { editPostAction } from "@/features/board/actions/post/editPostAction";
@@ -24,6 +31,38 @@ import { toast } from "sonner";
 
 import { ImageGallery } from "./ImageGallery";
 import { InlineImageLightbox } from "./InlineImageLightbox";
+
+type ParsedContentType = "text" | "aa" | "novel" | "line";
+const EDIT_TEXTAREA_MAX_ROWS = 30;
+const CONTENT_TYPE_TOKENS = ["text", "aa", "novel", "line"] as const;
+
+function setSingleContentTypeToken(
+  command: string,
+  selected: ParsedContentType,
+): string {
+  const filteredTokens = command
+    .split(".")
+    .map((value) => value.trim())
+    .filter(
+      (value) =>
+        value.length > 0 &&
+        !CONTENT_TYPE_TOKENS.includes(
+          value.toLowerCase() as (typeof CONTENT_TYPE_TOKENS)[number],
+        ),
+    );
+
+  return [...filteredTokens, selected].join(".");
+}
+
+function parseContentType(command: string): ParsedContentType {
+  const normalized = command.trim().toLowerCase();
+  const splitted = normalized.split(".");
+  if (splitted.includes("aa")) return "aa";
+  if (splitted.includes("novel")) return "novel";
+  if (splitted.includes("line")) return "line";
+
+  return "text";
+}
 
 function formatAuthorLabelAllowBoldOnly(rawLabel: string): string {
   const escaped = rawLabel
@@ -64,14 +103,21 @@ export function PostItem({
   const [isSavingEdit, setIsSavingEdit] = useState(false);
   const [isHistoryOpen, setIsHistoryOpen] = useState(false);
   const [isHistoryLoading, setIsHistoryLoading] = useState(false);
-  const [fullscreenInlineImageUrl, setFullscreenInlineImageUrl] = useState<string | null>(null);
+  const editContentRef = useRef<HTMLTextAreaElement | null>(null);
+  const [fullscreenInlineImageUrl, setFullscreenInlineImageUrl] = useState<
+    string | null
+  >(null);
   const { hideImages: initialHideImages } = useHideImagesPreference();
   const [hideImages, setHideImages] = useState(initialHideImages);
   const [isAnchorModalOpen, setIsAnchorModalOpen] = useState(false);
   const [isAnchorLoading, setIsAnchorLoading] = useState(false);
   const [anchorModalTitle, setAnchorModalTitle] = useState("");
-  const [anchorModalBoardKey, setAnchorModalBoardKey] = useState<string | null>(null);
-  const [anchorModalThreadIndex, setAnchorModalThreadIndex] = useState<number | null>(null);
+  const [anchorModalBoardKey, setAnchorModalBoardKey] = useState<string | null>(
+    null,
+  );
+  const [anchorModalThreadIndex, setAnchorModalThreadIndex] = useState<
+    number | null
+  >(null);
   const [anchorModalError, setAnchorModalError] = useState<string | null>(null);
   const [anchorPosts, setAnchorPosts] = useState<PostWithImages[]>([]);
   const [editHistories, setEditHistories] = useState<
@@ -99,7 +145,57 @@ export function PostItem({
     }
     return replaceInlineImagesWithMarker(post.content).html;
   }, [hideImages, post.content]);
-  const hiddenImageCount = hideImages ? galleryImageCount + inlineImageCount : 0;
+  const editContentTypeClassName = useMemo(
+    () => parseContentType(editCommand),
+    [editCommand],
+  );
+  const hiddenImageCount = hideImages
+    ? galleryImageCount + inlineImageCount
+    : 0;
+
+  const resizeEditTextarea = useCallback(() => {
+    const textarea = editContentRef.current;
+    if (!textarea) {
+      return;
+    }
+
+    const computedStyle = window.getComputedStyle(textarea);
+    const lineHeight = Number.parseFloat(computedStyle.lineHeight);
+    const paddingTop = Number.parseFloat(computedStyle.paddingTop) || 0;
+    const paddingBottom = Number.parseFloat(computedStyle.paddingBottom) || 0;
+    const resolvedLineHeight = Number.isFinite(lineHeight) ? lineHeight : 24;
+    const maxHeight =
+      resolvedLineHeight * EDIT_TEXTAREA_MAX_ROWS + paddingTop + paddingBottom;
+    textarea.style.maxHeight = `${maxHeight}px`;
+
+    textarea.style.height = "auto";
+    textarea.style.height = `${Math.min(textarea.scrollHeight, maxHeight)}px`;
+    textarea.style.overflowY =
+      textarea.scrollHeight > maxHeight ? "auto" : "hidden";
+  }, []);
+
+  useEffect(() => {
+    if (!isEditOpen) {
+      return;
+    }
+
+    resizeEditTextarea();
+  }, [editContent, isEditOpen, resizeEditTextarea, textareaRows]);
+
+  useEffect(() => {
+    if (!isEditOpen) {
+      return;
+    }
+
+    const handleResize = () => {
+      resizeEditTextarea();
+    };
+
+    window.addEventListener("resize", handleResize);
+    return () => {
+      window.removeEventListener("resize", handleResize);
+    };
+  }, [isEditOpen, resizeEditTextarea]);
 
   const copyAnchor = async () => {
     try {
@@ -150,7 +246,9 @@ export function PostItem({
       return;
     }
 
-    toast.success(post.contentType === "aa" ? "AA를 제거했습니다." : "AA를 적용했습니다.");
+    toast.success(
+      post.contentType === "aa" ? "AA를 제거했습니다." : "AA를 적용했습니다.",
+    );
   };
 
   const banUser = async () => {
@@ -193,6 +291,12 @@ export function PostItem({
     setEditContent(post.rawContent);
     setIsEditOpen(true);
   };
+
+  const applyEditContentType = useCallback((contentType: ParsedContentType) => {
+    setEditCommand((current) =>
+      setSingleContentTypeToken(current, contentType),
+    );
+  }, []);
 
   const submitEdit = async () => {
     setIsSavingEdit(true);
@@ -265,7 +369,9 @@ export function PostItem({
       return;
     }
 
-    const image = target.closest("img.content-inline-image") as HTMLImageElement | null;
+    const image = target.closest(
+      "img.content-inline-image",
+    ) as HTMLImageElement | null;
     if (!image) {
       return;
     }
@@ -555,7 +661,9 @@ export function PostItem({
 
             <div className="max-h-[calc(100vh-4.25rem-env(safe-area-inset-bottom))] overflow-auto p-4 pb-[calc(1rem+env(safe-area-inset-bottom))] sm:max-h-[70vh] sm:p-5">
               {isAnchorLoading ? (
-                <p className="text-sm text-slate-600">앵커 레스를 불러오는 중입니다...</p>
+                <p className="text-sm text-slate-600">
+                  앵커 레스를 불러오는 중입니다...
+                </p>
               ) : anchorModalError ? (
                 <p className="text-sm text-rose-700">{anchorModalError}</p>
               ) : (
@@ -567,12 +675,16 @@ export function PostItem({
                     >
                       <div className="flex flex-wrap items-center justify-between gap-2">
                         <p className="text-xs font-semibold text-sky-800">
-                          #{anchorPost.postOrder} {anchorPost.author || AnonymousAuthor}
+                          #{anchorPost.postOrder}{" "}
+                          {anchorPost.author || AnonymousAuthor}
                         </p>
                         <button
                           type="button"
                           onClick={() => {
-                            if (!anchorModalBoardKey || !anchorModalThreadIndex) {
+                            if (
+                              !anchorModalBoardKey ||
+                              !anchorModalThreadIndex
+                            ) {
                               return;
                             }
                             const href = `/board/${anchorModalBoardKey}/${String(anchorModalThreadIndex)}/${String(anchorPost.postOrder)}`;
@@ -611,7 +723,7 @@ export function PostItem({
 
       {isEditOpen ? (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/55 p-0 sm:p-4">
-          <div className="h-full w-full overflow-hidden border-0 bg-gradient-to-b from-white to-sky-50 shadow-2xl sm:h-auto sm:max-w-2xl sm:rounded-2xl sm:border sm:border-sky-200">
+          <div className="flex h-full max-h-[100dvh] w-full flex-col overflow-hidden border-0 bg-gradient-to-b from-white to-sky-50 shadow-2xl sm:h-auto sm:max-h-[calc(100dvh-2rem)] sm:max-w-2xl sm:rounded-2xl sm:border sm:border-sky-200">
             <div className="flex items-center justify-between border-b border-sky-100 bg-white/90 px-4 py-3 sm:px-5 sm:py-4">
               <h3 className="text-lg font-bold text-slate-900">레스 수정</h3>
               <button
@@ -625,7 +737,33 @@ export function PostItem({
               </button>
             </div>
 
-            <div className="space-y-3 overflow-y-auto p-4 pb-[calc(1rem+env(safe-area-inset-bottom))] sm:p-5">
+            <div className="flex-1 space-y-3 overflow-y-auto p-4 pb-[calc(1rem+env(safe-area-inset-bottom))] sm:p-5">
+              <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
+                {CONTENT_TYPE_TOKENS.map((contentType) => (
+                  <button
+                    key={contentType}
+                    type="button"
+                    onClick={() => {
+                      applyEditContentType(contentType);
+                    }}
+                    className={cn(
+                      "min-h-10 rounded-lg border px-2 text-xs font-semibold transition-colors",
+                      editContentTypeClassName === contentType
+                        ? "border-sky-500 bg-sky-500 text-white"
+                        : "border-slate-300 bg-white text-slate-700 hover:bg-slate-50",
+                    )}
+                  >
+                    {contentType === "text"
+                      ? "일반 텍스트"
+                      : contentType === "aa"
+                        ? "AA"
+                        : contentType === "novel"
+                          ? "소설"
+                          : "줄간격 크게"}
+                  </button>
+                ))}
+              </div>
+
               <input
                 type="text"
                 value={editCommand}
@@ -636,13 +774,20 @@ export function PostItem({
                 className="h-11 w-full rounded border border-sky-200 bg-slate-50 px-3 text-[15px] text-slate-900 placeholder:text-slate-500 focus:border-sky-400 focus:outline-none"
               />
               <textarea
+                ref={editContentRef}
+                onInput={resizeEditTextarea}
                 value={editContent}
                 onChange={(event) => {
                   setEditContent(event.target.value);
                 }}
                 rows={textareaRows}
                 placeholder="내용"
-                className="w-full resize-y rounded border border-sky-200 bg-slate-50 px-3 py-3 text-[15px] leading-relaxed text-slate-900 placeholder:text-slate-500 focus:border-sky-400 focus:outline-none"
+                className={cn(
+                  "contentInput w-full resize-y rounded border border-sky-200 bg-slate-50 px-3 py-3 text-[15px] leading-relaxed text-slate-900 placeholder:text-slate-500 focus:border-sky-400 focus:outline-none",
+                  editContentTypeClassName === "text"
+                    ? ""
+                    : editContentTypeClassName,
+                )}
               />
 
               <div className="flex gap-2 pt-1">

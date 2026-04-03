@@ -62,8 +62,32 @@ const MAX_IMAGE_COUNT = 10;
 const CONTENT_TYPE_DEBOUNCE_MS = 300;
 const AUTO_POST_DISMISS_ANIMATION_MS = 460;
 const DRAFT_SAVE_DEBOUNCE_MS = 400;
+const EDIT_TEXTAREA_MAX_ROWS = 30;
 
 type ParsedContentType = "text" | "aa" | "novel" | "line";
+const CONTENT_TYPE_TOKENS = ["text", "aa", "novel", "line"] as const;
+
+function setSingleContentTypeToken(
+  command: string,
+  selected: ParsedContentType,
+): string {
+  const filteredTokens = command
+    .split(".")
+    .map((value) => value.trim())
+    .filter(
+      (value) =>
+        value.length > 0 &&
+        !CONTENT_TYPE_TOKENS.includes(
+          value.toLowerCase() as (typeof CONTENT_TYPE_TOKENS)[number],
+        ),
+    );
+
+  if (selected === "text") {
+    return filteredTokens.join(".");
+  }
+
+  return [...filteredTokens, selected].join(".");
+}
 
 function toggleCommandToken(command: string, token: string): string {
   const normalizedToken = token.trim().toLowerCase();
@@ -184,6 +208,7 @@ export function AutoPostManagerClient({
 
   const [editingAutoPost, setEditingAutoPost] =
     useState<AutoPostPayload | null>(null);
+  const editContentRef = useRef<HTMLTextAreaElement | null>(null);
   const [fullscreenInlineImageUrl, setFullscreenInlineImageUrl] = useState<
     string | null
   >(null);
@@ -191,6 +216,10 @@ export function AutoPostManagerClient({
   const [editCommand, setEditCommand] = useState("");
   const [editContent, setEditContent] = useState("");
   const [isEditingSaving, setIsEditingSaving] = useState(false);
+  const editContentTypeClassName = useMemo(
+    () => parseContentType(editCommand),
+    [editCommand],
+  );
 
   const resizeTextarea = useCallback(() => {
     const textarea = contentRef.current;
@@ -328,6 +357,49 @@ export function AutoPostManagerClient({
       window.clearTimeout(timeoutId);
     };
   }, [command]);
+
+  const resizeEditTextarea = useCallback(() => {
+    const textarea = editContentRef.current;
+    if (!textarea) {
+      return;
+    }
+
+    const computedStyle = window.getComputedStyle(textarea);
+    const lineHeight = Number.parseFloat(computedStyle.lineHeight);
+    const paddingTop = Number.parseFloat(computedStyle.paddingTop) || 0;
+    const paddingBottom = Number.parseFloat(computedStyle.paddingBottom) || 0;
+    const resolvedLineHeight = Number.isFinite(lineHeight) ? lineHeight : 24;
+    const maxHeight =
+      resolvedLineHeight * EDIT_TEXTAREA_MAX_ROWS + paddingTop + paddingBottom;
+    textarea.style.maxHeight = `${maxHeight}px`;
+
+    textarea.style.height = "auto";
+    textarea.style.height = `${Math.min(textarea.scrollHeight, maxHeight)}px`;
+    textarea.style.overflowY = textarea.scrollHeight > maxHeight ? "auto" : "hidden";
+  }, []);
+
+  useEffect(() => {
+    if (!editingAutoPost) {
+      return;
+    }
+
+    resizeEditTextarea();
+  }, [editContent, editingAutoPost, resizeEditTextarea, textareaRows]);
+
+  useEffect(() => {
+    if (!editingAutoPost) {
+      return;
+    }
+
+    const handleResize = () => {
+      resizeEditTextarea();
+    };
+
+    window.addEventListener("resize", handleResize);
+    return () => {
+      window.removeEventListener("resize", handleResize);
+    };
+  }, [editingAutoPost, resizeEditTextarea]);
 
   const syncSelectedImages = useCallback((files: File[]) => {
     const input = imageInputRef.current;
@@ -598,6 +670,10 @@ export function AutoPostManagerClient({
     setEditAuthor(autoPost.author);
     setEditCommand(autoPost.contentType === "text" ? "" : autoPost.contentType);
     setEditContent(autoPost.rawContent);
+  }, []);
+
+  const applyEditContentType = useCallback((contentType: ParsedContentType) => {
+    setEditCommand((current) => setSingleContentTypeToken(current, contentType));
   }, []);
 
   const submitEdit = useCallback(async () => {
@@ -1317,7 +1393,7 @@ export function AutoPostManagerClient({
 
       {editingAutoPost ? (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/55 p-0 sm:p-4">
-          <div className="h-full w-full overflow-hidden border-0 bg-gradient-to-b from-white to-sky-50 shadow-2xl sm:h-auto sm:max-w-2xl sm:rounded-2xl sm:border sm:border-sky-200">
+          <div className="flex h-full max-h-[100dvh] w-full flex-col overflow-hidden border-0 bg-gradient-to-b from-white to-sky-50 shadow-2xl sm:h-auto sm:max-h-[calc(100dvh-2rem)] sm:max-w-2xl sm:rounded-2xl sm:border sm:border-sky-200">
             <div className="flex items-center justify-between border-b border-sky-100 bg-white/90 px-4 py-3 sm:px-5 sm:py-4">
               <h3 className="text-lg font-bold text-slate-900">
                 자동투하 레스 수정
@@ -1333,7 +1409,33 @@ export function AutoPostManagerClient({
               </button>
             </div>
 
-            <div className="space-y-2 overflow-y-auto p-3 pb-[calc(0.65rem+env(safe-area-inset-bottom))] sm:space-y-3 sm:p-5">
+            <div className="flex-1 space-y-2 overflow-y-auto p-3 pb-[calc(0.65rem+env(safe-area-inset-bottom))] sm:space-y-3 sm:p-5">
+              <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
+                {CONTENT_TYPE_TOKENS.map((contentType) => (
+                  <button
+                    key={contentType}
+                    type="button"
+                    onClick={() => {
+                      applyEditContentType(contentType);
+                    }}
+                    className={cn(
+                      "min-h-10 rounded-lg border px-2 text-xs font-semibold transition-colors",
+                      editContentTypeClassName === contentType
+                        ? "border-sky-500 bg-sky-500 text-white"
+                        : "border-slate-300 bg-white text-slate-700 hover:bg-slate-50",
+                    )}
+                  >
+                    {contentType === "text"
+                      ? "일반 텍스트"
+                      : contentType === "aa"
+                        ? "AA"
+                        : contentType === "novel"
+                          ? "소설"
+                          : "줄간격 크게"}
+                  </button>
+                ))}
+              </div>
+
               <input
                 type="text"
                 value={editAuthor}
@@ -1353,13 +1455,18 @@ export function AutoPostManagerClient({
                 className="h-9 w-full rounded border border-sky-200 bg-slate-50 px-2.5 text-[13px] text-slate-900 placeholder:text-slate-500 focus:border-sky-400 focus:outline-none sm:h-11 sm:px-3 sm:text-[15px]"
               />
               <textarea
+                ref={editContentRef}
+                onInput={resizeEditTextarea}
                 value={editContent}
                 onChange={(event) => {
                   setEditContent(event.target.value);
                 }}
                 rows={textareaRows}
                 placeholder="내용"
-                className="w-full resize-y rounded border border-sky-200 bg-slate-50 px-2.5 py-2 text-[13px] leading-relaxed text-slate-900 placeholder:text-slate-500 focus:border-sky-400 focus:outline-none sm:px-3 sm:py-3 sm:text-[15px]"
+                className={cn(
+                  "contentInput w-full resize-y rounded border border-sky-200 bg-slate-50 px-2.5 py-2 text-[13px] leading-relaxed text-slate-900 placeholder:text-slate-500 focus:border-sky-400 focus:outline-none sm:px-3 sm:py-3 sm:text-[15px]",
+                  editContentTypeClassName === "text" ? "" : editContentTypeClassName,
+                )}
               />
 
               <div className="flex gap-2 pt-1">
