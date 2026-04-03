@@ -9,10 +9,10 @@ const healthcheckUrl =
 module.exports = {
   apps: [
     {
-      name: "moonshineland-web",
+      name: "moonshineland2",
       cwd: ".",
       script: "npm",
-      args: "run start",
+      args: "start",
       instances: 1,
       autorestart: true,
       max_memory_restart: "700M",
@@ -22,7 +22,7 @@ module.exports = {
       },
     },
     {
-      name: "moonshineland-autopost-cron",
+      name: "moonshineland2-cron",
       cwd: ".",
       script: "npm",
       args: "run autopost:caller",
