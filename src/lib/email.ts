@@ -17,13 +17,25 @@ const transporter = nodemailer.createTransport({
   },
 });
 
+function getAppBaseUrl(): string {
+  const rawBaseUrl =
+    process.env.NEXT_PUBLIC_BASE_URL?.trim() || "http://localhost:3000";
+
+  const hasProtocol = /^https?:\/\//i.test(rawBaseUrl);
+  const fallbackProtocol = process.env.NODE_ENV === "production" ? "https" : "http";
+  const normalized = hasProtocol
+    ? rawBaseUrl
+    : `${fallbackProtocol}://${rawBaseUrl}`;
+
+  return normalized.replace(/\/+$/, "");
+}
+
 export async function sendVerificationEmail(
   to: string,
   token: string,
 ): Promise<void> {
-  const baseUrl =
-    process.env.NEXT_PUBLIC_BASE_URL ?? "http://localhost:3000";
-  const verifyUrl = `${baseUrl}/api/auth/verify-email?token=${encodeURIComponent(token)}`;
+  const verifyUrl = new URL("/api/auth/verify-email", `${getAppBaseUrl()}/`);
+  verifyUrl.searchParams.set("token", token);
 
   await transporter.sendMail({
     from: process.env.SMTP_FROM?.trim() || smtpUser,
@@ -32,7 +44,7 @@ export async function sendVerificationEmail(
     text: [
       "문샤인랜드 회원가입을 완료하려면 아래 링크를 클릭하세요.",
       "",
-      verifyUrl,
+      verifyUrl.toString(),
       "",
       "이 링크는 1시간 후에 만료됩니다.",
       "본인이 요청하지 않은 경우 이 메일을 무시하세요.",
@@ -40,7 +52,7 @@ export async function sendVerificationEmail(
     html: `
       <p>문샤인랜드 회원가입을 완료하려면 아래 버튼을 클릭하세요.</p>
       <p>
-        <a href="${verifyUrl}"
+        <a href="${verifyUrl.toString()}"
            style="display:inline-block;padding:10px 20px;background:#0ea5e9;color:#fff;border-radius:6px;text-decoration:none;font-weight:600;">
           이메일 인증하기
         </a>
@@ -57,9 +69,8 @@ export async function sendPasswordResetEmail(
   to: string,
   token: string,
 ): Promise<void> {
-  const baseUrl =
-    process.env.NEXT_PUBLIC_BASE_URL ?? "http://localhost:3000";
-  const resetUrl = `${baseUrl}/reset-password?token=${encodeURIComponent(token)}`;
+  const resetUrl = new URL("/reset-password", `${getAppBaseUrl()}/`);
+  resetUrl.searchParams.set("token", token);
 
   await transporter.sendMail({
     from: process.env.SMTP_FROM?.trim() || smtpUser,
@@ -68,7 +79,7 @@ export async function sendPasswordResetEmail(
     text: [
       "문샤인랜드 비밀번호를 재설정하려면 아래 링크를 클릭하세요.",
       "",
-      resetUrl,
+      resetUrl.toString(),
       "",
       "이 링크는 1시간 후에 만료됩니다.",
       "본인이 요청하지 않은 경우 이 메일을 무시하세요.",
@@ -76,7 +87,7 @@ export async function sendPasswordResetEmail(
     html: `
       <p>문샤인랜드 비밀번호를 재설정하려면 아래 버튼을 클릭하세요.</p>
       <p>
-        <a href="${resetUrl}"
+        <a href="${resetUrl.toString()}"
            style="display:inline-block;padding:10px 20px;background:#0ea5e9;color:#fff;border-radius:6px;text-decoration:none;font-weight:600;">
           비밀번호 재설정하기
         </a>
