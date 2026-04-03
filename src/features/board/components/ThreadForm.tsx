@@ -286,6 +286,20 @@ export function ThreadForm({
     setIsAutosizeEnabled((current) => !current);
   }, []);
 
+  const handleToggleChat = useCallback(() => {
+    setIsChat((current) => !current);
+  }, []);
+
+  const handleToggleAdultOnly = useCallback(() => {
+    if (!isAdultOnly && !isAdultVerified) {
+      toast.error("성인인증이 필요합니다.");
+      moveToAdultRequiredPage();
+      return;
+    }
+
+    setIsAdultOnly((current) => !current);
+  }, [isAdultOnly, isAdultVerified, moveToAdultRequiredPage]);
+
   const handleToggleCommandToken = useCallback((token: "aa" | "novel") => {
     setCommand((current) => toggleCommandToken(current, token));
   }, []);
@@ -446,24 +460,16 @@ export function ThreadForm({
 
           <div className="flex flex-col gap-2 sm:gap-3">
             <div className="grid gap-1.5 rounded-2xl border border-sky-200 bg-[linear-gradient(180deg,_rgba(240,249,255,1),_rgba(248,250,252,1))] p-2 text-[13px] text-slate-700 sm:grid-cols-2 sm:gap-2 sm:p-3 sm:text-[15px]">
-              <label
+              <button
+                type="button"
                 className={cn(
                   "cursor-pointer rounded-xl border px-3 py-2.5 transition sm:px-4 sm:py-3",
                   isChat
                     ? "border-amber-300 bg-amber-50 text-amber-700 shadow-sm"
                     : "border-slate-200 bg-white text-slate-600 hover:border-amber-200 hover:bg-amber-50/50",
                 )}
+                onClick={handleToggleChat}
               >
-                <input
-                  name="isChat"
-                  type="checkbox"
-                  value="true"
-                  checked={isChat}
-                  onChange={(event) => {
-                    setIsChat(event.target.checked);
-                  }}
-                  className="sr-only"
-                />
                 <span className="flex items-center justify-between gap-3">
                   <span>
                     <span className="block text-sm font-semibold">잡담판</span>
@@ -485,32 +491,18 @@ export function ThreadForm({
                     />
                   </span>
                 </span>
-              </label>
+              </button>
 
-              <label
+              <button
+                type="button"
                 className={cn(
                   "cursor-pointer rounded-xl border px-3 py-2.5 transition sm:px-4 sm:py-3",
                   isAdultOnly
                     ? "border-rose-300 bg-rose-50 text-rose-700 shadow-sm"
                     : "border-slate-200 bg-white text-slate-600 hover:border-rose-200 hover:bg-rose-50/50",
                 )}
+                onClick={handleToggleAdultOnly}
               >
-                <input
-                  name="isAdultOnly"
-                  type="checkbox"
-                  value="true"
-                  checked={isAdultOnly}
-                  onChange={(event) => {
-                    const nextChecked = event.target.checked;
-                    if (nextChecked && !isAdultVerified) {
-                      toast.error("성인인증이 필요합니다.");
-                      moveToAdultRequiredPage();
-                      return;
-                    }
-                    setIsAdultOnly(nextChecked);
-                  }}
-                  className="sr-only"
-                />
                 <span className="flex items-center justify-between gap-3">
                   <span>
                     <span className="block text-sm font-semibold">성인만</span>
@@ -532,8 +524,14 @@ export function ThreadForm({
                     />
                   </span>
                 </span>
-              </label>
+              </button>
             </div>
+            <input name="isChat" type="hidden" value={isChat ? "true" : "false"} />
+            <input
+              name="isAdultOnly"
+              type="hidden"
+              value={isAdultOnly ? "true" : "false"}
+            />
             <input
               name="title"
               type="text"
