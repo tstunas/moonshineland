@@ -1,6 +1,21 @@
 import { AnonymousAuthor } from "@/lib/constants";
 import { cn } from "@/lib/cn";
 import type { Thread } from "@/types/thread";
+import { createAuthorWithTripcode } from "../lib/createAuthorWithTripcode";
+
+function formatAuthorLabelAllowBoldOnly(rawLabel: string): string {
+  const escaped = rawLabel
+    .replaceAll("&", "&amp;")
+    .replaceAll("<", "&lt;")
+    .replaceAll(">", "&gt;")
+    .replaceAll('"', "&quot;")
+    .replaceAll("'", "&#39;");
+
+  return escaped
+    .replaceAll(/&lt;b&gt;/gi, "<b>")
+    .replaceAll(/&lt;\/b&gt;/gi, "</b>");
+}
+
 
 function formatThreadDate(value: Date | string): string {
   const date = value instanceof Date ? value : new Date(value);
@@ -16,7 +31,7 @@ function formatThreadDate(value: Date | string): string {
 }
 
 export function ThreadHeader({ thread }: { thread: Thread }) {
-  const author = thread.author || AnonymousAuthor;
+  const authorLabel = formatAuthorLabelAllowBoldOnly(createAuthorWithTripcode(thread.author || AnonymousAuthor));
   const threadBadges = [
     {
       key: thread.isChat ? "chat" : "serial",
@@ -57,7 +72,7 @@ export function ThreadHeader({ thread }: { thread: Thread }) {
       </h1>
 
       <p className="mt-2 text-[15px] leading-tight text-sky-800">
-        {author}
+        <span dangerouslySetInnerHTML={{ __html: authorLabel }} />
         {thread.idcode ? (
           <span className="ml-1 text-[13px] text-slate-500">
             ({thread.idcode})
