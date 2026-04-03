@@ -18,16 +18,34 @@ const transporter = nodemailer.createTransport({
 });
 
 function getAppBaseUrl(): string {
-  const rawBaseUrl =
-    process.env.NEXT_PUBLIC_BASE_URL?.trim() || "http://localhost:3000";
-
-  const hasProtocol = /^https?:\/\//i.test(rawBaseUrl);
   const fallbackProtocol = process.env.NODE_ENV === "production" ? "https" : "http";
-  const normalized = hasProtocol
-    ? rawBaseUrl
-    : `${fallbackProtocol}://${rawBaseUrl}`;
+  // 서버 코드에서는 NEXT_PUBLIC보다 BASE_URL을 우선 사용해 빌드/런타임 불일치 위험을 줄인다.
+  const candidates = [
+    process.env.BASE_URL,
+    process.env.NEXT_PUBLIC_BASE_URL,
+    process.env.VERCEL_URL,
+  ];
 
-  return normalized.replace(/\/+$/, "");
+  for (const candidate of candidates) {
+    const value = candidate?.trim();
+    if (!value) {
+      continue;
+    }
+
+    const hasProtocol = /^https?:\/\//i.test(value);
+    const normalized = hasProtocol ? value : `${fallbackProtocol}://${value}`;
+
+    try {
+      const parsed = new URL(normalized);
+      if (parsed.hostname) {
+        return parsed.origin;
+      }
+    } catch {
+      // invalid candidate; try next one
+    }
+  }
+
+  return "http://localhost:3000";
 }
 
 export async function sendVerificationEmail(
