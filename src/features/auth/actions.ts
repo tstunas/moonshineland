@@ -17,6 +17,7 @@ export interface AuthActionResult {
 }
 
 const PASSWORD_RESET_TOKEN_EXPIRES_MS = 60 * 60 * 1000;
+const EMAIL_VERIFICATION_TOKEN_EXPIRES_MS = 60 * 60 * 1000;
 
 async function issuePasswordResetEmailForUser(
   userId: number,
@@ -35,6 +36,25 @@ async function issuePasswordResetEmailForUser(
   });
 
   await sendPasswordResetEmail(email, token);
+}
+
+async function issueVerificationEmailForUser(
+  userId: number,
+  email: string,
+): Promise<void> {
+  const token = crypto.randomBytes(32).toString("hex");
+  const tokenHash = crypto.createHash("sha256").update(token).digest("hex");
+  const expiresAt = new Date(Date.now() + EMAIL_VERIFICATION_TOKEN_EXPIRES_MS);
+
+  await prisma.user.update({
+    where: { id: userId },
+    data: {
+      emailVerificationTokenHash: tokenHash,
+      emailVerificationExpiresAt: expiresAt,
+    },
+  });
+
+  await sendVerificationEmail(email, token);
 }
 
 const ACCESS_TOKEN_COOKIE = {
@@ -186,16 +206,16 @@ export async function signupAction(
     ]);
 
     if (existingEmailUser) {
-      // 만료된 미인증 계정이면 재사용 허용
-      if (
-        !existingEmailUser.emailVerifiedAt &&
-        existingEmailUser.emailVerificationExpiresAt &&
-        existingEmailUser.emailVerificationExpiresAt < new Date()
-      ) {
-        await prisma.user.delete({ where: { id: existingEmailUser.id } });
-      } else {
+      if (existingEmailUser.emailVerifiedAt) {
         return { success: false, message: "이미 가입된 이메일입니다." };
       }
+
+      await issueVerificationEmailForUser(existingEmailUser.id, existingEmailUser.email);
+
+      return {
+        success: true,
+        message: "이미 가입된 미인증 계정입니다. 인증 메일을 다시 전송했습니다.",
+      };
     }
 
     if (existingUsernameUser) {
@@ -210,17 +230,9 @@ export async function signupAction(
       }
     }
 
-    // 만료된 미인증 계정 일괄 정리 (opportunistic)
-    await prisma.user.deleteMany({
-      where: {
-        emailVerifiedAt: null,
-        emailVerificationExpiresAt: { lt: new Date() },
-      },
-    });
-
     const token = crypto.randomBytes(32).toString("hex");
     const tokenHash = crypto.createHash("sha256").update(token).digest("hex");
-    const expiresAt = new Date(Date.now() + 60 * 60 * 1000); // 1시간
+    const expiresAt = new Date(Date.now() + EMAIL_VERIFICATION_TOKEN_EXPIRES_MS);
 
     const passwordHash = await bcrypt.hash(password, 10);
 
