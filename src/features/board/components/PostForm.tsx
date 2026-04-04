@@ -219,26 +219,27 @@ export function PostForm({
     }
 
     try {
-      const previousMuted = audio.muted;
-      const previousVolume = audio.volume;
       audio.muted = true;
       audio.volume = 0;
       audio.currentTime = 0;
       await audio.play();
-      audio.pause();
-      audio.currentTime = 0;
-      audio.volume = previousVolume;
-      audio.muted = previousMuted;
       setIsAudioUnlocked(true);
       return true;
     } catch {
       return false;
+    } finally {
+      audio.pause();
+      audio.currentTime = 0;
+      audio.muted = false;
+      audio.volume = 1;
     }
   }, [isAudioUnlocked]);
 
   useEffect(() => {
     const audio = new Audio("/sound/post-sound.mp3");
     audio.preload = "auto";
+    audio.muted = false;
+    audio.volume = 1;
     refreshAudioRef.current = audio;
 
     void unlockRefreshAudio();

@@ -20,6 +20,10 @@ import {
   PREFS_FILTER_INCLUDE_ADULT_COOKIE,
   PREFS_PRIMARY_BOARD,
   PREFS_SOUND_ENABLED,
+  PREFS_REPLY_ALARM_VOLUME,
+  REPLY_ALARM_VOLUME_DEFAULT,
+  REPLY_ALARM_VOLUME_MAX,
+  REPLY_ALARM_VOLUME_MIN,
   PREFS_TOAST_SIZE,
   TOAST_SIZE_DEFAULT,
   TOAST_SIZE_MAX,
@@ -117,11 +121,13 @@ function DragSlider({
   onChange,
   min = TOAST_SIZE_MIN,
   max = TOAST_SIZE_MAX,
+  unit = "px",
 }: {
   value: number;
   onChange: (v: number) => void;
   min?: number;
   max?: number;
+  unit?: string;
 }) {
   const trackRef = useRef<HTMLDivElement>(null);
   const isDragging = useRef(false);
@@ -195,9 +201,18 @@ function DragSlider({
       </div>
       {/* 레이블 */}
       <div className="mt-1.5 flex justify-between text-xs text-slate-400">
-        <span>작게 ({min}px)</span>
-        <span className="font-semibold text-indigo-600">{value}px</span>
-        <span>크게 ({max}px)</span>
+        <span>
+          작게 ({min}
+          {unit})
+        </span>
+        <span className="font-semibold text-indigo-600">
+          {value}
+          {unit}
+        </span>
+        <span>
+          크게 ({max}
+          {unit})
+        </span>
       </div>
     </div>
   );
@@ -298,6 +313,19 @@ export default function PreferencesPage() {
       typeof window !== "undefined" &&
       window.localStorage.getItem(PREFS_SOUND_ENABLED) === "1",
   );
+  const [replyAlarmVolume, setReplyAlarmVolume] = useState(() => {
+    if (typeof window === "undefined") return REPLY_ALARM_VOLUME_DEFAULT;
+    const stored = window.localStorage.getItem(PREFS_REPLY_ALARM_VOLUME);
+    const parsed = stored ? Number(stored) : REPLY_ALARM_VOLUME_DEFAULT;
+    if (Number.isNaN(parsed)) {
+      return REPLY_ALARM_VOLUME_DEFAULT;
+    }
+
+    return Math.min(
+      Math.max(parsed, REPLY_ALARM_VOLUME_MIN),
+      REPLY_ALARM_VOLUME_MAX,
+    );
+  });
   const [toastSize, setToastSize] = useState(() => {
     if (typeof window === "undefined") return TOAST_SIZE_DEFAULT;
     const stored = window.localStorage.getItem(PREFS_TOAST_SIZE);
@@ -335,6 +363,15 @@ export default function PreferencesPage() {
   const saveSoundEnabled = (val: boolean) => {
     setSoundEnabled(val);
     window.localStorage.setItem(PREFS_SOUND_ENABLED, val ? "1" : "0");
+  };
+
+  const saveReplyAlarmVolume = (val: number) => {
+    const clamped = Math.min(
+      Math.max(Math.round(val), REPLY_ALARM_VOLUME_MIN),
+      REPLY_ALARM_VOLUME_MAX,
+    );
+    setReplyAlarmVolume(clamped);
+    window.localStorage.setItem(PREFS_REPLY_ALARM_VOLUME, String(clamped));
   };
 
   const saveToastSize = (val: number) => {
@@ -383,6 +420,7 @@ export default function PreferencesPage() {
     window.localStorage.removeItem(PREFS_FILTER_COLLAPSED);
     window.localStorage.removeItem(PREFS_BOARD_CONTENT_WIDTH);
     window.localStorage.removeItem(PREFS_SOUND_ENABLED);
+    window.localStorage.removeItem(PREFS_REPLY_ALARM_VOLUME);
     window.localStorage.removeItem(PREFS_TOAST_SIZE);
     document.cookie = `${PREFS_BOARD_CONTENT_WIDTH_COOKIE}=; path=/; max-age=0; samesite=lax`;
     document.cookie = `${PREFS_FILTER_INCLUDE_ADULT_COOKIE}=; path=/; max-age=0; samesite=lax`;
@@ -392,6 +430,7 @@ export default function PreferencesPage() {
     setBoardContentWidth(BOARD_CONTENT_WIDTH_DEFAULT);
     setHideImages(true);
     setSoundEnabled(false);
+    setReplyAlarmVolume(REPLY_ALARM_VOLUME_DEFAULT);
     saveToastSize(TOAST_SIZE_DEFAULT);
   };
 
@@ -572,6 +611,22 @@ export default function PreferencesPage() {
         >
           <Toggle checked={soundEnabled} onChange={saveSoundEnabled} />
         </SettingRow>
+
+        <div className="border-t border-slate-100 pt-4">
+          <p className="mb-3 text-sm font-medium text-slate-700">
+            새 레스 알림 볼륨
+          </p>
+          <DragSlider
+            value={replyAlarmVolume}
+            onChange={saveReplyAlarmVolume}
+            min={REPLY_ALARM_VOLUME_MIN}
+            max={REPLY_ALARM_VOLUME_MAX}
+            unit="%"
+          />
+          <p className="mt-2 text-xs text-slate-500">
+            100%는 기본 크기, 200%는 약 2배 크기입니다.
+          </p>
+        </div>
 
         <div className="border-t border-slate-100 pt-4">
           <p className="mb-3 text-sm font-medium text-slate-700">

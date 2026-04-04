@@ -50,6 +50,14 @@ export const PREFS_FILTER_COLLAPSED = "moonshineland:board:filters:collapsed";
 /** 새 투고 알림 사운드 활성화 여부 */
 export const PREFS_SOUND_ENABLED = "moonshine:post:soundEnabled";
 
+/** 새 레스 알림 볼륨 (0~200 정수, 100이 기본) */
+export const PREFS_REPLY_ALARM_VOLUME =
+  "moonshineland:preferences:reply-alarm-volume";
+
+export const REPLY_ALARM_VOLUME_MIN = 0;
+export const REPLY_ALARM_VOLUME_MAX = 200;
+export const REPLY_ALARM_VOLUME_DEFAULT = 100;
+
 // ============================================================================
 // 토스트 크기 범위
 // ============================================================================

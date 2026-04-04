@@ -11,6 +11,12 @@ import {
   clearHeaderPresence,
   setHeaderPresence,
 } from "@/components/layout/headerPresenceStore";
+import {
+  PREFS_REPLY_ALARM_VOLUME,
+  REPLY_ALARM_VOLUME_DEFAULT,
+  REPLY_ALARM_VOLUME_MAX,
+  REPLY_ALARM_VOLUME_MIN,
+} from "@/lib/preferences";
 
 import { PostForm } from "./PostForm";
 import { PostItem } from "./PostItem";
@@ -45,6 +51,7 @@ export function ThreadLiveClient({
     initialReceiveNewPosts,
   );
   const [isReplyAlertEnabled, setIsReplyAlertEnabled] = useState(true);
+  const [replyAlarmVolume, setReplyAlarmVolume] = useState(1);
   const [isBottomLockEnabled, setIsBottomLockEnabled] = useState(false);
   const [isAdminMode, setIsAdminMode] = useState(false);
   const postsRef = useRef(posts);
@@ -55,6 +62,7 @@ export function ThreadLiveClient({
   const audioContextRef = useRef<AudioContext | null>(null);
 
   const bottomLockStorageKey = `moonshineland:thread-bottom-lock:${boardKey}:${initialThread.threadIndex}`;
+  const replyAlarmVolumeStorageKey = `moonshineland:thread-reply-alarm-volume:${boardKey}:${initialThread.threadIndex}`;
 
   const isFormVisibleInViewport = useCallback(() => {
     const formElement = postFormContainerRef.current;
@@ -81,10 +89,14 @@ export function ThreadLiveClient({
       const now = context.currentTime;
       const oscillator = context.createOscillator();
       const gain = context.createGain();
+      const clampedVolume = Math.min(Math.max(replyAlarmVolume, 0), 2);
       oscillator.type = "triangle";
       oscillator.frequency.setValueAtTime(880, now);
       gain.gain.setValueAtTime(0.0001, now);
-      gain.gain.exponentialRampToValueAtTime(0.18, now + 0.02);
+      gain.gain.exponentialRampToValueAtTime(
+        Math.max(0.01, 0.22 * clampedVolume),
+        now + 0.02,
+      );
       gain.gain.exponentialRampToValueAtTime(0.0001, now + 0.2);
       oscillator.connect(gain);
       gain.connect(context.destination);
@@ -93,7 +105,7 @@ export function ThreadLiveClient({
     } catch {
       // 일부 브라우저 정책으로 소리가 차단될 수 있음
     }
-  }, []);
+  }, [replyAlarmVolume]);
 
   const scrollToBottom = useCallback(() => {
     const scroller = rootContainerRef.current?.closest("main") ?? null;
@@ -244,6 +256,43 @@ export function ThreadLiveClient({
     const stored = window.localStorage.getItem(bottomLockStorageKey);
     setIsBottomLockEnabled(stored === "1");
   }, [bottomLockStorageKey]);
+
+  useEffect(() => {
+    const stored = window.localStorage.getItem(PREFS_REPLY_ALARM_VOLUME);
+    if (stored != null) {
+      const parsed = Number(stored);
+      if (!Number.isNaN(parsed)) {
+        const clamped = Math.min(
+          Math.max(parsed, REPLY_ALARM_VOLUME_MIN),
+          REPLY_ALARM_VOLUME_MAX,
+        );
+        setReplyAlarmVolume(clamped / 100);
+        return;
+      }
+    }
+
+    // 기존 스레드별 볼륨 값을 개인선호설정으로 1회 마이그레이션
+    const legacyStored = window.localStorage.getItem(replyAlarmVolumeStorageKey);
+    if (legacyStored == null) {
+      setReplyAlarmVolume(REPLY_ALARM_VOLUME_DEFAULT / 100);
+      return;
+    }
+
+    const legacyParsed = Number(legacyStored);
+    if (Number.isNaN(legacyParsed)) {
+      setReplyAlarmVolume(REPLY_ALARM_VOLUME_DEFAULT / 100);
+      return;
+    }
+
+    const migratedPercent = Math.round(
+      Math.min(Math.max(legacyParsed, 0), 1) * 100,
+    );
+    window.localStorage.setItem(
+      PREFS_REPLY_ALARM_VOLUME,
+      String(migratedPercent),
+    );
+    setReplyAlarmVolume(migratedPercent / 100);
+  }, [replyAlarmVolumeStorageKey]);
 
   const { userCount, setReceiveNewPosts, connectionStatus } = useThreadSse(
     boardKey,
