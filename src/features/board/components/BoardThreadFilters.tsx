@@ -67,7 +67,7 @@ export function BoardThreadFilters({
 
     return window.localStorage.getItem(PREFS_FILTER_INCLUDE_ADULT) === "1";
   });
-  const [isCollapsed, setIsCollapsed] = useState(true);
+  const [isCollapsed, setIsCollapsed] = useState(false);
   const deferredTitleValue = useDeferredValue(titleValue);
   const deferredAuthorValue = useDeferredValue(authorValue);
   const hasHydratedRef = useRef(false);
