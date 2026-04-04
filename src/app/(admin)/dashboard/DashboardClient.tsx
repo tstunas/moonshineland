@@ -376,7 +376,7 @@ export default function DashboardClient({
       <section className="rounded-2xl border border-slate-300 bg-white p-4 shadow-sm sm:p-5">
         <div className="flex flex-wrap items-center justify-between gap-3">
           <div>
-            <h2 className="text-lg font-bold text-slate-900">검색 및 필터</h2>
+            <h2 className="text-lg font-bold text-slate-900">검색 및 조건 설정</h2>
             <p className="text-xs text-slate-500">
               유저, 게시판, 스레드, 레스 목록을 조건별로 좁혀서 관리할 수 있습니다.
             </p>
@@ -385,7 +385,7 @@ export default function DashboardClient({
             onClick={handleResetFilters}
             className="rounded-md border border-slate-300 bg-white px-3 py-1.5 text-xs font-semibold text-slate-700 hover:bg-slate-50"
           >
-            필터 초기화
+            조건 초기화
           </button>
         </div>
 
@@ -488,7 +488,7 @@ export default function DashboardClient({
               disabled={isLoading}
               className="rounded-md border border-sky-700 bg-sky-600 px-4 py-2 text-sm font-semibold text-white hover:bg-sky-700 disabled:opacity-50"
             >
-              {isLoading ? "로드 중..." : "필터 적용"}
+              {isLoading ? "로드 중..." : "조건 적용"}
             </button>
           </div>
         </form>
@@ -540,14 +540,14 @@ export default function DashboardClient({
           className="rounded-xl border border-slate-300 bg-white px-4 py-4 shadow-sm transition hover:-translate-y-0.5 hover:shadow"
         >
           <p className="text-sm font-bold text-slate-900">스레드 상세 관리</p>
-          <p className="mt-1 text-xs leading-5 text-slate-600">검색, 타입 필터, 일괄 공개/숨김 변경</p>
+          <p className="mt-1 text-xs leading-5 text-slate-600">검색, 타입 조건, 일괄 공개/숨김 변경</p>
         </Link>
         <Link
           href="/dashboard/posts"
           className="rounded-xl border border-slate-300 bg-white px-4 py-4 shadow-sm transition hover:-translate-y-0.5 hover:shadow"
         >
           <p className="text-sm font-bold text-slate-900">레스 상세 관리</p>
-          <p className="mt-1 text-xs leading-5 text-slate-600">검색, 콘텐츠 필터, 일괄 공개/숨김 변경</p>
+          <p className="mt-1 text-xs leading-5 text-slate-600">검색, 콘텐츠 조건, 일괄 공개/숨김 변경</p>
         </Link>
       </section>
 

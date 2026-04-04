@@ -293,7 +293,7 @@ export default function PreferencesPage() {
 
   // ── 닉네임 ────────────────────────────────────────────────────────────────
 
-  // ── 게시판 필터 ────────────────────────────────────────────────────────────
+  // ── 게시판 검색 조건 ────────────────────────────────────────────────────────────
   const [includeAdult, setIncludeAdult] = useState(
     readIncludeAdultPreference,
   );
@@ -474,10 +474,10 @@ export default function PreferencesPage() {
         </div>
       </Section>
 
-      {/* ── 게시판 필터 ────────────────────────────────────────────────── */}
+      {/* ── 게시판 검색 조건 ────────────────────────────────────────────────── */}
       <Section
-        title="게시판 필터"
-        description="스레드 목록 필터의 기본 상태를 설정합니다."
+        title="게시판 검색 패널"
+        description="스레드 목록 검색 패널의 기본 상태를 설정합니다."
       >
         <SettingRow
           label="성인 콘텐츠 기본 표시"
@@ -486,8 +486,8 @@ export default function PreferencesPage() {
           <Toggle checked={includeAdult} onChange={saveIncludeAdult} />
         </SettingRow>
         <SettingRow
-          label="필터 패널 기본으로 접기"
-          description="게시판 접속 시 필터 패널이 닫힌 상태로 표시됩니다."
+          label="스레드 검색 패널 기본으로 접기"
+          description="게시판 접속 시 스레드 검색 패널이 닫힌 상태로 표시됩니다."
         >
           <Toggle checked={filterCollapsed} onChange={saveFilterCollapsed} />
         </SettingRow>

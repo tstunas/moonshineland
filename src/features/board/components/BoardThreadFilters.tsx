@@ -324,7 +324,7 @@ export function BoardThreadFilters({
             Thread Finder
           </p>
           <h2 className="mt-1 text-xl font-semibold tracking-tight text-slate-900 lg:text-lg">
-            스레드 목록 필터
+            스레드 검색
           </h2>
           <p className="mt-0.5 text-xs text-slate-600">
             현재 조건으로 {totalThreads}개의 스레드를 보고 있습니다.
@@ -344,7 +344,7 @@ export function BoardThreadFilters({
             }}
             className="inline-flex min-h-11 items-center gap-2 rounded-full border border-slate-300 bg-white/85 px-3 py-1.5 text-xs font-semibold text-slate-700 shadow-sm transition hover:border-slate-400 hover:bg-white lg:min-h-9"
           >
-            <span>{isCollapsed ? "필터 펼치기" : "필터 접기"}</span>
+            <span>{isCollapsed ? "펼치기" : "접기"}</span>
             <span
               className={cn(
                 "inline-block text-[10px] transition-transform",
@@ -370,7 +370,7 @@ export function BoardThreadFilters({
             {filter.removable ? (
               <button
                 type="button"
-                aria-label={`${filter.label} 필터 해제`}
+                aria-label={`${filter.label} 검색 조건 해제`}
                 onClick={filter.onRemove}
                 className="inline-flex h-6 w-6 items-center justify-center rounded-full bg-black/5 text-[10px] leading-none transition hover:bg-black/10 sm:h-4 sm:w-4"
               >

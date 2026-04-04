@@ -36,15 +36,15 @@ export function normalizeBoardContentWidthPreference(
 // 기존 컴포넌트와 공유하는 키 (재사용 목적)
 // ============================================================================
 
-/** 게시판 필터: 성인 콘텐츠 포함 여부 */
+/** 게시판 검색 조건: 성인 콘텐츠 포함 여부 */
 export const PREFS_FILTER_INCLUDE_ADULT =
   "moonshineland:board:filters:includeAdultOnly";
 
-/** 게시판 필터: 성인 콘텐츠 포함 여부 SSR 동기화를 위한 쿠키 키 */
+/** 게시판 검색 조건: 성인 콘텐츠 포함 여부 SSR 동기화를 위한 쿠키 키 */
 export const PREFS_FILTER_INCLUDE_ADULT_COOKIE =
   "moonshineland_pref_filter_include_adult";
 
-/** 게시판 필터: 필터 패널 접힘 상태 */
+/** 게시판 검색 조건: 검색 조건 패널 접힘 상태 */
 export const PREFS_FILTER_COLLAPSED = "moonshineland:board:filters:collapsed";
 
 /** 새 투고 알림 사운드 활성화 여부 */
