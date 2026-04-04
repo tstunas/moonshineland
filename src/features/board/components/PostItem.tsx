@@ -200,7 +200,7 @@ export function PostItem({
   const copyAnchor = async () => {
     try {
       await navigator.clipboard.writeText(
-        `>${boardKey}>${threadIndex}>${post.postOrder}`,
+        `${boardKey}>${threadIndex}>${post.postOrder}`,
       );
       toast.success("앵커를 복사했습니다.");
     } catch {
